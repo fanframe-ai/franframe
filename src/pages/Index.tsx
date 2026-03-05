@@ -147,13 +147,14 @@ const Index = () => {
     return <AccessDeniedScreen />;
   }
 
+  const effectiveBalance = isAdminPreview ? 999 : balance;
   const currentStepNumber = STEP_ORDER.indexOf(currentStep) + 1;
   const showStepIndicator = currentStep !== "welcome" && currentStep !== "result" && currentStep !== "history";
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Credits Display */}
-      {FANFRAME_ENABLED && (
+      {FANFRAME_ENABLED && !isAdminPreview && (
         <div className="fixed top-14 right-2 sm:top-16 sm:right-4 z-50 safe-right">
           <CreditsDisplay 
             balance={balance} 
@@ -173,17 +174,17 @@ const Index = () => {
       
       {currentStep === "welcome" && (
         <WelcomeScreen 
-          onStart={() => goToStep(FANFRAME_ENABLED && balance <= 0 ? "buy-credits" : "tutorial")}
+          onStart={() => goToStep(FANFRAME_ENABLED && effectiveBalance <= 0 ? "buy-credits" : "tutorial")}
           onHistory={() => goToStep("history")}
         />
       )}
 
       {currentStep === "buy-credits" && (
         <BuyCreditsScreen 
-          balance={balance}
+          balance={effectiveBalance}
           onRefreshBalance={handleRefreshBalance}
           isRefreshing={creditsLoading}
-          onContinue={balance > 0 ? () => goToStep("tutorial") : undefined}
+          onContinue={effectiveBalance > 0 ? () => goToStep("tutorial") : undefined}
           fetchBalance={fetchBalance}
         />
       )}
@@ -191,7 +192,7 @@ const Index = () => {
       {currentStep === "tutorial" && (
         <TutorialScreen 
           onContinue={() => goToStep("shirt")} 
-          onBack={() => goToStep(FANFRAME_ENABLED && balance <= 0 ? "buy-credits" : "welcome")}
+          onBack={() => goToStep(FANFRAME_ENABLED && effectiveBalance <= 0 ? "buy-credits" : "welcome")}
         />
       )}
 
@@ -209,7 +210,7 @@ const Index = () => {
           selectedBackground={selectedBackground}
           onSelectBackground={handleBackgroundSelect}
           onContinue={() => {
-            if (balance <= 0) {
+            if (effectiveBalance <= 0) {
               goToStep("buy-credits");
               return;
             }
@@ -225,7 +226,7 @@ const Index = () => {
           onImageUpload={handleImageUpload}
           onClearImage={handleClearImage}
           onContinue={() => {
-            if (balance <= 0) {
+            if (effectiveBalance <= 0) {
               goToStep("buy-credits");
               return;
             }
@@ -240,7 +241,7 @@ const Index = () => {
           userImage={uploadedImage}
           selectedShirt={selectedShirt}
           selectedBackground={selectedBackground}
-          balance={balance}
+          balance={effectiveBalance}
           onTryAgain={handleTryAgain}
           onBalanceUpdate={handleBalanceUpdate}
           onNoCredits={handleNoCredits}
