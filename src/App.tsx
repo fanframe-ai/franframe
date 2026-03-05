@@ -66,11 +66,7 @@ const App = () => (
               <AdminSettings />
             </ProtectedAdminRoute>
           } />
-          <Route path="/admin/preview" element={
-            <ProtectedAdminRoute>
-              <AdminPreview />
-            </ProtectedAdminRoute>
-          } />
+          <Route path="/admin/preview" element={<AdminPreview />} />
           <Route path="/admin/assets" element={
             <ProtectedAdminRoute>
               <AdminAssets />
