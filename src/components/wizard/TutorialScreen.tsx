@@ -20,7 +20,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
       icon: ShirtIcon,
       number: "02",
       title: "Escolha a camiseta",
-      description: "O manto oficial do Tricolor",
+      description: "O manto oficial do Corinthians",
     },
     {
       icon: Sparkles,

@@ -18,7 +18,7 @@ const TermosDeUso = () => {
         </Button>
 
         <h1 className="text-2xl sm:text-3xl font-black mb-6 uppercase">
-          Termo de Uso - Virtual Try-On
+          Termo de Uso - Provador Virtual
         </h1>
 
         <div className="glass-card p-6 rounded-2xl space-y-6 text-sm sm:text-base text-muted-foreground leading-relaxed">

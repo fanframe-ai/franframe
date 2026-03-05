@@ -22,10 +22,10 @@ const getProgressMessage = (progress: number, queuePosition: number) => {
   if (progress < 15) return { title: "Preparando o tecido...", subtitle: "Separando os melhores materiais" };
   if (progress < 30) return { title: "Cortando o manto...", subtitle: "Cada detalhe conta" };
   if (progress < 50) return { title: "Costurando o manto...", subtitle: "Com amor de torcedor" };
-  if (progress < 70) return { title: "Bordando o escudo...", subtitle: "O símbolo do Tricolor" };
+  if (progress < 70) return { title: "Bordando o escudo...", subtitle: "O símbolo do Corinthians" };
   if (progress < 85) return { title: "Ajustando o caimento...", subtitle: "Perfeito pra você" };
   if (progress < 95) return { title: "Finalizando detalhes...", subtitle: "Quase pronto!" };
-  return { title: "Manto pronto!", subtitle: "Vai São Paulo!" };
+  return { title: "Manto pronto!", subtitle: "Vai Corinthians!" };
 };
 
 export const TestResultScreen = ({
@@ -173,7 +173,7 @@ export const TestResultScreen = ({
     try {
       const link = document.createElement("a");
       link.href = generatedImage;
-      link.download = `teste-tricolor-${Date.now()}.png`;
+      link.download = `teste-timao-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

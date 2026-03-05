@@ -15,27 +15,27 @@ export interface Shirt {
 export const SHIRTS: Shirt[] = [
   {
     id: "manto-1",
-    name: "Manto I – O Soberano",
-    subtitle: "O clássico tricolor que carrega a história",
+    name: "Manto I – O Timão",
+    subtitle: "O clássico alvinegro que carrega a história",
     imageUrl: ASSET_URLS.shirts["manto-1"],
     assetPath: ASSET_URLS.shirts["manto-1"],
-    promptDescription: "white São Paulo FC soccer jersey with red and black horizontal stripes, New Balance logo on chest, São Paulo team crest in center, classic tricolor design",
+    promptDescription: "white Corinthians soccer jersey with black details, Nike logo on chest, Corinthians team crest in center, classic alvinegro design",
   },
   {
     id: "manto-2",
-    name: "Manto II – Tricolor Paulista",
-    subtitle: "A força que vem da torcida",
+    name: "Manto II – O Fiel",
+    subtitle: "A força que vem da Fiel Torcida",
     imageUrl: ASSET_URLS.shirts["manto-2"],
     assetPath: ASSET_URLS.shirts["manto-2"],
-    promptDescription: "red São Paulo FC away soccer jersey with white and black accents, New Balance logo on chest, São Paulo team crest in center",
+    promptDescription: "black Corinthians away soccer jersey with white accents, Nike logo on chest, Corinthians team crest in center",
   },
   {
     id: "manto-3",
-    name: "Manto III – O Mais Querido",
-    subtitle: "Atitude e paixão tricolor",
+    name: "Manto III – O Bando de Loucos",
+    subtitle: "Atitude e paixão corintiana",
     imageUrl: ASSET_URLS.shirts["manto-3"],
     assetPath: ASSET_URLS.shirts["manto-3"],
-    promptDescription: "black São Paulo FC third jersey with red and white details, New Balance logo on chest, São Paulo team crest",
+    promptDescription: "dark grey Corinthians third jersey with black and white details, Nike logo on chest, Corinthians team crest",
   },
 ];
 

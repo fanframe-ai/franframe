@@ -17,7 +17,7 @@ export const AccessDeniedScreen = () => {
 
         {/* Description */}
         <p className="text-muted-foreground text-sm sm:text-lg mb-6 sm:mb-8 px-2">
-          Para criar sua foto com a camisa do São Paulo, você precisa acessar pelo tour virtual.
+          Para criar sua foto com a camisa do Corinthians, você precisa acessar pelo tour virtual.
         </p>
 
         {/* Instructions */}
@@ -43,7 +43,7 @@ export const AccessDeniedScreen = () => {
         <Button
           size="lg"
           className="w-full btn-mobile-cta"
-          onClick={() => window.open("https://saopaulofc.net", "_blank")}
+          onClick={() => window.open("https://corinthians.com.br", "_blank")}
         >
           Visitar Site Oficial
           <ExternalLink className="w-5 h-5 ml-2" />
