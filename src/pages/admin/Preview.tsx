@@ -13,7 +13,7 @@ const viewports = [
 export default function AdminPreview() {
   const [viewport, setViewport] = useState<typeof viewports[number]>(viewports[0]);
 
-  const previewUrl = window.location.origin + "/teste";
+  const previewUrl = window.location.origin + "/?preview=admin";
 
   return (
     <AdminLayout>

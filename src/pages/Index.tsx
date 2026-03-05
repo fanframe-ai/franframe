@@ -130,8 +130,11 @@ const Index = () => {
     }
   }, [fetchBalance, updateBalance]);
 
+  // Check if running inside admin preview
+  const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
+
   // Loading state
-  if (FANFRAME_ENABLED && authLoading) {
+  if (FANFRAME_ENABLED && !isAdminPreview && authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -140,7 +143,7 @@ const Index = () => {
   }
 
   // Not authenticated
-  if (FANFRAME_ENABLED && !isAuthenticated) {
+  if (FANFRAME_ENABLED && !isAdminPreview && !isAuthenticated) {
     return <AccessDeniedScreen />;
   }
 
