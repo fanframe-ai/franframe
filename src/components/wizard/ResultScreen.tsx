@@ -40,10 +40,10 @@ const getProgressMessage = (progress: number, queuePosition: number) => {
   if (progress < 15) return { title: "Preparando o tecido...", subtitle: "Separando os melhores materiais" };
   if (progress < 30) return { title: "Cortando o manto...", subtitle: "Cada detalhe conta" };
   if (progress < 50) return { title: "Costurando o manto...", subtitle: "Com amor de torcedor" };
-  if (progress < 70) return { title: "Bordando o escudo...", subtitle: "O símbolo do Tricolor" };
+  if (progress < 70) return { title: "Bordando o escudo...", subtitle: "O símbolo do Corinthians" };
   if (progress < 85) return { title: "Ajustando o caimento...", subtitle: "Perfeito pra você" };
   if (progress < 95) return { title: "Finalizando detalhes...", subtitle: "Quase pronto!" };
-  return { title: "Manto pronto!", subtitle: "Vai São Paulo!" };
+  return { title: "Manto pronto!", subtitle: "Vai Corinthians!" };
 };
 
 export const ResultScreen = ({
@@ -372,7 +372,7 @@ export const ResultScreen = ({
       
       const link = document.createElement("a");
       link.href = imageWithWatermark;
-      link.download = `provador-tricolor-${Date.now()}.png`;
+      link.download = `provador-timao-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -392,7 +392,7 @@ export const ResultScreen = ({
       
       const link = document.createElement("a");
       link.href = generatedImage;
-      link.download = `provador-tricolor-${Date.now()}.png`;
+      link.download = `provador-timao-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -489,7 +489,7 @@ export const ResultScreen = ({
           Ficou épico!
         </h2>
         <p className="text-muted-foreground text-xs sm:text-sm">
-          Você vestiu o manto do São Paulo.
+          Você vestiu o manto do Corinthians.
         </p>
       </div>
 
@@ -508,7 +508,7 @@ export const ResultScreen = ({
             {generatedImage && (
               <img
                 src={generatedImage}
-                alt="Você com o manto do São Paulo"
+                alt="Você com o manto do Corinthians"
                 className="w-full h-full object-contain"
               />
             )}

@@ -20,12 +20,12 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
         {/* Headline */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-3 sm:mb-4 leading-tight tracking-tighter">
           VISTA A CAMISA
-          <span className="block gradient-text">DO TRICOLOR!</span>
+          <span className="block gradient-text">DO TIMÃO!</span>
         </h1>
 
         {/* Single Subtitle */}
         <p className="text-base sm:text-lg md:text-xl text-white/80 font-medium mb-6 sm:mb-8 leading-relaxed max-w-xs sm:max-w-sm px-2">
-          IA que veste o manto Tricolor em você. Resultado realista em segundos.
+          IA que veste o manto do Corinthians em você. Resultado realista em segundos.
         </p>
 
         {/* Before/After Preview */}
@@ -87,7 +87,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
 
           {/* Social Proof */}
           <p className="text-xs sm:text-sm text-white/70 font-medium">
-            + de 10.000 Tricolores já vestiram
+            + de 10.000 Fiéis já vestiram
           </p>
           
           {/* AI Badge */}

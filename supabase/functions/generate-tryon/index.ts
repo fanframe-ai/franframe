@@ -29,11 +29,11 @@ const CIRCUIT_STATE_KEY = "replicate_circuit_state";
 const CIRCUIT_FAILURES_KEY = "replicate_failure_count";
 const CIRCUIT_LAST_FAILURE_KEY = "replicate_last_failure";
 
-const DEFAULT_PROMPT = `Virtual try-on: Transform this person to wear the São Paulo FC jersey (Tricolor).
+const DEFAULT_PROMPT = `Virtual try-on: Transform this person to wear the Corinthians jersey (Timão).
 
 RULES:
 - Preserve the person's face, body proportions and pose exactly
-- Replace only the upper body clothing with the São Paulo FC jersey
+- Replace only the upper body clothing with the Corinthians jersey
 - Ensure realistic fabric folds and natural fit
 - Place the person in the museum background setting
 - Match lighting to indoor museum environment

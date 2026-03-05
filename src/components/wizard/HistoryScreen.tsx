@@ -26,7 +26,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `provador-tricolor-${entry.id.slice(0, 8)}.png`;
+      link.download = `provador-timao-${entry.id.slice(0, 8)}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
