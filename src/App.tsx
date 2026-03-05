@@ -16,6 +16,8 @@ import AdminAlerts from "./pages/admin/Alerts";
 import AdminSystemStatus from "./pages/admin/SystemStatus";
 import AdminSettings from "./pages/admin/Settings";
 import AdminDeploy from "./pages/admin/Deploy";
+import AdminPreview from "./pages/admin/Preview";
+import AdminAssets from "./pages/admin/Assets";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
 
 const queryClient = new QueryClient();
@@ -67,6 +69,16 @@ const App = () => (
           <Route path="/admin/deploy" element={
             <ProtectedAdminRoute>
               <AdminDeploy />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/preview" element={
+            <ProtectedAdminRoute>
+              <AdminPreview />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/assets" element={
+            <ProtectedAdminRoute>
+              <AdminAssets />
             </ProtectedAdminRoute>
           } />
           
