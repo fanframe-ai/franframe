@@ -15,7 +15,7 @@ import AdminStats from "./pages/admin/Stats";
 import AdminAlerts from "./pages/admin/Alerts";
 import AdminSystemStatus from "./pages/admin/SystemStatus";
 import AdminSettings from "./pages/admin/Settings";
-import AdminDeploy from "./pages/admin/Deploy";
+
 import AdminPreview from "./pages/admin/Preview";
 import AdminAssets from "./pages/admin/Assets";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
@@ -64,11 +64,6 @@ const App = () => (
           <Route path="/admin/settings" element={
             <ProtectedAdminRoute>
               <AdminSettings />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/deploy" element={
-            <ProtectedAdminRoute>
-              <AdminDeploy />
             </ProtectedAdminRoute>
           } />
           <Route path="/admin/preview" element={

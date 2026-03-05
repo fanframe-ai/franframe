@@ -8,7 +8,7 @@ import {
   Shield,
   Activity,
   Settings,
-  Rocket,
+  
   Eye,
   Images
 } from "lucide-react";
@@ -22,7 +22,7 @@ const navItems = [
   { href: "/admin/status", icon: Activity, label: "Status" },
   { href: "/admin/alerts", icon: Bell, label: "Alertas" },
   { href: "/admin/settings", icon: Settings, label: "Configurações" },
-  { href: "/admin/deploy", icon: Rocket, label: "Deploy" },
+  
   { href: "/admin/preview", icon: Eye, label: "Preview" },
   { href: "/admin/assets", icon: Images, label: "Assets" },
 ];
