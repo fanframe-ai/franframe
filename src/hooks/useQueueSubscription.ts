@@ -31,8 +31,8 @@ export function useQueueSubscription({
   onPositionUpdate,
 }: QueueSubscriptionOptions) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const hasCompletedRef = useRef(false);
   const { toast } = useToast();
