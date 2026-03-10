@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Camera, ShirtIcon, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
-import beforeExample from "@/assets/before-example.jpg";
-import afterExample from "@/assets/after-example.png";
+import { useState } from "react";
+import { ASSET_URLS } from "@/config/fanframe";
+import beforeExampleLocal from "@/assets/before-example.jpg";
+import afterExampleLocal from "@/assets/after-example.png";
 
 interface TutorialScreenProps {
   onContinue: () => void;
