@@ -248,14 +248,14 @@ export default function AdminAssets() {
               <AssetCard
                 label="Imagem Antes"
                 subtitle="Foto de exemplo sem o manto"
-                currentUrl="/assets/before-example.jpg"
+                currentUrl={ASSET_URLS.tutorial.before}
                 storagePath="tutorial/before.jpg"
                 aspectRatio="3/4"
               />
               <AssetCard
                 label="Imagem Depois"
                 subtitle="Foto de exemplo com o manto"
-                currentUrl="/assets/after-example.png"
+                currentUrl={ASSET_URLS.tutorial.after}
                 storagePath="tutorial/after.png"
                 aspectRatio="3/4"
               />
