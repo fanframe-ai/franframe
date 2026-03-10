@@ -102,7 +102,7 @@ export const BuyCreditsScreen = ({
           <div
             key={pkg.credits}
             className={`glass-card p-4 sm:p-5 rounded-xl relative ${
-              pkg.highlight ? "ring-2 ring-destructive" : ""
+              pkg.highlight ? "ring-2 ring-[#F1AF07]" : ""
             }`}
           >
             {pkg.badge && (
