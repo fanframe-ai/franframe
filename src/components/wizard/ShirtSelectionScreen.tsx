@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ASSET_URLS } from "@/config/fanframe";
+import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
 
 export interface Shirt {
   id: string;
@@ -53,6 +54,7 @@ export const ShirtSelectionScreen = ({
   onBack,
 }: ShirtSelectionScreenProps) => {
   const canContinue = selectedShirt !== null;
+  const { getName, getSubtitle } = useAssetTextOverrides("shirts_text_overrides");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
@@ -88,9 +90,9 @@ export const ShirtSelectionScreen = ({
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm sm:text-base uppercase mb-0.5 truncate">{shirt.name}</h3>
+                  <h3 className="font-bold text-sm sm:text-base uppercase mb-0.5 truncate">{getName(shirt.id, shirt.name)}</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                    {shirt.subtitle}
+                    {getSubtitle(shirt.id, shirt.subtitle)}
                   </p>
                 </div>
                 <div

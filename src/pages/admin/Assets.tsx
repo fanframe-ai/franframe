@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Loader2, Check, ImageIcon } from "lucide-react";
+import { Upload, Loader2, Check, Pencil, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ASSET_URLS, BACKGROUNDS } from "@/config/fanframe";
@@ -11,39 +11,101 @@ import { SHIRTS } from "@/components/wizard/ShirtSelectionScreen";
 
 const BUCKET = "tryon-assets";
 
+interface TextOverrides {
+  [id: string]: { name?: string; subtitle?: string };
+}
+
+function useTextOverrides(settingsKey: string, defaults: { id: string; name: string; subtitle: string }[]) {
+  const [overrides, setOverrides] = useState<TextOverrides>({});
+  const [loaded, setLoaded] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", settingsKey)
+        .maybeSingle();
+      if (data?.value) {
+        try { setOverrides(JSON.parse(data.value)); } catch {}
+      }
+      setLoaded(true);
+    })();
+  }, [settingsKey]);
+
+  const save = useCallback(async (newOverrides: TextOverrides) => {
+    setOverrides(newOverrides);
+    const value = JSON.stringify(newOverrides);
+
+    const { data: existing } = await supabase
+      .from("system_settings")
+      .select("id")
+      .eq("key", settingsKey)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from("system_settings").update({ value }).eq("key", settingsKey);
+    } else {
+      await supabase.from("system_settings").insert({
+        key: settingsKey,
+        value,
+        description: `Text overrides for ${settingsKey}`,
+      });
+    }
+
+    toast({ title: "Textos salvos!" });
+  }, [settingsKey, toast]);
+
+  const getName = (id: string) => overrides[id]?.name ?? defaults.find(d => d.id === id)?.name ?? "";
+  const getSubtitle = (id: string) => overrides[id]?.subtitle ?? defaults.find(d => d.id === id)?.subtitle ?? "";
+
+  return { overrides, save, getName, getSubtitle, loaded };
+}
+
 function AssetCard({
+  id,
   label,
   subtitle,
   currentUrl,
   storagePath,
   aspectRatio = "3/4",
+  editable = false,
+  onTextChange,
 }: {
+  id?: string;
   label: string;
   subtitle?: string;
   currentUrl: string;
   storagePath: string;
   aspectRatio?: string;
+  editable?: boolean;
+  onTextChange?: (name: string, subtitle: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(currentUrl);
   const [done, setDone] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(label);
+  const [editSubtitle, setEditSubtitle] = useState(subtitle || "");
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setEditName(label);
+    setEditSubtitle(subtitle || "");
+  }, [label, subtitle]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     setDone(false);
-
     try {
-        const { error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(BUCKET)
         .upload(storagePath, file, { cacheControl: "60", upsert: true });
-
       if (error) throw error;
-
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
       setPreviewUrl(urlData.publicUrl + "?t=" + Date.now());
       setDone(true);
@@ -54,6 +116,11 @@ function AssetCard({
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
+  };
+
+  const handleSaveText = () => {
+    onTextChange?.(editName, editSubtitle);
+    setEditing(false);
   };
 
   return (
@@ -72,8 +139,39 @@ function AssetCard({
         )}
       </div>
       <div className="p-3">
-        <h3 className="font-semibold text-sm">{label}</h3>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        {editing ? (
+          <div className="space-y-2">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Nome"
+              className="h-8 text-sm"
+            />
+            <Input
+              value={editSubtitle}
+              onChange={(e) => setEditSubtitle(e.target.value)}
+              placeholder="Subtítulo"
+              className="h-8 text-sm"
+            />
+            <Button size="sm" className="w-full" onClick={handleSaveText}>
+              <Save className="h-4 w-4 mr-1" /> Salvar textos
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-1">
+              <div>
+                <h3 className="font-semibold text-sm">{label}</h3>
+                {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+              </div>
+              {editable && (
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditing(true)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          </>
+        )}
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
         <Button
           size="sm"
@@ -91,12 +189,28 @@ function AssetCard({
 }
 
 export default function AdminAssets() {
+  const shirtDefaults = SHIRTS.map(s => ({ id: s.id, name: s.name, subtitle: s.subtitle }));
+  const bgDefaults = BACKGROUNDS.map(b => ({ id: b.id, name: b.name, subtitle: b.subtitle }));
+
+  const shirts = useTextOverrides("shirts_text_overrides", shirtDefaults);
+  const bgs = useTextOverrides("backgrounds_text_overrides", bgDefaults);
+
+  const handleShirtTextChange = (shirtId: string) => (name: string, subtitle: string) => {
+    const newOverrides = { ...shirts.overrides, [shirtId]: { name, subtitle } };
+    shirts.save(newOverrides);
+  };
+
+  const handleBgTextChange = (bgId: string) => (name: string, subtitle: string) => {
+    const newOverrides = { ...bgs.overrides, [bgId]: { name, subtitle } };
+    bgs.save(newOverrides);
+  };
+
   return (
     <AdminLayout>
       <div className="max-w-5xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Gerenciar Assets</h1>
-          <p className="text-sm text-muted-foreground">Edite as imagens do provador virtual</p>
+          <p className="text-sm text-muted-foreground">Edite as imagens e textos do provador virtual</p>
         </div>
 
         <Tabs defaultValue="tutorial" className="space-y-4">
@@ -106,7 +220,6 @@ export default function AdminAssets() {
             <TabsTrigger value="backgrounds">Cenários</TabsTrigger>
           </TabsList>
 
-          {/* Tutorial Before/After */}
           <TabsContent value="tutorial">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <AssetCard
@@ -126,33 +239,37 @@ export default function AdminAssets() {
             </div>
           </TabsContent>
 
-          {/* Shirts */}
           <TabsContent value="shirts">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {SHIRTS.map((shirt) => (
                 <AssetCard
                   key={shirt.id}
-                  label={shirt.name}
-                  subtitle={shirt.subtitle}
+                  id={shirt.id}
+                  label={shirts.getName(shirt.id)}
+                  subtitle={shirts.getSubtitle(shirt.id)}
                   currentUrl={shirt.imageUrl}
                   storagePath={`shirts/${shirt.id}.png`}
                   aspectRatio="1/1"
+                  editable
+                  onTextChange={handleShirtTextChange(shirt.id)}
                 />
               ))}
             </div>
           </TabsContent>
 
-          {/* Backgrounds */}
           <TabsContent value="backgrounds">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {BACKGROUNDS.map((bg) => (
                 <AssetCard
                   key={bg.id}
-                  label={bg.name}
-                  subtitle={bg.subtitle}
+                  id={bg.id}
+                  label={bgs.getName(bg.id)}
+                  subtitle={bgs.getSubtitle(bg.id)}
                   currentUrl={bg.imageUrl}
                   storagePath={`backgrounds/${bg.id}.${bg.id === "mural" ? "png" : "jpg"}`}
                   aspectRatio="16/9"
+                  editable
+                  onTextChange={handleBgTextChange(bg.id)}
                 />
               ))}
             </div>
