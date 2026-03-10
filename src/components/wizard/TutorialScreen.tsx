@@ -78,10 +78,11 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
             <div className="relative">
               <div className="aspect-[3/4] bg-secondary rounded-xl overflow-hidden border-2 border-white/20">
                 <img 
-                  src={afterExample} 
+                  src={afterSrc} 
                   alt="Exemplo depois com manto" 
                   loading="lazy"
                   className="w-full h-full object-cover object-top"
+                  onError={() => setAfterSrc(afterExampleLocal)}
                 />
               </div>
               <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase bg-white text-black px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">

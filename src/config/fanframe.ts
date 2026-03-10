@@ -75,17 +75,21 @@ export interface Background {
 
 // Asset URLs from Supabase Storage (permanent, publicly accessible)
 export const ASSET_URLS = {
-  background: `${CLOUD_STORAGE_BASE}/backgrounds/mural.png`,
+  background: `${STORAGE_BASE}/backgrounds/mural.png`,
   shirts: {
     "manto-1": `${STORAGE_BASE}/shirts/manto-1.png`,
     "manto-2": `${STORAGE_BASE}/shirts/manto-2.png`,
     "manto-3": `${STORAGE_BASE}/shirts/manto-3.png`,
   },
   backgrounds: {
-    "mural": `${CLOUD_STORAGE_BASE}/backgrounds/mural.png`,
+    "mural": `${STORAGE_BASE}/backgrounds/mural.png`,
     "memorial": `${STORAGE_BASE}/backgrounds/memorial.jpg`,
     "idolos": `${STORAGE_BASE}/backgrounds/idolos.jpg`,
     "trofeus": `${STORAGE_BASE}/backgrounds/trofeus.jpg`,
+  },
+  tutorial: {
+    before: `${STORAGE_BASE}/tutorial/before.jpg`,
+    after: `${STORAGE_BASE}/tutorial/after.png`,
   },
 } as const;
 

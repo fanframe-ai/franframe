@@ -38,9 +38,9 @@ function AssetCard({
     setDone(false);
 
     try {
-      const { error } = await supabase.storage
+        const { error } = await supabase.storage
         .from(BUCKET)
-        .upload(storagePath, file, { cacheControl: "3600", upsert: true });
+        .upload(storagePath, file, { cacheControl: "60", upsert: true });
 
       if (error) throw error;
 
