@@ -33,7 +33,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           <div className="relative">
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 border-white/20">
               <img 
-                src={beforeExample} 
+                src={ASSET_URLS.tutorial.before} 
                 alt="Antes" 
                 loading="eager"
                 className="w-full h-full object-cover object-[center_20%]"
