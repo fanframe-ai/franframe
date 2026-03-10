@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BACKGROUNDS, type Background } from "@/config/fanframe";
+import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
 
 interface BackgroundSelectionScreenProps {
   selectedBackground: Background | null;
