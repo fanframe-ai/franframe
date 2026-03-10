@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight } from "lucide-react";
-import beforeExample from "@/assets/before-example.jpg";
-import afterExample from "@/assets/after-example.png";
+import { ASSET_URLS } from "@/config/fanframe";
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -34,7 +33,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           <div className="relative">
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 border-white/20">
               <img 
-                src={beforeExample} 
+                src={ASSET_URLS.tutorial.before} 
                 alt="Antes" 
                 loading="eager"
                 className="w-full h-full object-cover object-[center_20%]"
@@ -52,7 +51,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           <div className="relative">
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 border-white ring-2 sm:ring-4 ring-white/30 ring-offset-1 sm:ring-offset-2 ring-offset-black shadow-[0_0_20px_rgba(255,255,255,0.3)]">
               <img 
-                src={afterExample} 
+                src={ASSET_URLS.tutorial.after} 
                 alt="Depois" 
                 loading="eager"
                 className="w-full h-full object-cover"
