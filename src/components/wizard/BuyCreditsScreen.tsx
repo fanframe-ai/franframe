@@ -60,21 +60,21 @@ export const BuyCreditsScreen = ({
       credits: 1, 
       price: "R$ 5,90", 
       highlight: false,
-      checkoutUrl: "https://timaotourvirtual.com.br/checkout/?add-to-cart=4516"
+      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67822"
     },
     { 
       credits: 3, 
       price: "R$ 16,90", 
       highlight: true,
       badge: "Mais Popular",
-      checkoutUrl: "https://timaotourvirtual.com.br/checkout/?add-to-cart=4517"
+      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67824"
     },
     { 
       credits: 7, 
       price: "R$ 34,90", 
       highlight: false,
       badge: "Melhor Valor",
-      checkoutUrl: "https://timaotourvirtual.com.br/checkout/?add-to-cart=4518"
+      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67825"
     },
   ];
 
