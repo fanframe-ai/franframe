@@ -18,6 +18,7 @@ export const BackgroundSelectionScreen = ({
   onBack,
 }: BackgroundSelectionScreenProps) => {
   const canContinue = selectedBackground !== null;
+  const { getName, getSubtitle } = useAssetTextOverrides("backgrounds_text_overrides");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
