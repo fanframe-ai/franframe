@@ -11,8 +11,8 @@ interface TutorialScreenProps {
 }
 
 export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
-  const [beforeSrc, setBeforeSrc] = useState(ASSET_URLS.tutorial.before);
-  const [afterSrc, setAfterSrc] = useState(ASSET_URLS.tutorial.after);
+  const [beforeSrc, setBeforeSrc] = useState<string>(ASSET_URLS.tutorial.before);
+  const [afterSrc, setAfterSrc] = useState<string>(ASSET_URLS.tutorial.after);
 
   const steps = [
     {
