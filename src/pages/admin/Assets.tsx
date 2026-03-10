@@ -129,7 +129,7 @@ function AssetCard({
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className={cn("bg-card border border-border rounded-xl overflow-hidden transition-opacity", !visible && "opacity-50")}>
       <div className="relative bg-muted" style={{ aspectRatio }}>
         <img
           src={previewUrl}
