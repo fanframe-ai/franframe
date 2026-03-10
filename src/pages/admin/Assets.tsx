@@ -177,6 +177,12 @@ function AssetCard({
                 </Button>
               )}
             </div>
+            {onVisibilityChange && (
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                <span className="text-xs text-muted-foreground">Visível para clientes</span>
+                <Switch checked={visible} onCheckedChange={onVisibilityChange} />
+              </div>
+            )}
           </>
         )}
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
