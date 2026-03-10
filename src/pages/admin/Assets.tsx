@@ -203,12 +203,22 @@ export default function AdminAssets() {
   const bgs = useTextOverrides("backgrounds_text_overrides", bgDefaults);
 
   const handleShirtTextChange = (shirtId: string) => (name: string, subtitle: string) => {
-    const newOverrides = { ...shirts.overrides, [shirtId]: { name, subtitle } };
+    const newOverrides = { ...shirts.overrides, [shirtId]: { ...shirts.overrides[shirtId], name, subtitle } };
+    shirts.save(newOverrides);
+  };
+
+  const handleShirtVisibility = (shirtId: string) => (visible: boolean) => {
+    const newOverrides = { ...shirts.overrides, [shirtId]: { ...shirts.overrides[shirtId], hidden: !visible } };
     shirts.save(newOverrides);
   };
 
   const handleBgTextChange = (bgId: string) => (name: string, subtitle: string) => {
-    const newOverrides = { ...bgs.overrides, [bgId]: { name, subtitle } };
+    const newOverrides = { ...bgs.overrides, [bgId]: { ...bgs.overrides[bgId], name, subtitle } };
+    bgs.save(newOverrides);
+  };
+
+  const handleBgVisibility = (bgId: string) => (visible: boolean) => {
+    const newOverrides = { ...bgs.overrides, [bgId]: { ...bgs.overrides[bgId], hidden: !visible } };
     bgs.save(newOverrides);
   };
 
