@@ -90,9 +90,9 @@ export const ShirtSelectionScreen = ({
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm sm:text-base uppercase mb-0.5 truncate">{shirt.name}</h3>
+                  <h3 className="font-bold text-sm sm:text-base uppercase mb-0.5 truncate">{getName(shirt.id, shirt.name)}</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                    {shirt.subtitle}
+                    {getSubtitle(shirt.id, shirt.subtitle)}
                   </p>
                 </div>
                 <div

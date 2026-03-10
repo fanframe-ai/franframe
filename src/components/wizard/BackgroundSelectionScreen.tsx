@@ -54,9 +54,9 @@ export const BackgroundSelectionScreen = ({
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm sm:text-base uppercase mb-0.5 truncate">{background.name}</h3>
+                  <h3 className="font-bold text-sm sm:text-base uppercase mb-0.5 truncate">{getName(background.id, background.name)}</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                    {background.subtitle}
+                    {getSubtitle(background.id, background.subtitle)}
                   </p>
                 </div>
                 <div
