@@ -63,7 +63,7 @@ export const ResultScreen = ({
   const [queueId, setQueueId] = useState<string | null>(null);
   const [queuePosition, setQueuePosition] = useState(1);
   
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasStartedRef = useRef(false);
   const { toast } = useToast();
 
