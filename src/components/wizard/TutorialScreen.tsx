@@ -55,10 +55,11 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
             <div className="relative">
               <div className="aspect-[3/4] bg-secondary rounded-xl overflow-hidden">
                 <img 
-                  src={beforeExample} 
+                  src={beforeSrc} 
                   alt="Exemplo antes" 
                   loading="lazy"
                   className="w-full h-full object-cover object-[center_20%]"
+                  onError={() => setBeforeSrc(beforeExampleLocal)}
                 />
               </div>
               <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase bg-black/50 backdrop-blur px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
