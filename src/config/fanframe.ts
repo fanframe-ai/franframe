@@ -22,9 +22,9 @@ export const FANFRAME_ENDPOINTS = {
 
 // Credit purchase URLs (abrem em nova aba) - conforme seção 3
 export const FANFRAME_PURCHASE_URLS = {
-  credits1: "https://tricolorvirtualexperience.net/buy-credits?pack=1",
-  credits3: "https://tricolorvirtualexperience.net/buy-credits?pack=3", // CTA principal recomendado
-  credits7: "https://tricolorvirtualexperience.net/buy-credits?pack=7",
+  credits1: "https://timaotourvirtual.com.br/buy-credits?pack=1",
+  credits3: "https://timaotourvirtual.com.br/buy-credits?pack=3", // CTA principal recomendado
+  credits7: "https://timaotourvirtual.com.br/buy-credits?pack=7",
 } as const;
 
 // LocalStorage keys - conforme documentação seção 9: "vf_app_token"
