@@ -8,7 +8,7 @@ const STORAGE_BASE = "https://qmjvsftlounkitclmzzw.supabase.co/storage/v1/object
 export const FANFRAME_ENABLED = true;
 
 // API Base URL - WordPress REST API
-export const FANFRAME_API_BASE = "https://tricolorvirtualexperience.net/wp-json/vf-fanframe/v1";
+export const FANFRAME_API_BASE = "https://timaotourvirtual.com.br/wp-json/vf-fanframe/v1";
 
 // API Endpoints conforme documentação seção 5
 export const FANFRAME_ENDPOINTS = {
@@ -22,9 +22,9 @@ export const FANFRAME_ENDPOINTS = {
 
 // Credit purchase URLs (abrem em nova aba) - conforme seção 3
 export const FANFRAME_PURCHASE_URLS = {
-  credits1: "https://tricolorvirtualexperience.net/buy-credits?pack=1",
-  credits3: "https://tricolorvirtualexperience.net/buy-credits?pack=3", // CTA principal recomendado
-  credits7: "https://tricolorvirtualexperience.net/buy-credits?pack=7",
+  credits1: "https://timaotourvirtual.com.br/buy-credits?pack=1",
+  credits3: "https://timaotourvirtual.com.br/buy-credits?pack=3", // CTA principal recomendado
+  credits7: "https://timaotourvirtual.com.br/buy-credits?pack=7",
 } as const;
 
 // LocalStorage keys - conforme documentação seção 9: "vf_app_token"
