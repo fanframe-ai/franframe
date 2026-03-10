@@ -106,7 +106,7 @@ export const BuyCreditsScreen = ({
             }`}
           >
             {pkg.badge && (
-              <span className="absolute -top-2 right-3 sm:right-4 px-2 py-0.5 text-[10px] sm:text-xs font-bold bg-destructive text-white rounded-full whitespace-nowrap">
+              <span className="absolute -top-2 right-3 sm:right-4 px-2 py-0.5 text-[10px] sm:text-xs font-bold bg-[#F1AF07] text-black rounded-full whitespace-nowrap">
                 {pkg.badge}
               </span>
             )}
