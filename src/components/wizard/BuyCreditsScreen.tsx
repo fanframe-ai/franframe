@@ -119,6 +119,7 @@ export const BuyCreditsScreen = ({
               </div>
               <a
                 href={pkg.checkoutUrl}
+                target="_top"
                 onClick={(e) => handlePurchaseClick(pkg, e)}
                 className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-9 px-4 py-2 touch-target flex-shrink-0 ${
                   pkg.highlight 
