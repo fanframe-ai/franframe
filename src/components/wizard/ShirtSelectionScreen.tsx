@@ -54,7 +54,8 @@ export const ShirtSelectionScreen = ({
   onBack,
 }: ShirtSelectionScreenProps) => {
   const canContinue = selectedShirt !== null;
-  const { getName, getSubtitle } = useAssetTextOverrides("shirts_text_overrides");
+  const { getName, getSubtitle, isVisible } = useAssetTextOverrides("shirts_text_overrides");
+  const visibleShirts = SHIRTS.filter(s => isVisible(s.id));
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
@@ -65,7 +66,7 @@ export const ShirtSelectionScreen = ({
       </div>
 
       <div className="w-full max-w-lg grid grid-cols-1 gap-2 sm:gap-3 mb-6">
-        {SHIRTS.map((shirt, index) => {
+        {visibleShirts.map((shirt, index) => {
           const isSelected = selectedShirt?.id === shirt.id;
           return (
             <button

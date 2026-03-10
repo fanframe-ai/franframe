@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Upload, Loader2, Check, Pencil, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +14,7 @@ import { SHIRTS } from "@/components/wizard/ShirtSelectionScreen";
 const BUCKET = "tryon-assets";
 
 interface TextOverrides {
-  [id: string]: { name?: string; subtitle?: string };
+  [id: string]: { name?: string; subtitle?: string; hidden?: boolean };
 }
 
 function useTextOverrides(settingsKey: string, defaults: { id: string; name: string; subtitle: string }[]) {
@@ -59,8 +61,9 @@ function useTextOverrides(settingsKey: string, defaults: { id: string; name: str
 
   const getName = (id: string) => overrides[id]?.name ?? defaults.find(d => d.id === id)?.name ?? "";
   const getSubtitle = (id: string) => overrides[id]?.subtitle ?? defaults.find(d => d.id === id)?.subtitle ?? "";
+  const isVisible = (id: string) => overrides[id]?.hidden !== true;
 
-  return { overrides, save, getName, getSubtitle, loaded };
+  return { overrides, save, getName, getSubtitle, isVisible, loaded };
 }
 
 function AssetCard({
@@ -71,7 +74,9 @@ function AssetCard({
   storagePath,
   aspectRatio = "3/4",
   editable = false,
+  visible = true,
   onTextChange,
+  onVisibilityChange,
 }: {
   id?: string;
   label: string;
@@ -80,7 +85,9 @@ function AssetCard({
   storagePath: string;
   aspectRatio?: string;
   editable?: boolean;
+  visible?: boolean;
   onTextChange?: (name: string, subtitle: string) => void;
+  onVisibilityChange?: (visible: boolean) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(currentUrl);
@@ -124,7 +131,7 @@ function AssetCard({
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className={cn("bg-card border border-border rounded-xl overflow-hidden transition-opacity", !visible && "opacity-50")}>
       <div className="relative bg-muted" style={{ aspectRatio }}>
         <img
           src={previewUrl}
@@ -196,12 +203,22 @@ export default function AdminAssets() {
   const bgs = useTextOverrides("backgrounds_text_overrides", bgDefaults);
 
   const handleShirtTextChange = (shirtId: string) => (name: string, subtitle: string) => {
-    const newOverrides = { ...shirts.overrides, [shirtId]: { name, subtitle } };
+    const newOverrides = { ...shirts.overrides, [shirtId]: { ...shirts.overrides[shirtId], name, subtitle } };
+    shirts.save(newOverrides);
+  };
+
+  const handleShirtVisibility = (shirtId: string) => (visible: boolean) => {
+    const newOverrides = { ...shirts.overrides, [shirtId]: { ...shirts.overrides[shirtId], hidden: !visible } };
     shirts.save(newOverrides);
   };
 
   const handleBgTextChange = (bgId: string) => (name: string, subtitle: string) => {
-    const newOverrides = { ...bgs.overrides, [bgId]: { name, subtitle } };
+    const newOverrides = { ...bgs.overrides, [bgId]: { ...bgs.overrides[bgId], name, subtitle } };
+    bgs.save(newOverrides);
+  };
+
+  const handleBgVisibility = (bgId: string) => (visible: boolean) => {
+    const newOverrides = { ...bgs.overrides, [bgId]: { ...bgs.overrides[bgId], hidden: !visible } };
     bgs.save(newOverrides);
   };
 
@@ -251,7 +268,9 @@ export default function AdminAssets() {
                   storagePath={`shirts/${shirt.id}.png`}
                   aspectRatio="1/1"
                   editable
+                  visible={shirts.isVisible(shirt.id)}
                   onTextChange={handleShirtTextChange(shirt.id)}
+                  onVisibilityChange={handleShirtVisibility(shirt.id)}
                 />
               ))}
             </div>
@@ -269,7 +288,9 @@ export default function AdminAssets() {
                   storagePath={`backgrounds/${bg.id}.${bg.id === "mural" ? "png" : "jpg"}`}
                   aspectRatio="16/9"
                   editable
+                  visible={bgs.isVisible(bg.id)}
                   onTextChange={handleBgTextChange(bg.id)}
+                  onVisibilityChange={handleBgVisibility(bg.id)}
                 />
               ))}
             </div>

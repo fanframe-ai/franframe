@@ -18,7 +18,8 @@ export const BackgroundSelectionScreen = ({
   onBack,
 }: BackgroundSelectionScreenProps) => {
   const canContinue = selectedBackground !== null;
-  const { getName, getSubtitle } = useAssetTextOverrides("backgrounds_text_overrides");
+  const { getName, getSubtitle, isVisible } = useAssetTextOverrides("backgrounds_text_overrides");
+  const visibleBackgrounds = BACKGROUNDS.filter(b => isVisible(b.id));
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
@@ -29,7 +30,7 @@ export const BackgroundSelectionScreen = ({
       </div>
 
       <div className="w-full max-w-lg grid grid-cols-1 gap-2 sm:gap-3 mb-6">
-        {BACKGROUNDS.map((background, index) => {
+        {visibleBackgrounds.map((background, index) => {
           const isSelected = selectedBackground?.id === background.id;
           return (
             <button
