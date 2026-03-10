@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Camera, ShirtIcon, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
-import beforeExample from "@/assets/before-example.jpg";
-import afterExample from "@/assets/after-example.png";
+import { useState } from "react";
+import { ASSET_URLS } from "@/config/fanframe";
+import beforeExampleLocal from "@/assets/before-example.jpg";
+import afterExampleLocal from "@/assets/after-example.png";
 
 interface TutorialScreenProps {
   onContinue: () => void;
@@ -9,6 +11,9 @@ interface TutorialScreenProps {
 }
 
 export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
+  const [beforeSrc, setBeforeSrc] = useState<string>(ASSET_URLS.tutorial.before);
+  const [afterSrc, setAfterSrc] = useState<string>(ASSET_URLS.tutorial.after);
+
   const steps = [
     {
       icon: Camera,
@@ -50,10 +55,11 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
             <div className="relative">
               <div className="aspect-[3/4] bg-secondary rounded-xl overflow-hidden">
                 <img 
-                  src={beforeExample} 
+                  src={beforeSrc} 
                   alt="Exemplo antes" 
                   loading="lazy"
                   className="w-full h-full object-cover object-[center_20%]"
+                  onError={() => setBeforeSrc(beforeExampleLocal)}
                 />
               </div>
               <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase bg-black/50 backdrop-blur px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
@@ -72,10 +78,11 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
             <div className="relative">
               <div className="aspect-[3/4] bg-secondary rounded-xl overflow-hidden border-2 border-white/20">
                 <img 
-                  src={afterExample} 
+                  src={afterSrc} 
                   alt="Exemplo depois com manto" 
                   loading="lazy"
                   className="w-full h-full object-cover object-top"
+                  onError={() => setAfterSrc(afterExampleLocal)}
                 />
               </div>
               <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase bg-white text-black px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
