@@ -8,7 +8,7 @@ const STORAGE_BASE = "https://qmjvsftlounkitclmzzw.supabase.co/storage/v1/object
 export const FANFRAME_ENABLED = true;
 
 // API Base URL - WordPress REST API
-export const FANFRAME_API_BASE = "https://tricolorvirtualexperience.net/wp-json/vf-fanframe/v1";
+export const FANFRAME_API_BASE = "https://timaotourvirtual.com.br/wp-json/vf-fanframe/v1";
 
 // API Endpoints conforme documentação seção 5
 export const FANFRAME_ENDPOINTS = {
