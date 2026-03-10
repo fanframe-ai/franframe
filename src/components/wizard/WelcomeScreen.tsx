@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight } from "lucide-react";
-import beforeExample from "@/assets/before-example.jpg";
-import afterExample from "@/assets/after-example.png";
+import { ASSET_URLS } from "@/config/fanframe";
 
 interface WelcomeScreenProps {
   onStart: () => void;
