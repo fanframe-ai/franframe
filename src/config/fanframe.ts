@@ -1,9 +1,8 @@
 // FanFrame WordPress Integration Configuration
 // Seguindo estritamente a documentação oficial
 
-// Supabase Storage base URL for permanent assets
-const STORAGE_BASE = "https://yxtglwbrdtwmxwrrhroy.supabase.co/storage/v1/object/public/tryon-assets";
-const CLOUD_STORAGE_BASE = "https://nosobqpiqhskkcfefbuw.supabase.co/storage/v1/object/public/tryon-assets";
+// Supabase Storage base URL for permanent assets (projeto conectado ao app)
+const STORAGE_BASE = "https://qmjvsftlounkitclmzzw.supabase.co/storage/v1/object/public/tryon-assets";
 
 // Flag para ativar/desativar integração
 export const FANFRAME_ENABLED = true;
