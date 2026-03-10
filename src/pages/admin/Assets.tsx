@@ -61,8 +61,9 @@ function useTextOverrides(settingsKey: string, defaults: { id: string; name: str
 
   const getName = (id: string) => overrides[id]?.name ?? defaults.find(d => d.id === id)?.name ?? "";
   const getSubtitle = (id: string) => overrides[id]?.subtitle ?? defaults.find(d => d.id === id)?.subtitle ?? "";
+  const isVisible = (id: string) => overrides[id]?.hidden !== true;
 
-  return { overrides, save, getName, getSubtitle, loaded };
+  return { overrides, save, getName, getSubtitle, isVisible, loaded };
 }
 
 function AssetCard({
