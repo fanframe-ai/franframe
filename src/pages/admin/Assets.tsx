@@ -268,7 +268,9 @@ export default function AdminAssets() {
                   storagePath={`shirts/${shirt.id}.png`}
                   aspectRatio="1/1"
                   editable
+                  visible={shirts.isVisible(shirt.id)}
                   onTextChange={handleShirtTextChange(shirt.id)}
+                  onVisibilityChange={handleShirtVisibility(shirt.id)}
                 />
               ))}
             </div>
