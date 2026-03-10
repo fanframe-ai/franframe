@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ASSET_URLS } from "@/config/fanframe";
+import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
 
 export interface Shirt {
   id: string;
