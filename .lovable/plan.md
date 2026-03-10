@@ -1,52 +1,48 @@
 
 
-## Plano: Adicionar telas "Preview" e "Gerenciar Assets" no Admin Panel
+## Vistoria: Problemas encontrados no fluxo Admin Assets -> Provador
 
-### Resumo
-
-Criar duas novas telas no painel admin:
-1. **Preview** - Renderiza o fluxo completo do provador virtual como o usuário final vê (em um iframe ou componente embutido)
-2. **Gerenciar Assets** - Tela para editar imagens do provador: antes/depois do tutorial, camisas disponíveis e cenários de fundo
+Identifiquei **3 problemas críticos** que impedem que as edições feitas no admin reflitam no provador:
 
 ---
 
-### 1. Tela Preview (`/admin/preview`)
+### Problema 1: URLs de Storage apontam para projetos Supabase DIFERENTES
 
-- Nova página `src/pages/admin/Preview.tsx`
-- Usa `AdminLayout` como wrapper
-- Renderiza o preview da URL principal (`/`) dentro de um iframe estilizado como tela de celular (mockup mobile)
-- Botões para alternar tamanho do viewport (mobile/tablet/desktop)
-- Botão para abrir em nova aba
+O arquivo `src/config/fanframe.ts` define as URLs dos assets apontando para **dois projetos Supabase diferentes**:
+- `yxtglwbrdtwmxwrrhroy.supabase.co` (shirts e alguns backgrounds)
+- `nosobqpiqhskkcfefbuw.supabase.co` (mural background)
 
-### 2. Tela Gerenciar Assets (`/admin/assets`)
+Porém, o admin faz upload para o projeto **conectado ao app**: `qmjvsftlounkitclmzzw.supabase.co`.
 
-- Nova página `src/pages/admin/Assets.tsx`
-- Seções organizadas em tabs:
-  - **Antes/Depois** - Upload das imagens de exemplo do tutorial (before-example, after-example)
-  - **Camisas** - Lista as 3 camisas com preview da imagem, nome e subtítulo; botão para fazer upload de nova imagem para cada uma (envia ao bucket `tryon-assets` no Supabase Storage)
-  - **Cenários** - Lista os 4 backgrounds com preview; botão para upload de nova imagem para cada um
-- Cada item mostra a imagem atual e permite substituir fazendo upload
-- Os uploads vão para o bucket `tryon-assets` já existente no Storage
-- Após upload, atualiza a URL no `system_settings` (nova chave `asset_overrides` com JSON das URLs customizadas)
+Ou seja, o admin sobe a imagem num bucket, mas o provador carrega de outro. **Nada vai atualizar.**
 
-### 3. Alterações em arquivos existentes
+**Correção**: Alterar `STORAGE_BASE` em `fanframe.ts` para usar a URL do projeto conectado (`qmjvsftlounkitclmzzw.supabase.co`), ou construir a URL dinamicamente a partir do `supabase` client.
 
-- **`AdminSidebar.tsx`** - Adicionar 2 novos itens de navegação: "Preview" (ícone `Eye`) e "Assets" (ícone `Image`)
-- **`App.tsx`** - Adicionar 2 novas rotas protegidas: `/admin/preview` e `/admin/assets`
+### Problema 2: Imagens do Tutorial são imports locais (bundled)
 
-### Detalhes Técnicos
+O `TutorialScreen.tsx` importa as imagens antes/depois com `import`:
+```typescript
+import beforeExample from "@/assets/before-example.jpg";
+import afterExample from "@/assets/after-example.png";
+```
 
-- As imagens das camisas e cenários já estão no Supabase Storage (`tryon-assets` bucket, público)
-- O upload substituirá os arquivos existentes no mesmo path do bucket
-- Para as imagens antes/depois do tutorial, serão armazenadas em `tryon-assets/tutorial/before.jpg` e `tryon-assets/tutorial/after.png`
-- O componente `TutorialScreen` será atualizado para carregar as imagens do Storage ao invés de imports locais, permitindo que o admin as atualize sem rebuild
-- As configurações de camisas e cenários (nomes, subtítulos) serão editáveis via `system_settings` com chave `shirts_config` e `backgrounds_config`
+Essas imagens são embutidas no bundle do Vite. Mesmo que o admin faça upload para `tutorial/before.jpg` no Storage, o provador continuará mostrando as imagens originais.
 
-### Arquivos a criar
-- `src/pages/admin/Preview.tsx`
-- `src/pages/admin/Assets.tsx`
+**Correção**: Alterar `TutorialScreen.tsx` para carregar as imagens do Supabase Storage (com fallback para os imports locais caso ainda não existam no bucket).
 
-### Arquivos a modificar
-- `src/components/admin/AdminSidebar.tsx` (2 novos nav items)
-- `src/App.tsx` (2 novas rotas)
+### Problema 3: Cache do Storage
+
+O upload usa `cacheControl: "3600"` (1 hora). Após substituir uma imagem, o usuário pode ver a versão antiga por até 1 hora. Devemos adicionar um cache-buster (`?t=timestamp`) nas URLs ou reduzir o cache time.
+
+---
+
+### Plano de correção
+
+**Arquivos a modificar:**
+
+1. **`src/config/fanframe.ts`** - Corrigir `STORAGE_BASE` para apontar ao projeto Supabase correto (`qmjvsftlounkitclmzzw.supabase.co`), unificando todas as URLs.
+
+2. **`src/components/wizard/TutorialScreen.tsx`** - Substituir imports locais por URLs do Supabase Storage (com fallback para os imports locais).
+
+3. **`src/pages/admin/Assets.tsx`** - Verificar que os `storagePath` dos cards correspondem exatamente aos paths usados nas URLs do provador.
 
