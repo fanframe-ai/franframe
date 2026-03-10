@@ -13,7 +13,7 @@ import { SHIRTS } from "@/components/wizard/ShirtSelectionScreen";
 const BUCKET = "tryon-assets";
 
 interface TextOverrides {
-  [id: string]: { name?: string; subtitle?: string };
+  [id: string]: { name?: string; subtitle?: string; hidden?: boolean };
 }
 
 function useTextOverrides(settingsKey: string, defaults: { id: string; name: string; subtitle: string }[]) {
