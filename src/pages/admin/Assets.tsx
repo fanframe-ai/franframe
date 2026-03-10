@@ -72,7 +72,9 @@ function AssetCard({
   storagePath,
   aspectRatio = "3/4",
   editable = false,
+  visible = true,
   onTextChange,
+  onVisibilityChange,
 }: {
   id?: string;
   label: string;
@@ -81,7 +83,9 @@ function AssetCard({
   storagePath: string;
   aspectRatio?: string;
   editable?: boolean;
+  visible?: boolean;
   onTextChange?: (name: string, subtitle: string) => void;
+  onVisibilityChange?: (visible: boolean) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(currentUrl);
