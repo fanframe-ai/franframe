@@ -288,7 +288,9 @@ export default function AdminAssets() {
                   storagePath={`backgrounds/${bg.id}.${bg.id === "mural" ? "png" : "jpg"}`}
                   aspectRatio="16/9"
                   editable
+                  visible={bgs.isVisible(bg.id)}
                   onTextChange={handleBgTextChange(bg.id)}
+                  onVisibilityChange={handleBgVisibility(bg.id)}
                 />
               ))}
             </div>

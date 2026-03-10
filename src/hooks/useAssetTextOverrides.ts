@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TextOverrides {
-  [id: string]: { name?: string; subtitle?: string };
+  [id: string]: { name?: string; subtitle?: string; hidden?: boolean };
 }
 
 export function useAssetTextOverrides(settingsKey: string) {
@@ -23,6 +23,7 @@ export function useAssetTextOverrides(settingsKey: string) {
 
   const getName = (id: string, fallback: string) => overrides[id]?.name ?? fallback;
   const getSubtitle = (id: string, fallback: string) => overrides[id]?.subtitle ?? fallback;
+  const isVisible = (id: string) => overrides[id]?.hidden !== true;
 
-  return { getName, getSubtitle };
+  return { getName, getSubtitle, isVisible };
 }
