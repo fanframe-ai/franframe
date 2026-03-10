@@ -67,7 +67,7 @@ export const BuyCreditsScreen = ({
       price: "R$ 16,90", 
       highlight: true,
       badge: "Mais Popular",
-      checkoutUrl: "https://tricolorvirtualexperience.net/checkout/?add-to-cart=4517"
+      checkoutUrl: "https://timaotourvirtual.com.br/checkout/?add-to-cart=4517"
     },
     { 
       credits: 7, 
