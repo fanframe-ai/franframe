@@ -30,7 +30,8 @@ serve(async (req) => {
 
     switch (action) {
       case "balance":
-        endpoint = `${FANFRAME_API_BASE}/credits/balance`;
+        // Add cache-buster to prevent WordPress/CDN caching stale balance
+        endpoint = `${FANFRAME_API_BASE}/credits/balance?_t=${Date.now()}`;
         method = "GET";
         break;
       case "debit":
