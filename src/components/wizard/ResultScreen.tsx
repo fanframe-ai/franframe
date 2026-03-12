@@ -65,6 +65,7 @@ export const ResultScreen = ({
   
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasStartedRef = useRef(false);
+  const hasDebitedRef = useRef(false);
   const { toast } = useToast();
 
   const { 
