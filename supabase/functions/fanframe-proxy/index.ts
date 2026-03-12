@@ -55,6 +55,8 @@ serve(async (req) => {
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
     };
 
     // Exchange doesn't use X-Fanframe-Token, it uses the code in the body
