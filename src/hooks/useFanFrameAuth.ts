@@ -101,11 +101,12 @@ export function useFanFrameAuth() {
       window.history.replaceState({}, "", url.toString());
       console.log("[FanFrame][Exchange] URL limpa (code removido)");
 
+      // NÃO usar balance do response do exchange - buscar fresh da API
       setAuthState({
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        balance: responseData.balance ?? 0,
+        balance: 0, // será atualizado pelo fetchBalance no Index.tsx
       });
 
       console.log("[FanFrame][Exchange] ✅ SUCESSO! Autenticação concluída!");

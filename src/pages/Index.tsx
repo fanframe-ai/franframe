@@ -225,8 +225,14 @@ const Index = () => {
           uploadedImage={uploadedImage}
           onImageUpload={handleImageUpload}
           onClearImage={handleClearImage}
-          onContinue={() => {
-            if (effectiveBalance <= 0) {
+          onContinue={async () => {
+            // Sempre buscar saldo fresco antes de gerar
+            const freshBalance = await fetchBalance();
+            if (freshBalance !== null) {
+              updateBalance(freshBalance);
+            }
+            const currentBalance = freshBalance ?? effectiveBalance;
+            if (currentBalance <= 0) {
               goToStep("buy-credits");
               return;
             }
