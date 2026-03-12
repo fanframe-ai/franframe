@@ -23,6 +23,7 @@ export function useFanFrameAuth() {
     error: null,
     balance: 0,
   });
+  const justExchangedRef = useRef(false);
 
   // Obter token do localStorage
   const getStoredToken = useCallback((): string | null => {
