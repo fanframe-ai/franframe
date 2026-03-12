@@ -73,17 +73,16 @@ export function useFanFrameAuth() {
 
       console.log("[FanFrame][Exchange] Response:", JSON.stringify(data));
 
-      const responseText = await response.text();
-      console.log("[FanFrame][Exchange] Response body (raw):", responseText);
-      
-      let data: ExchangeResponse;
-      try {
-        data = JSON.parse(responseText);
-        console.log("[FanFrame][Exchange] Response parsed:", JSON.stringify(data));
-      } catch (parseError) {
-        console.error("[FanFrame][Exchange] ❌ ERRO ao parsear JSON:", parseError);
-        throw new Error("Resposta inválida do servidor");
+      const exchangeData = data as ExchangeResponse;
+
+      // Verificar se a resposta foi ok: true
+      if (!exchangeData.ok || !exchangeData.app_token) {
+        console.error("[FanFrame][Exchange] ❌ Exchange falhou:", exchangeData.error);
+        throw new Error(exchangeData.error || "Código inválido ou expirado");
       }
+
+      // Alias for rest of function
+      const responseData = exchangeData;
 
       // Verificar se a resposta foi ok: true
       if (!data.ok || !data.app_token) {
