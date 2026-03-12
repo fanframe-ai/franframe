@@ -420,7 +420,8 @@ export const ResultScreen = ({
         title: "Imagem aberta em nova aba",
         description: "Segure na imagem para salvar no celular",
       });
-
+    }
+  };
 
   const handleRetry = () => {
     setError(null);
