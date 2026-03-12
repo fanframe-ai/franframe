@@ -383,35 +383,45 @@ export const ResultScreen = ({
       
       const imageWithWatermark = await applyWatermark(imageToProcess);
       
+      // Convert base64 to blob and open in new tab (iframe sandbox blocks direct downloads)
+      const byteString = atob(imageWithWatermark.split(",")[1]);
+      const mimeType = imageWithWatermark.split(",")[0].split(":")[1].split(";")[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([ab], { type: mimeType });
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Try download link first, fallback to open in new tab
       const link = document.createElement("a");
-      link.href = imageWithWatermark;
+      link.href = blobUrl;
       link.download = `provador-timao-${Date.now()}.png`;
+      link.target = "_top";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Also open in new tab as fallback for sandboxed iframes
+      window.open(blobUrl, "_blank");
 
       toast({
-        title: "Download iniciado!",
-        description: "Sua foto com marca d'água está sendo baixada",
+        title: "Foto pronta! 🎉",
+        description: "Segure na imagem para salvar no celular",
       });
     } catch (error) {
       console.error("Error applying watermark:", error);
       
-      toast({
-        title: "Erro ao aplicar marca d'água",
-        description: "Baixando imagem sem marca d'água...",
-        variant: "destructive",
-      });
+      // Fallback: open original image in new tab
+      window.open(generatedImage, "_blank");
       
-      const link = document.createElement("a");
-      link.href = generatedImage;
-      link.download = `provador-timao-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      toast({
+        title: "Imagem aberta em nova aba",
+        description: "Segure na imagem para salvar no celular",
+      });
     }
   };
-
 
   const handleRetry = () => {
     setError(null);
