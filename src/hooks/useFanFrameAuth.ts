@@ -84,24 +84,18 @@ export function useFanFrameAuth() {
       // Alias for rest of function
       const responseData = exchangeData;
 
-      // Verificar se a resposta foi ok: true
-      if (!data.ok || !data.app_token) {
-        console.error("[FanFrame][Exchange] ❌ Exchange falhou:", data.error);
-        throw new Error(data.error || "Código inválido ou expirado");
-      }
-
       // Salvar token conforme documentação: localStorage com chave "vf_app_token"
-      console.log("[FanFrame][Exchange] Token recebido:", data.app_token.substring(0, 10) + "...");
-      storeToken(data.app_token);
+      console.log("[FanFrame][Exchange] Token recebido:", responseData.app_token!.substring(0, 10) + "...");
+      storeToken(responseData.app_token!);
       console.log("[FanFrame][Exchange] ✅ Token salvo no localStorage");
 
-      // Salvar user_id separadamente (token não é JWT, precisamos guardar o ID)
-      if (data.user_id) {
-        localStorage.setItem(FANFRAME_STORAGE_KEYS.userId, data.user_id.toString());
-        console.log("[FanFrame][Exchange] ✅ User ID salvo:", data.user_id);
+      // Salvar user_id separadamente
+      if (responseData.user_id) {
+        localStorage.setItem(FANFRAME_STORAGE_KEYS.userId, responseData.user_id.toString());
+        console.log("[FanFrame][Exchange] ✅ User ID salvo:", responseData.user_id);
       }
 
-      // Remover code da URL (recomendado pela documentação)
+      // Remover code da URL
       const url = new URL(window.location.href);
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
@@ -111,13 +105,13 @@ export function useFanFrameAuth() {
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        balance: data.balance ?? 0,
+        balance: responseData.balance ?? 0,
       });
 
       console.log("[FanFrame][Exchange] ✅ SUCESSO! Autenticação concluída!");
-      console.log("[FanFrame][Exchange] User ID:", data.user_id);
-      console.log("[FanFrame][Exchange] Saldo:", data.balance);
-      console.log("[FanFrame][Exchange] Expira em:", data.expires_at);
+      console.log("[FanFrame][Exchange] User ID:", responseData.user_id);
+      console.log("[FanFrame][Exchange] Saldo:", responseData.balance);
+      console.log("[FanFrame][Exchange] Expira em:", responseData.expires_at);
       console.log("[FanFrame][Exchange] ========== FIM EXCHANGE (SUCESSO) ==========");
       return true;
     } catch (error) {
