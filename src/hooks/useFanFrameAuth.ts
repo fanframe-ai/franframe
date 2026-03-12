@@ -51,33 +51,27 @@ export function useFanFrameAuth() {
     console.log("[FanFrame][Exchange] ========== INÍCIO EXCHANGE ==========");
     console.log("[FanFrame][Exchange] Timestamp:", new Date().toISOString());
     console.log("[FanFrame][Exchange] Code recebido:", code ? `${code.substring(0, 5)}...` : "VAZIO");
-    console.log("[FanFrame][Exchange] Endpoint:", FANFRAME_ENDPOINTS.exchange);
+    console.log("[FanFrame][Exchange] Usando proxy edge function");
     
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const headers = {
-        "Content-Type": "application/json",
-      };
-      const body = JSON.stringify({ code });
-      
-      console.log("[FanFrame][Exchange] Headers:", JSON.stringify(headers));
-      console.log("[FanFrame][Exchange] Body:", body);
-      console.log("[FanFrame][Exchange] Iniciando fetch POST...");
+      console.log("[FanFrame][Exchange] Iniciando invoke fanframe-proxy...");
       
       const fetchStartTime = performance.now();
 
-      const response = await fetch(FANFRAME_ENDPOINTS.exchange, {
-        method: "POST",
-        headers,
-        body,
+      const { data, error: invokeError } = await supabase.functions.invoke("fanframe-proxy", {
+        body: { action: "exchange", token: "exchange", body: { code } },
       });
 
       const fetchEndTime = performance.now();
-      console.log("[FanFrame][Exchange] Fetch completado em:", Math.round(fetchEndTime - fetchStartTime), "ms");
-      console.log("[FanFrame][Exchange] Response status:", response.status);
-      console.log("[FanFrame][Exchange] Response ok:", response.ok);
-      console.log("[FanFrame][Exchange] Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+      console.log("[FanFrame][Exchange] Invoke completado em:", Math.round(fetchEndTime - fetchStartTime), "ms");
+
+      if (invokeError) {
+        throw new Error(invokeError.message || "Erro na comunicação com o servidor");
+      }
+
+      console.log("[FanFrame][Exchange] Response:", JSON.stringify(data));
 
       const responseText = await response.text();
       console.log("[FanFrame][Exchange] Response body (raw):", responseText);
