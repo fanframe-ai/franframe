@@ -383,7 +383,7 @@ export const ResultScreen = ({
       
       const imageWithWatermark = await applyWatermark(imageToProcess);
       
-      // Convert base64 to blob for download
+      // Convert base64 to blob and open in new tab (iframe sandbox blocks direct downloads)
       const byteString = atob(imageWithWatermark.split(",")[1]);
       const mimeType = imageWithWatermark.split(",")[0].split(":")[1].split(";")[0];
       const ab = new ArrayBuffer(byteString.length);
@@ -394,47 +394,31 @@ export const ResultScreen = ({
       const blob = new Blob([ab], { type: mimeType });
       const blobUrl = URL.createObjectURL(blob);
       
-      // Use top-level window for download (bypasses iframe sandbox restrictions)
-      const topWindow = window.top || window.parent || window;
-      const link = topWindow.document.createElement("a");
+      // Try download link first, fallback to open in new tab
+      const link = document.createElement("a");
       link.href = blobUrl;
       link.download = `provador-timao-${Date.now()}.png`;
-      link.style.display = "none";
-      topWindow.document.body.appendChild(link);
+      link.target = "_top";
+      document.body.appendChild(link);
       link.click();
-      setTimeout(() => {
-        topWindow.document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      }, 1000);
+      document.body.removeChild(link);
+      
+      // Also open in new tab as fallback for sandboxed iframes
+      window.open(blobUrl, "_blank");
 
       toast({
-        title: "Download iniciado! 🎉",
-        description: "Sua foto está sendo baixada",
+        title: "Foto pronta! 🎉",
+        description: "Segure na imagem para salvar no celular",
       });
     } catch (error) {
       console.error("Error applying watermark:", error);
       
-      // Fallback: direct download without watermark
-      try {
-        const topWindow = window.top || window.parent || window;
-        const link = topWindow.document.createElement("a");
-        link.href = generatedImage;
-        link.download = `provador-timao-${Date.now()}.png`;
-        link.style.display = "none";
-        topWindow.document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          topWindow.document.body.removeChild(link);
-        }, 1000);
-      } catch {
-        // Last resort: open image directly
-        window.open(generatedImage, "_top");
-      }
+      // Fallback: open original image in new tab
+      window.open(generatedImage, "_blank");
       
       toast({
-        title: "Download iniciado",
-        description: "Baixando imagem sem marca d'água",
-        variant: "destructive",
+        title: "Imagem aberta em nova aba",
+        description: "Segure na imagem para salvar no celular",
       });
     }
   };
