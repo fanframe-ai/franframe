@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { 
-  FANFRAME_ENDPOINTS, 
   FANFRAME_STORAGE_KEYS,
   type ExchangeResponse 
 } from "@/config/fanframe";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -51,64 +51,51 @@ export function useFanFrameAuth() {
     console.log("[FanFrame][Exchange] ========== INÍCIO EXCHANGE ==========");
     console.log("[FanFrame][Exchange] Timestamp:", new Date().toISOString());
     console.log("[FanFrame][Exchange] Code recebido:", code ? `${code.substring(0, 5)}...` : "VAZIO");
-    console.log("[FanFrame][Exchange] Endpoint:", FANFRAME_ENDPOINTS.exchange);
+    console.log("[FanFrame][Exchange] Usando proxy edge function");
     
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const headers = {
-        "Content-Type": "application/json",
-      };
-      const body = JSON.stringify({ code });
-      
-      console.log("[FanFrame][Exchange] Headers:", JSON.stringify(headers));
-      console.log("[FanFrame][Exchange] Body:", body);
-      console.log("[FanFrame][Exchange] Iniciando fetch POST...");
+      console.log("[FanFrame][Exchange] Iniciando invoke fanframe-proxy...");
       
       const fetchStartTime = performance.now();
 
-      const response = await fetch(FANFRAME_ENDPOINTS.exchange, {
-        method: "POST",
-        headers,
-        body,
+      const { data, error: invokeError } = await supabase.functions.invoke("fanframe-proxy", {
+        body: { action: "exchange", token: "exchange", body: { code } },
       });
 
       const fetchEndTime = performance.now();
-      console.log("[FanFrame][Exchange] Fetch completado em:", Math.round(fetchEndTime - fetchStartTime), "ms");
-      console.log("[FanFrame][Exchange] Response status:", response.status);
-      console.log("[FanFrame][Exchange] Response ok:", response.ok);
-      console.log("[FanFrame][Exchange] Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+      console.log("[FanFrame][Exchange] Invoke completado em:", Math.round(fetchEndTime - fetchStartTime), "ms");
 
-      const responseText = await response.text();
-      console.log("[FanFrame][Exchange] Response body (raw):", responseText);
-      
-      let data: ExchangeResponse;
-      try {
-        data = JSON.parse(responseText);
-        console.log("[FanFrame][Exchange] Response parsed:", JSON.stringify(data));
-      } catch (parseError) {
-        console.error("[FanFrame][Exchange] ❌ ERRO ao parsear JSON:", parseError);
-        throw new Error("Resposta inválida do servidor");
+      if (invokeError) {
+        throw new Error(invokeError.message || "Erro na comunicação com o servidor");
       }
+
+      console.log("[FanFrame][Exchange] Response:", JSON.stringify(data));
+
+      const exchangeData = data as ExchangeResponse;
 
       // Verificar se a resposta foi ok: true
-      if (!data.ok || !data.app_token) {
-        console.error("[FanFrame][Exchange] ❌ Exchange falhou:", data.error);
-        throw new Error(data.error || "Código inválido ou expirado");
+      if (!exchangeData.ok || !exchangeData.app_token) {
+        console.error("[FanFrame][Exchange] ❌ Exchange falhou:", exchangeData.error);
+        throw new Error(exchangeData.error || "Código inválido ou expirado");
       }
+
+      // Alias for rest of function
+      const responseData = exchangeData;
 
       // Salvar token conforme documentação: localStorage com chave "vf_app_token"
-      console.log("[FanFrame][Exchange] Token recebido:", data.app_token.substring(0, 10) + "...");
-      storeToken(data.app_token);
+      console.log("[FanFrame][Exchange] Token recebido:", responseData.app_token!.substring(0, 10) + "...");
+      storeToken(responseData.app_token!);
       console.log("[FanFrame][Exchange] ✅ Token salvo no localStorage");
 
-      // Salvar user_id separadamente (token não é JWT, precisamos guardar o ID)
-      if (data.user_id) {
-        localStorage.setItem(FANFRAME_STORAGE_KEYS.userId, data.user_id.toString());
-        console.log("[FanFrame][Exchange] ✅ User ID salvo:", data.user_id);
+      // Salvar user_id separadamente
+      if (responseData.user_id) {
+        localStorage.setItem(FANFRAME_STORAGE_KEYS.userId, responseData.user_id.toString());
+        console.log("[FanFrame][Exchange] ✅ User ID salvo:", responseData.user_id);
       }
 
-      // Remover code da URL (recomendado pela documentação)
+      // Remover code da URL
       const url = new URL(window.location.href);
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
@@ -118,13 +105,13 @@ export function useFanFrameAuth() {
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        balance: data.balance ?? 0,
+        balance: responseData.balance ?? 0,
       });
 
       console.log("[FanFrame][Exchange] ✅ SUCESSO! Autenticação concluída!");
-      console.log("[FanFrame][Exchange] User ID:", data.user_id);
-      console.log("[FanFrame][Exchange] Saldo:", data.balance);
-      console.log("[FanFrame][Exchange] Expira em:", data.expires_at);
+      console.log("[FanFrame][Exchange] User ID:", responseData.user_id);
+      console.log("[FanFrame][Exchange] Saldo:", responseData.balance);
+      console.log("[FanFrame][Exchange] Expira em:", responseData.expires_at);
       console.log("[FanFrame][Exchange] ========== FIM EXCHANGE (SUCESSO) ==========");
       return true;
     } catch (error) {
