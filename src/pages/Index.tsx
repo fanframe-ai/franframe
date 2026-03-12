@@ -174,7 +174,15 @@ const Index = () => {
       
       {currentStep === "welcome" && (
         <WelcomeScreen 
-          onStart={() => goToStep(FANFRAME_ENABLED && effectiveBalance <= 0 ? "buy-credits" : "tutorial")}
+          onStart={async () => {
+            // Buscar saldo fresco ao iniciar
+            const freshBalance = await fetchBalance();
+            if (freshBalance !== null) {
+              updateBalance(freshBalance);
+            }
+            const currentBalance = freshBalance ?? effectiveBalance;
+            goToStep(FANFRAME_ENABLED && currentBalance <= 0 ? "buy-credits" : "tutorial");
+          }}
           onHistory={() => goToStep("history")}
         />
       )}
@@ -225,8 +233,14 @@ const Index = () => {
           uploadedImage={uploadedImage}
           onImageUpload={handleImageUpload}
           onClearImage={handleClearImage}
-          onContinue={() => {
-            if (effectiveBalance <= 0) {
+          onContinue={async () => {
+            // Sempre buscar saldo fresco antes de gerar
+            const freshBalance = await fetchBalance();
+            if (freshBalance !== null) {
+              updateBalance(freshBalance);
+            }
+            const currentBalance = freshBalance ?? effectiveBalance;
+            if (currentBalance <= 0) {
               goToStep("buy-credits");
               return;
             }
