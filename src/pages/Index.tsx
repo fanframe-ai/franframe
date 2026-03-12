@@ -33,7 +33,8 @@ const Index = () => {
     balance, 
     updateBalance,
     logout,
-    getStoredToken 
+    getStoredToken,
+    justExchangedRef,
   } = useFanFrameAuth();
 
   const { 
