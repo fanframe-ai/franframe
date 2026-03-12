@@ -65,6 +65,7 @@ export const ResultScreen = ({
   
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasStartedRef = useRef(false);
+  const hasDebitedRef = useRef(false);
   const { toast } = useToast();
 
   const { 
@@ -107,6 +108,18 @@ export const ResultScreen = ({
 
   const handleGenerationComplete = async (imageUrl: string) => {
     console.log("[ResultScreen] Generation completed via queue!");
+    
+    // Guard against double debit (polling + realtime can both fire)
+    if (hasDebitedRef.current) {
+      console.log("[ResultScreen] Debit already done, skipping duplicate");
+      clearGenerationId();
+      completeProgress();
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setGeneratedImage(imageUrl);
+      setIsGenerating(false);
+      return;
+    }
+    hasDebitedRef.current = true;
     
     // Debit credit after successful generation
     const localGenerationId = generateGenerationId();
