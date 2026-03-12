@@ -216,5 +216,6 @@ export function useFanFrameAuth() {
     logout,
     updateBalance,
     getStoredToken,
+    justExchangedRef,
   };
 }
