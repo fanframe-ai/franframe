@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { 
-  FANFRAME_ENDPOINTS, 
   FANFRAME_STORAGE_KEYS,
   type ExchangeResponse 
 } from "@/config/fanframe";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthState {
   isAuthenticated: boolean;
