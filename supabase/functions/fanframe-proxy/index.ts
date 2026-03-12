@@ -15,10 +15,12 @@ serve(async (req) => {
   try {
     const { action, token, body } = await req.json();
 
+    console.log(`[fanframe-proxy] action=${action}, token=${token ? token.substring(0, 10) + "..." : "MISSING"}`);
+
     if (!token) {
       return new Response(
         JSON.stringify({ ok: false, error: "Token não fornecido" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -44,7 +46,7 @@ serve(async (req) => {
       default:
         return new Response(
           JSON.stringify({ ok: false, error: "Ação inválida" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
 
@@ -56,7 +58,14 @@ serve(async (req) => {
 
     // Exchange doesn't use X-Fanframe-Token, it uses the code in the body
     if (action !== "exchange") {
+      // Send token in multiple ways to maximize compatibility
       headers["X-Fanframe-Token"] = token;
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    console.log(`[fanframe-proxy] Outgoing headers:`, JSON.stringify(headers));
+    if (fetchBody) {
+      console.log(`[fanframe-proxy] Outgoing body:`, fetchBody);
     }
 
     const response = await fetch(endpoint, {
@@ -66,17 +75,26 @@ serve(async (req) => {
     });
 
     const responseText = await response.text();
-    console.log(`[fanframe-proxy] Response ${response.status}:`, responseText);
+    console.log(`[fanframe-proxy] Upstream response ${response.status}:`, responseText);
+
+    // ALWAYS return 200 to avoid Supabase SDK throwing FunctionsHttpError
+    // Include upstream status in body for client-side handling
+    if (response.status === 401) {
+      return new Response(
+        JSON.stringify({ status: 401, error: "Token inválido", upstream: responseText }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(responseText, {
-      status: response.status,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("[fanframe-proxy] Error:", error);
     return new Response(
       JSON.stringify({ ok: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
