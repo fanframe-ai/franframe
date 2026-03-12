@@ -30,7 +30,8 @@ serve(async (req) => {
 
     switch (action) {
       case "balance":
-        endpoint = `${FANFRAME_API_BASE}/credits/balance`;
+        // Add cache-buster to prevent WordPress/CDN caching stale balance
+        endpoint = `${FANFRAME_API_BASE}/credits/balance?_t=${Date.now()}`;
         method = "GET";
         break;
       case "debit":
@@ -54,6 +55,8 @@ serve(async (req) => {
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
     };
 
     // Exchange doesn't use X-Fanframe-Token, it uses the code in the body
