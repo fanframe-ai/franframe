@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { 
   FANFRAME_STORAGE_KEYS,
   type ExchangeResponse 
@@ -23,6 +23,7 @@ export function useFanFrameAuth() {
     error: null,
     balance: 0,
   });
+  const justExchangedRef = useRef(false);
 
   // Obter token do localStorage
   const getStoredToken = useCallback((): string | null => {
@@ -101,12 +102,13 @@ export function useFanFrameAuth() {
       window.history.replaceState({}, "", url.toString());
       console.log("[FanFrame][Exchange] URL limpa (code removido)");
 
-      // NÃO usar balance do response do exchange - buscar fresh da API
+      // Usar balance do exchange (é o valor correto no momento do login)
+      justExchangedRef.current = true;
       setAuthState({
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        balance: 0, // será atualizado pelo fetchBalance no Index.tsx
+        balance: responseData.balance ?? 0,
       });
 
       console.log("[FanFrame][Exchange] ✅ SUCESSO! Autenticação concluída!");
@@ -214,5 +216,6 @@ export function useFanFrameAuth() {
     logout,
     updateBalance,
     getStoredToken,
+    justExchangedRef,
   };
 }

@@ -33,7 +33,8 @@ const Index = () => {
     balance, 
     updateBalance,
     logout,
-    getStoredToken 
+    getStoredToken,
+    justExchangedRef,
   } = useFanFrameAuth();
 
   const { 
@@ -67,11 +68,18 @@ const Index = () => {
     }
   }, [fetchBalance, updateBalance]);
 
-  // Fetch balance only once on initial authentication
+  // Fetch balance on initial auth (skip if we just exchanged - balance already set)
   useEffect(() => {
     let isMounted = true;
     
     const loadInitialBalance = async () => {
+      // Se acabou de fazer exchange, o balance já veio correto do response
+      if (justExchangedRef.current) {
+        console.log("[Index] Skipping balance fetch - just exchanged, balance already set");
+        justExchangedRef.current = false;
+        return;
+      }
+      
       if (isAuthenticated && getStoredToken()) {
         const newBalance = await fetchBalance();
         if (isMounted && newBalance !== null) {
