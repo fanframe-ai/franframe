@@ -58,7 +58,9 @@ serve(async (req) => {
 
     // Exchange doesn't use X-Fanframe-Token, it uses the code in the body
     if (action !== "exchange") {
+      // Send token in multiple ways to maximize compatibility
       headers["X-Fanframe-Token"] = token;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     console.log(`[fanframe-proxy] Outgoing headers:`, JSON.stringify(headers));
