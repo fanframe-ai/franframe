@@ -174,7 +174,15 @@ const Index = () => {
       
       {currentStep === "welcome" && (
         <WelcomeScreen 
-          onStart={() => goToStep(FANFRAME_ENABLED && effectiveBalance <= 0 ? "buy-credits" : "tutorial")}
+          onStart={async () => {
+            // Buscar saldo fresco ao iniciar
+            const freshBalance = await fetchBalance();
+            if (freshBalance !== null) {
+              updateBalance(freshBalance);
+            }
+            const currentBalance = freshBalance ?? effectiveBalance;
+            goToStep(FANFRAME_ENABLED && currentBalance <= 0 ? "buy-credits" : "tutorial");
+          }}
           onHistory={() => goToStep("history")}
         />
       )}
