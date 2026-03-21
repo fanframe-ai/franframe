@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight } from "lucide-react";
+import { useTeam } from "@/contexts/TeamContext";
 import { ASSET_URLS } from "@/config/fanframe";
 
 interface WelcomeScreenProps {
@@ -8,6 +9,12 @@ interface WelcomeScreenProps {
 }
 
 export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
+  const { team } = useTeam();
+  
+  const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
+  const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
+  const teamName = team?.name || "Timão";
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden safe-bottom">
       {/* Background Effects */}
@@ -19,12 +26,12 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
         {/* Headline */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-3 sm:mb-4 leading-tight tracking-tighter">
           VISTA A CAMISA
-          <span className="block gradient-text">DO TIMÃO!</span>
+          <span className="block gradient-text">DO {teamName.toUpperCase()}!</span>
         </h1>
 
         {/* Single Subtitle */}
         <p className="text-base sm:text-lg md:text-xl text-white/80 font-medium mb-6 sm:mb-8 leading-relaxed max-w-xs sm:max-w-sm px-2">
-          IA que veste o manto do Corinthians em você. Resultado realista em segundos.
+          IA que veste o manto do {teamName} em você. Resultado realista em segundos.
         </p>
 
         {/* Before/After Preview */}
@@ -33,7 +40,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           <div className="relative">
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 border-white/20">
               <img 
-                src={ASSET_URLS.tutorial.before} 
+                src={tutorialBefore} 
                 alt="Antes" 
                 loading="eager"
                 className="w-full h-full object-cover object-[center_20%]"
@@ -51,7 +58,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           <div className="relative">
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 border-white ring-2 sm:ring-4 ring-white/30 ring-offset-1 sm:ring-offset-2 ring-offset-black shadow-[0_0_20px_rgba(255,255,255,0.3)]">
               <img 
-                src={ASSET_URLS.tutorial.after} 
+                src={tutorialAfter} 
                 alt="Depois" 
                 loading="eager"
                 className="w-full h-full object-cover"
@@ -74,7 +81,6 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
 
         {/* Trust Elements */}
         <div className="mt-8 sm:mt-10 flex flex-col items-center gap-2 sm:gap-3">
-          {/* History link */}
           {onHistory && (
             <button
               onClick={onHistory}
@@ -84,12 +90,10 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
             </button>
           )}
 
-          {/* Social Proof */}
           <p className="text-xs sm:text-sm text-white/70 font-medium">
-            + de 10.000 Fiéis já vestiram
+            + de 10.000 torcedores já vestiram
           </p>
           
-          {/* AI Badge */}
           <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10 bg-white/5">
             <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/50" />
             <span className="text-[10px] sm:text-xs text-white/50 uppercase tracking-wider">

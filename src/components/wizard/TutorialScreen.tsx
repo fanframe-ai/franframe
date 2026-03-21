@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Camera, ShirtIcon, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useTeam } from "@/contexts/TeamContext";
 import { ASSET_URLS } from "@/config/fanframe";
 import beforeExampleLocal from "@/assets/before-example.jpg";
 import afterExampleLocal from "@/assets/after-example.png";
@@ -11,8 +12,14 @@ interface TutorialScreenProps {
 }
 
 export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
-  const [beforeSrc, setBeforeSrc] = useState<string>(ASSET_URLS.tutorial.before);
-  const [afterSrc, setAfterSrc] = useState<string>(ASSET_URLS.tutorial.after);
+  const { team } = useTeam();
+  
+  const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
+  const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
+  const teamName = team?.name || "Corinthians";
+  
+  const [beforeSrc, setBeforeSrc] = useState<string>(tutorialBefore);
+  const [afterSrc, setAfterSrc] = useState<string>(tutorialAfter);
 
   const steps = [
     {
@@ -25,7 +32,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
       icon: ShirtIcon,
       number: "02",
       title: "Escolha a camiseta",
-      description: "O manto oficial do Corinthians",
+      description: `O manto oficial do ${teamName}`,
     },
     {
       icon: Sparkles,
@@ -93,7 +100,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
         </div>
       </div>
 
-      {/* Steps - Horizontal on mobile */}
+      {/* Steps */}
       <div className="w-full max-w-4xl grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-8 px-0 sm:px-4">
         {steps.map((step, index) => (
           <div
@@ -115,7 +122,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
         ))}
       </div>
 
-      {/* CTAs - Stack on mobile */}
+      {/* CTAs */}
       <div className="flex flex-col gap-3 w-full max-w-md px-4 sm:px-0 animate-fade-in" style={{ animationDelay: "0.5s" }}>
         <Button
           onClick={onContinue}

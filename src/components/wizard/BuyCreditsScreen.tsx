@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Coins, RefreshCw, CreditCard } from "lucide-react";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface BuyCreditsScreenProps {
   balance: number;
@@ -23,36 +24,14 @@ export const BuyCreditsScreen = ({
   isRefreshing, 
   onContinue,
 }: BuyCreditsScreenProps) => {
+  const { team } = useTeam();
   
+  const purchaseUrls = team?.purchase_urls || {};
+
   const handlePurchaseClick = (pkg: PackageInfo, event: React.MouseEvent<HTMLAnchorElement>) => {
     const timestamp = new Date().toISOString();
-    console.log(`[BuyCredits][${timestamp}] ========== CLIQUE EM COMPRAR ==========`);
     console.log(`[BuyCredits][${timestamp}] Pacote: ${pkg.credits} crédito(s) - ${pkg.price}`);
     console.log(`[BuyCredits][${timestamp}] URL destino: ${pkg.checkoutUrl}`);
-    console.log(`[BuyCredits][${timestamp}] Event target:`, event.target);
-    console.log(`[BuyCredits][${timestamp}] Event currentTarget:`, event.currentTarget);
-    console.log(`[BuyCredits][${timestamp}] window.self === window.top: ${window.self === window.top}`);
-    console.log(`[BuyCredits][${timestamp}] window.location.href: ${window.location.href}`);
-    console.log(`[BuyCredits][${timestamp}] window.location.origin: ${window.location.origin}`);
-    console.log(`[BuyCredits][${timestamp}] document.referrer: ${document.referrer}`);
-    
-    // Log iframe detection
-    try {
-      console.log(`[BuyCredits][${timestamp}] parent.location.href: ${window.parent.location.href}`);
-    } catch (e) {
-      console.log(`[BuyCredits][${timestamp}] parent.location.href: BLOQUEADO (cross-origin)`);
-    }
-    
-    // Log cookies info
-    console.log(`[BuyCredits][${timestamp}] document.cookie length: ${document.cookie.length}`);
-    console.log(`[BuyCredits][${timestamp}] Cookies presentes: ${document.cookie ? 'SIM' : 'NÃO'}`);
-    
-    // Log localStorage user_id
-    const userId = localStorage.getItem("fanframe_user_id");
-    console.log(`[BuyCredits][${timestamp}] fanframe_user_id no localStorage: ${userId || 'NÃO ENCONTRADO'}`);
-    
-    console.log(`[BuyCredits][${timestamp}] ========== NAVEGAÇÃO INICIANDO ==========`);
-    console.log(`[BuyCredits][${timestamp}] O navegador agora deve redirecionar para: ${pkg.checkoutUrl}`);
   };
 
   const packages: PackageInfo[] = [
@@ -60,21 +39,21 @@ export const BuyCreditsScreen = ({
       credits: 1, 
       price: "R$ 5,90", 
       highlight: false,
-      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67822"
+      checkoutUrl: purchaseUrls.credits1 || "https://timaotourvirtual.com.br/checkout?add-to-cart=67822"
     },
     { 
       credits: 3, 
       price: "R$ 16,90", 
       highlight: true,
       badge: "Mais Popular",
-      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67824"
+      checkoutUrl: purchaseUrls.credits3 || "https://timaotourvirtual.com.br/checkout?add-to-cart=67824"
     },
     { 
       credits: 7, 
       price: "R$ 34,90", 
       highlight: false,
       badge: "Melhor Valor",
-      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67825"
+      checkoutUrl: purchaseUrls.credits7 || "https://timaotourvirtual.com.br/checkout?add-to-cart=67825"
     },
   ];
 
