@@ -627,14 +627,24 @@ serve(async (req) => {
       status: "processing",
     });
 
-    // Get generation prompt
+    // Get generation prompt (team-specific or fallback)
     stage = "fetch_prompt";
-    const textPrompt = await getGenerationPrompt(supabase);
+    const textPrompt = await getGenerationPrompt(supabase, team_slug);
     console.log(`[${generationId}] Prompt length: ${textPrompt.length} chars`);
+
+    // Resolve Replicate API token (team-specific or fallback)
+    stage = "resolve_replicate_token";
+    const teamReplicateToken = await getTeamReplicateToken(supabase, team_slug);
+    const REPLICATE_API_TOKEN = teamReplicateToken || DEFAULT_REPLICATE_TOKEN;
+    
+    if (!REPLICATE_API_TOKEN) {
+      console.error(`[${generationId}] No Replicate API token available`);
+      throw new Error("REPLICATE_API_TOKEN is not configured");
+    }
 
     // Call Replicate with webhook (async - no polling!)
     stage = "call_replicate";
-    console.log(`[${generationId}] Calling Replicate with webhook: ${WEBHOOK_URL}`);
+    console.log(`[${generationId}] Calling Replicate with webhook: ${WEBHOOK_URL}, using ${teamReplicateToken ? "team" : "default"} token`);
     
     const response = await fetch(REPLICATE_API_URL, {
       method: "POST",
