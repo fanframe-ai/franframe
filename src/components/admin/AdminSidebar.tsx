@@ -8,9 +8,9 @@ import {
   Shield,
   Activity,
   Settings,
-  
   Eye,
-  Images
+  Images,
+  Users
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { cn } from "@/lib/utils";
