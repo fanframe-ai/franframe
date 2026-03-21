@@ -1,92 +1,73 @@
 
 
-# Plano: Reformulacao do Admin — UX Amigavel para Criar Provadores
+# Plano: Transformar Admin Panel em FanFrame Management System
 
-## Problema Atual
-- A tela `/admin/teams` usa campos JSON brutos para camisas e cenarios — impossivel para nao-devs
-- A tela `/admin/assets` e separada e hardcoded para Corinthians
-- Configuracoes (prompt, token) estao em `/admin/settings` mas agora devem ser por time
-- Sidebar tem itens redundantes (Assets separado de Teams)
+## Problema
+O admin ainda parece o painel do Corinthians: sidebar diz "Provador Tricolor", Settings tem prompt hardcoded do Corinthians, SystemStatus aponta para outro projeto Supabase (`yxtglwbrdtwmxwrrhroy`), Generations/Stats/Dashboard nao filtram por time, e Preview nao permite escolher qual time visualizar.
 
-## Visao Geral da Solucao
+## Visao da Solucao
 
-Unificar tudo em uma experiencia **wizard-like** dentro de `/admin/teams/:slug` com abas visuais, uploads de imagem via drag-and-drop (reutilizando o pattern do `AssetCard` que ja existe em Assets.tsx), e eliminando campos JSON.
+Rebranding completo para **"FanFrame"** e reorganizacao da navegacao em 3 blocos:
 
 ```text
-/admin/teams (lista)
-  └── /admin/teams/novo (criar)
-  └── /admin/teams/:slug (editar)
-        ├── Tab: Informacoes Gerais (nome, slug, subdominio, ativo)
-        ├── Tab: Integracao (WordPress URL, Replicate token, prompt)
-        ├── Tab: Camisas (cards visuais com upload + nome + subtitulo + visibilidade)
-        ├── Tab: Cenarios (cards visuais com upload + nome + subtitulo + visibilidade)
-        ├── Tab: Tutorial (upload antes/depois)
-        └── Tab: Branding (cores, logo upload, watermark upload)
+SIDEBAR "FanFrame"
+├── Dashboard (visao global com seletor de time)
+├── Provadores (lista + editor de times - ja existe)
+├── Geracoes (com filtro por time)
+├── Estatisticas (com filtro por time)
+├── Status do Sistema (apontando pro projeto correto)
+├── Alertas (com filtro por time)
+└── Configuracoes (apenas config global do sistema)
 ```
 
-## Mudancas Planejadas
+## Mudancas
 
-### 1. Refatorar `/admin/teams` — Tela de Edicao de Time (arquivo principal)
+### 1. Rebranding Sidebar
+- **`AdminSidebar.tsx`**: Trocar "Admin Panel" / "Provador Tricolor" por "FanFrame" com icone/logo proprio
+- Remover "Preview" da sidebar (mover para dentro do editor de cada time)
 
-**`src/pages/admin/Teams.tsx`** — reescrever completamente:
+### 2. Dashboard com seletor de time
+- **`Dashboard.tsx`**: Adicionar dropdown de seletor de time (todos / time especifico)
+- **`useAdminStats.ts`**: Aceitar `teamId` opcional para filtrar queries por `team_id`
+- Cards e graficos filtram pelo time selecionado
 
-- **Lista de times**: manter como esta, esta OK
-- **Formulario de edicao**: substituir as tabs "Assets" (JSON) por interface visual:
-  - **Tab Camisas**: grid de `AssetCard` com botao "Adicionar Camisa". Cada card tem: upload de imagem, nome, subtitulo, descricao para o prompt, toggle visibilidade, botao remover. Dados salvos no JSONB `shirts` da tabela `teams` (com imageUrl apontando para Supabase Storage `tryon-assets/{team_slug}/shirts/{id}.png`)
-  - **Tab Cenarios**: mesma abordagem, salva em `backgrounds`
-  - **Tab Tutorial**: dois cards (antes/depois) com upload, salva em `tutorial_assets`
-  - **Tab Branding**: color pickers, upload de logo e watermark
-  - **Tab Integracao**: WordPress URL, token Replicate (campo password), prompt textarea, URLs de compra (campos simples key/value ao inves de JSON)
+### 3. Geracoes com filtro por time
+- **`Generations.tsx`**: Adicionar dropdown de time junto aos filtros existentes
+- Query filtra por `team_id` quando selecionado
 
-### 2. Extrair `AssetCard` como componente reutilizavel
+### 4. Estatisticas com filtro por time
+- **`Stats.tsx`**: Mesmo padrao — dropdown de time + queries filtradas
 
-**`src/components/admin/AssetCard.tsx`** — extrair o componente `AssetCard` de `Assets.tsx` para ser reutilizado tanto em Assets quanto em Teams. Adicionar props para:
-- `onRemove` (botao de deletar)
-- Upload que salva no storage path `{team_slug}/shirts/{id}.png`
+### 5. Alertas com filtro por time
+- **`Alerts.tsx`**: Adicionar filtro por time
 
-### 3. Remover pagina `/admin/assets`
+### 6. Corrigir SystemStatus
+- **`SystemStatus.tsx`**: Trocar URLs hardcoded do projeto antigo (`yxtglwbrdtwmxwrrhroy`) pelo projeto atual (`qmjvsftlounkitclmzzw`)
 
-A pagina Assets se torna redundante — toda gestao de assets acontece dentro da edicao do time. Remover a rota e o item da sidebar.
+### 7. Simplificar Settings
+- **`Settings.tsx`**: Remover prompt e token Replicate (agora sao por time no TeamEdit). Manter apenas configuracoes globais do sistema (ou transformar em pagina de informacoes do sistema tipo versao, projeto Supabase, etc.)
 
-### 4. Atualizar Sidebar
+### 8. Preview dentro do time
+- Mover funcionalidade de Preview para dentro do `TeamEdit.tsx` como uma aba ou botao que abre o provador do time selecionado em nova aba
+- Remover rota `/admin/preview`
 
-**`src/components/admin/AdminSidebar.tsx`**:
-- Remover item "Assets" (agora esta dentro de Times)
-- Mover "Configuracoes" para ser mais especifico (configuracoes globais vs por time)
+## Componente reutilizavel: TeamSelector
+Criar um componente `<TeamSelector />` (dropdown com todos os times + opcao "Todos") que sera usado em Dashboard, Geracoes, Stats e Alertas.
 
-### 5. Mover configuracoes por time
-
-As configuracoes que hoje estao em `/admin/settings` (prompt, token Replicate) agora sao por time. Manter `/admin/settings` apenas para configuracoes **globais** do sistema. Prompt e token ficam na tab "Integracao" de cada time.
-
-### 6. Adicionar rota `/admin/teams/:slug`
-
-**`src/App.tsx`**: adicionar rota parametrizada para edicao individual de time.
-
-### 7. UX para adicionar camisas/cenarios sem JSON
-
-Interface com botao "+ Adicionar Camisa" que cria um card vazio onde o usuario:
-1. Faz upload da imagem
-2. Digita nome e subtitulo
-3. Digita descricao para o prompt (texto simples explicando a camisa)
-4. Toggle de visibilidade
-
-O array JSONB e montado automaticamente pelo codigo ao salvar — o usuario nunca ve JSON.
-
-## Detalhes Tecnicos
-
-- **Storage paths**: `tryon-assets/{team_slug}/shirts/{shirt_id}.png`, `tryon-assets/{team_slug}/backgrounds/{bg_id}.png`, etc.
-- **Geracao de IDs**: usar `slug` do time + counter ou input do usuario (ex: "manto-1")
-- **Componentes reutilizados**: `AssetCard` (extraido), `Input`, `Switch`, `Tabs`, `Button`
-- **Sem migracao de banco**: a tabela `teams` ja tem os campos JSONB necessarios
-- **URLs de compra**: trocar JSON textarea por lista de inputs dinamicos (label + URL)
-
-## Arquivos Afetados
+## Arquivos afetados
 
 | Arquivo | Acao |
 |---|---|
-| `src/pages/admin/Teams.tsx` | Reescrever formulario com UX visual |
-| `src/components/admin/AssetCard.tsx` | Novo — componente extraido |
-| `src/pages/admin/Assets.tsx` | Remover (redundante) |
-| `src/components/admin/AdminSidebar.tsx` | Remover item Assets |
-| `src/App.tsx` | Adicionar rota `/admin/teams/:slug`, remover rota `/admin/assets` |
+| `AdminSidebar.tsx` | Rebrand para FanFrame, remover Preview |
+| `Dashboard.tsx` | Adicionar TeamSelector, filtrar dados |
+| `useAdminStats.ts` | Aceitar teamId, filtrar queries |
+| `Generations.tsx` | Adicionar TeamSelector |
+| `Stats.tsx` | Adicionar TeamSelector |
+| `Alerts.tsx` | Adicionar TeamSelector |
+| `SystemStatus.tsx` | Corrigir URLs do projeto Supabase |
+| `Settings.tsx` | Remover config por time, simplificar |
+| `TeamEdit.tsx` | Adicionar botao "Preview" que abre o provador |
+| `Preview.tsx` | Remover arquivo |
+| `App.tsx` | Remover rota `/admin/preview` |
+| Novo: `TeamSelector.tsx` | Componente dropdown de selecao de time |
 
