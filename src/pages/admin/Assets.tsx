@@ -9,7 +9,13 @@ import { Upload, Loader2, Check, Pencil, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ASSET_URLS, BACKGROUNDS } from "@/config/fanframe";
-import { SHIRTS } from "@/components/wizard/ShirtSelectionScreen";
+
+// Local fallback for admin - mirrors the default team shirts
+const SHIRTS = [
+  { id: "manto-1", name: "Manto I – O Timão", subtitle: "O clássico alvinegro que carrega a história", imageUrl: ASSET_URLS.shirts["manto-1"] },
+  { id: "manto-2", name: "Manto II – O Fiel", subtitle: "A força que vem da Fiel Torcida", imageUrl: ASSET_URLS.shirts["manto-2"] },
+  { id: "manto-3", name: "Manto III – O Bando de Loucos", subtitle: "Atitude e paixão corintiana", imageUrl: ASSET_URLS.shirts["manto-3"] },
+];
 
 const BUCKET = "tryon-assets";
 
