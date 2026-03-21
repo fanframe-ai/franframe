@@ -102,11 +102,11 @@ const Index = () => {
     setCurrentStep(step);
   }, []);
 
-  const handleShirtSelect = useCallback((shirt: Shirt) => {
+  const handleShirtSelect = useCallback((shirt: TeamShirt) => {
     setSelectedShirt(shirt);
   }, []);
 
-  const handleBackgroundSelect = useCallback((background: Background) => {
+  const handleBackgroundSelect = useCallback((background: TeamBackground) => {
     setSelectedBackground(background);
   }, []);
 
