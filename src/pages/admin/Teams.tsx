@@ -93,7 +93,7 @@ export default function AdminTeams() {
                     <div>
                       <h3 className="font-semibold">{team.name}</h3>
                       <p className="text-xs text-muted-foreground">
-                        {team.subdomain}.lovable.app · {(team.shirts as any[])?.length || 0} camisas · {(team.backgrounds as any[])?.length || 0} cenários
+                        /{team.slug} · {(team.shirts as any[])?.length || 0} camisas · {(team.backgrounds as any[])?.length || 0} cenários
                         {!team.is_active && " · Inativo"}
                       </p>
                     </div>
