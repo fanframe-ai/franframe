@@ -49,7 +49,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
       setState({ isLoading: true, error: null });
 
       const { data, error } = await supabase.functions.invoke("fanframe-proxy", {
-        body: { action: "balance", token: storedToken },
+        body: { action: "balance", token: storedToken, team_slug: team?.slug },
       });
 
       if (error) {
