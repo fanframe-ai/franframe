@@ -105,6 +105,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
         body: {
           action: "debit",
           token: storedToken,
+          team_slug: team?.slug,
           body: { generation_id: generationId },
         },
       });
