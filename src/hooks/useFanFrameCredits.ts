@@ -22,6 +22,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
     isLoading: false,
     error: null,
   });
+  const { team } = useTeam();
 
   const handleAuthError = useCallback(() => {
     console.log("[FanFrame] Token inválido/expirado (401), limpando...");
