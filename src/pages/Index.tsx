@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { WelcomeScreen } from "@/components/wizard/WelcomeScreen";
 import { TutorialScreen } from "@/components/wizard/TutorialScreen";
-import { ShirtSelectionScreen, type Shirt } from "@/components/wizard/ShirtSelectionScreen";
+import { ShirtSelectionScreen } from "@/components/wizard/ShirtSelectionScreen";
 import { BackgroundSelectionScreen } from "@/components/wizard/BackgroundSelectionScreen";
 import { UploadScreen } from "@/components/wizard/UploadScreen";
 import { ResultScreen } from "@/components/wizard/ResultScreen";
@@ -12,7 +12,8 @@ import { StepIndicator } from "@/components/wizard/StepIndicator";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
 import { useFanFrameCredits } from "@/hooks/useFanFrameCredits";
-import { FANFRAME_ENABLED, type Background } from "@/config/fanframe";
+import { FANFRAME_ENABLED } from "@/config/fanframe";
+import { useTeam, type TeamShirt, type TeamBackground } from "@/contexts/TeamContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
