@@ -229,6 +229,7 @@ export const ResultScreen = ({
           backgroundAssetUrl,
           shirtId: selectedShirt.id,
           userId: fanframeUserId,
+          team_slug: team?.slug,
         },
       });
 
