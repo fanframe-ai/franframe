@@ -9,7 +9,6 @@ import {
   Activity,
   Settings,
   Eye,
-  Images,
   Users
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -17,15 +16,13 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/admin/teams", icon: Users, label: "Provadores" },
   { href: "/admin/generations", icon: ImageIcon, label: "Gerações" },
   { href: "/admin/stats", icon: BarChart3, label: "Estatísticas" },
   { href: "/admin/status", icon: Activity, label: "Status" },
   { href: "/admin/alerts", icon: Bell, label: "Alertas" },
   { href: "/admin/settings", icon: Settings, label: "Configurações" },
-  
   { href: "/admin/preview", icon: Eye, label: "Preview" },
-  { href: "/admin/assets", icon: Images, label: "Assets" },
-  { href: "/admin/teams", icon: Users, label: "Times" },
 ];
 
 export function AdminSidebar() {
