@@ -21,6 +21,7 @@ export type Database = {
           consent_type: string
           id: string
           ip_address: string | null
+          team_id: string | null
           user_agent: string | null
           user_id: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           consent_type?: string
           id?: string
           ip_address?: string | null
+          team_id?: string | null
           user_agent?: string | null
           user_id: string
         }
@@ -39,10 +41,19 @@ export type Database = {
           consent_type?: string
           id?: string
           ip_address?: string | null
+          team_id?: string | null
           user_agent?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "consent_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_stats: {
         Row: {
@@ -52,6 +63,7 @@ export type Database = {
           failed_generations: number
           id: string
           successful_generations: number
+          team_id: string | null
           total_generations: number
           unique_users: number
         }
@@ -62,6 +74,7 @@ export type Database = {
           failed_generations?: number
           id?: string
           successful_generations?: number
+          team_id?: string | null
           total_generations?: number
           unique_users?: number
         }
@@ -72,10 +85,19 @@ export type Database = {
           failed_generations?: number
           id?: string
           successful_generations?: number
+          team_id?: string | null
           total_generations?: number
           unique_users?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "daily_stats_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       generation_queue: {
         Row: {
@@ -90,6 +112,7 @@ export type Database = {
           shirt_id: string
           started_at: string | null
           status: string
+          team_id: string | null
           user_id: string | null
           user_image_url: string
         }
@@ -105,6 +128,7 @@ export type Database = {
           shirt_id: string
           started_at?: string | null
           status?: string
+          team_id?: string | null
           user_id?: string | null
           user_image_url: string
         }
@@ -120,10 +144,19 @@ export type Database = {
           shirt_id?: string
           started_at?: string | null
           status?: string
+          team_id?: string | null
           user_id?: string | null
           user_image_url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "generation_queue_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       generations: {
         Row: {
@@ -135,6 +168,7 @@ export type Database = {
           processing_time_ms: number | null
           shirt_id: string
           status: Database["public"]["Enums"]["generation_status"]
+          team_id: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -145,6 +179,7 @@ export type Database = {
           processing_time_ms?: number | null
           shirt_id: string
           status?: Database["public"]["Enums"]["generation_status"]
+          team_id?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -155,8 +190,17 @@ export type Database = {
           processing_time_ms?: number | null
           shirt_id?: string
           status?: Database["public"]["Enums"]["generation_status"]
+          team_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "generations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       health_checks: {
         Row: {
@@ -224,6 +268,7 @@ export type Database = {
           resolved_at: string | null
           resolved_by: string | null
           severity: Database["public"]["Enums"]["alert_severity"]
+          team_id: string | null
           type: Database["public"]["Enums"]["alert_type"]
         }
         Insert: {
@@ -234,6 +279,7 @@ export type Database = {
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: Database["public"]["Enums"]["alert_severity"]
+          team_id?: string | null
           type: Database["public"]["Enums"]["alert_type"]
         }
         Update: {
@@ -244,9 +290,18 @@ export type Database = {
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: Database["public"]["Enums"]["alert_severity"]
+          team_id?: string | null
           type?: Database["public"]["Enums"]["alert_type"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "system_alerts_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_settings: {
         Row: {
@@ -272,6 +327,69 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: string
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          backgrounds: Json
+          created_at: string | null
+          generation_prompt: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          purchase_urls: Json | null
+          replicate_api_token: string | null
+          secondary_color: string | null
+          shirts: Json
+          slug: string
+          subdomain: string
+          tutorial_assets: Json | null
+          updated_at: string | null
+          watermark_url: string | null
+          wordpress_api_base: string
+        }
+        Insert: {
+          backgrounds?: Json
+          created_at?: string | null
+          generation_prompt?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          purchase_urls?: Json | null
+          replicate_api_token?: string | null
+          secondary_color?: string | null
+          shirts?: Json
+          slug: string
+          subdomain: string
+          tutorial_assets?: Json | null
+          updated_at?: string | null
+          watermark_url?: string | null
+          wordpress_api_base: string
+        }
+        Update: {
+          backgrounds?: Json
+          created_at?: string | null
+          generation_prompt?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          purchase_urls?: Json | null
+          replicate_api_token?: string | null
+          secondary_color?: string | null
+          shirts?: Json
+          slug?: string
+          subdomain?: string
+          tutorial_assets?: Json | null
+          updated_at?: string | null
+          watermark_url?: string | null
+          wordpress_api_base?: string
         }
         Relationships: []
       }
