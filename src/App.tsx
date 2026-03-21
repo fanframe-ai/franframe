@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import TeamProvadorPage from "./pages/TeamProvador";
 import NotFound from "./pages/NotFound";
 import Teste from "./pages/Teste";
 import TermosDeUso from "./pages/TermosDeUso";
@@ -30,7 +30,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          {/* Root redirects to admin */}
+          <Route path="/" element={<Navigate to="/admin" replace />} />
+          
+          {/* Team provador route */}
+          <Route path="/:slug" element={<TeamProvadorPage />} />
+          
           <Route path="/teste" element={<Teste />} />
           <Route path="/termos-de-uso" element={<TermosDeUso />} />
           <Route path="/upload-assets" element={<UploadAssets />} />
@@ -46,7 +51,6 @@ const App = () => (
           <Route path="/admin/teams" element={<ProtectedAdminRoute><AdminTeams /></ProtectedAdminRoute>} />
           <Route path="/admin/teams/:slug" element={<ProtectedAdminRoute><AdminTeamEdit /></ProtectedAdminRoute>} />
           
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

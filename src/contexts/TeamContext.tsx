@@ -41,60 +41,39 @@ interface TeamContextValue {
   team: TeamConfig | null;
   isLoading: boolean;
   error: string | null;
+  setSlug: (slug: string) => void;
 }
 
 const TeamContext = createContext<TeamContextValue>({
   team: null,
   isLoading: true,
   error: null,
+  setSlug: () => {},
 });
 
 export function useTeam() {
   return useContext(TeamContext);
 }
 
-function resolveTeamSlug(): string {
-  // 1. Check query param (for dev/preview)
-  const params = new URLSearchParams(window.location.search);
-  const teamParam = params.get("team");
-  if (teamParam) return teamParam;
-
-  // 2. Check subdomain
-  const hostname = window.location.hostname;
-  
-  // Handle lovable.app subdomains: ffcorinthians.lovable.app
-  if (hostname.endsWith(".lovable.app")) {
-    const sub = hostname.split(".")[0];
-    // Remove "ff" prefix if present (convention: ff<slug>.lovable.app)
-    if (sub.startsWith("ff")) {
-      return sub.slice(2);
-    }
-    // Preview URLs like id-preview--xxx.lovable.app -> fallback
-  }
-
-  // Handle custom domains: check teams table by subdomain match
-  // For now, return the full hostname as subdomain to match against DB
-  if (!hostname.includes("localhost") && !hostname.includes("lovable.app")) {
-    // Custom domain - will be matched by subdomain column in DB
-    return hostname;
-  }
-
-  // Fallback: corinthians (default team)
-  return "corinthians";
-}
-
 export function TeamProvider({ children }: { children: ReactNode }) {
   const [team, setTeam] = useState<TeamConfig | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slug, setSlug] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadTeam = async () => {
-      try {
-        const slug = resolveTeamSlug();
-        console.log("[TeamContext] Resolving team for slug:", slug);
+    if (!slug) {
+      setTeam(null);
+      setIsLoading(false);
+      return;
+    }
 
-        // Try by slug first, then by subdomain
+    const loadTeam = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log("[TeamContext] Loading team for slug:", slug);
+
         let { data, error: fetchError } = await supabase
           .from("teams")
           .select("*")
@@ -102,7 +81,6 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           .eq("is_active", true)
           .maybeSingle();
 
-        // If not found by slug, try by subdomain
         if (!data && !fetchError) {
           const result = await supabase
             .from("teams")
@@ -158,10 +136,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     };
 
     loadTeam();
-  }, []);
+  }, [slug]);
 
   return (
-    <TeamContext.Provider value={{ team, isLoading, error }}>
+    <TeamContext.Provider value={{ team, isLoading, error, setSlug }}>
       {children}
     </TeamContext.Provider>
   );
