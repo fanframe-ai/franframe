@@ -13,8 +13,8 @@ import { useQueueSubscription, useQueueStatusCheck } from "@/hooks/useQueueSubsc
 
 interface ResultScreenProps {
   userImage: string;
-  selectedShirt: Shirt;
-  selectedBackground: Background;
+  selectedShirt: TeamShirt;
+  selectedBackground: TeamBackground;
   balance: number;
   onTryAgain: () => void;
   onBalanceUpdate: (newBalance: number) => void;
