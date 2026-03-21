@@ -518,11 +518,8 @@ serve(async (req) => {
     supabase = getSupabaseClient();
 
     stage = "validate_env";
-    const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
-    if (!REPLICATE_API_TOKEN) {
-      console.error(`[${generationId}] Missing env var: REPLICATE_API_TOKEN`);
-      throw new Error("REPLICATE_API_TOKEN is not configured");
-    }
+    // Will be resolved after parsing body (team may have its own token)
+    const DEFAULT_REPLICATE_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
 
     stage = "parse_body";
     const rawBody = await req.text();
