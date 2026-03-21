@@ -25,6 +25,7 @@ const navItems = [
   
   { href: "/admin/preview", icon: Eye, label: "Preview" },
   { href: "/admin/assets", icon: Images, label: "Assets" },
+  { href: "/admin/teams", icon: Users, label: "Times" },
 ];
 
 export function AdminSidebar() {
