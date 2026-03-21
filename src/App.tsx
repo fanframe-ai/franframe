@@ -17,8 +17,8 @@ import AdminSystemStatus from "./pages/admin/SystemStatus";
 import AdminSettings from "./pages/admin/Settings";
 
 import AdminPreview from "./pages/admin/Preview";
-import AdminAssets from "./pages/admin/Assets";
 import AdminTeams from "./pages/admin/Teams";
+import AdminTeamEdit from "./pages/admin/TeamEdit";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
 import { TeamProvider } from "./contexts/TeamContext";
 
