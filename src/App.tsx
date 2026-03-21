@@ -19,11 +19,13 @@ import AdminSettings from "./pages/admin/Settings";
 import AdminPreview from "./pages/admin/Preview";
 import AdminAssets from "./pages/admin/Assets";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
+import { TeamProvider } from "./contexts/TeamContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <TeamProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
