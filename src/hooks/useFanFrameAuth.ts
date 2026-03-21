@@ -25,6 +25,7 @@ export function useFanFrameAuth() {
     balance: 0,
   });
   const justExchangedRef = useRef(false);
+  const { team } = useTeam();
 
   // Obter token do localStorage
   const getStoredToken = useCallback((): string | null => {
