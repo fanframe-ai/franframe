@@ -68,6 +68,7 @@ export const ResultScreen = ({
   const hasStartedRef = useRef(false);
   const hasDebitedRef = useRef(false);
   const { toast } = useToast();
+  const { team } = useTeam();
 
   const { 
     debitCredit, 
