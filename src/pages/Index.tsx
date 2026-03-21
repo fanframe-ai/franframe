@@ -24,9 +24,10 @@ const STEP_LABELS = ["Início", "Créditos", "Tutorial", "Manto", "Cenário", "F
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<WizardStep>("welcome");
-  const [selectedShirt, setSelectedShirt] = useState<Shirt | null>(null);
-  const [selectedBackground, setSelectedBackground] = useState<Background | null>(null);
+  const [selectedShirt, setSelectedShirt] = useState<TeamShirt | null>(null);
+  const [selectedBackground, setSelectedBackground] = useState<TeamBackground | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const { team, isLoading: teamLoading } = useTeam();
 
   const { 
     isAuthenticated, 
