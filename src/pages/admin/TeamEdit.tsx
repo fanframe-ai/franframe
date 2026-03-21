@@ -285,7 +285,7 @@ export default function TeamEdit() {
             </div>
             {!isNew && form.slug && (
               <Button variant="outline" asChild>
-                <a href={`${window.location.origin}/${form.slug}`} target="_blank" rel="noopener noreferrer">
+                <a href={`${window.location.origin}/${form.slug}?preview=admin`} target="_blank" rel="noopener noreferrer">
                   <Eye className="h-4 w-4 mr-2" />
                   Preview
                 </a>
