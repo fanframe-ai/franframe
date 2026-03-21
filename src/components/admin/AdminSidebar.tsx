@@ -9,7 +9,6 @@ import {
   Activity,
   Settings,
   Eye,
-  Images,
   Users
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
