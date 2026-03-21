@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Download, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Shirt } from "./ShirtSelectionScreen";
-import type { Background } from "@/config/fanframe";
+import type { TeamShirt } from "@/contexts/TeamContext";
+import type { TeamBackground } from "@/contexts/TeamContext";
+import { useTeam } from "@/contexts/TeamContext";
 import { useToast } from "@/hooks/use-toast";
 import { useFanFrameCredits } from "@/hooks/useFanFrameCredits";
 import { FANFRAME_ERROR_CODES, getAssetFullUrl } from "@/config/fanframe";
@@ -12,8 +13,8 @@ import { useQueueSubscription, useQueueStatusCheck } from "@/hooks/useQueueSubsc
 
 interface ResultScreenProps {
   userImage: string;
-  selectedShirt: Shirt;
-  selectedBackground: Background;
+  selectedShirt: TeamShirt;
+  selectedBackground: TeamBackground;
   balance: number;
   onTryAgain: () => void;
   onBalanceUpdate: (newBalance: number) => void;
@@ -67,6 +68,7 @@ export const ResultScreen = ({
   const hasStartedRef = useRef(false);
   const hasDebitedRef = useRef(false);
   const { toast } = useToast();
+  const { team } = useTeam();
 
   const { 
     debitCredit, 
@@ -227,6 +229,7 @@ export const ResultScreen = ({
           backgroundAssetUrl,
           shirtId: selectedShirt.id,
           userId: fanframeUserId,
+          team_slug: team?.slug,
         },
       });
 
@@ -319,7 +322,7 @@ export const ResultScreen = ({
       
       Promise.all([
         loadImage(mainImage, imageBase64),
-        loadImage(watermark, "/watermark.webp")
+        loadImage(watermark, team?.watermark_url || "/watermark.webp")
       ])
         .then(() => {
           clearTimeout(timeout);
@@ -384,8 +387,8 @@ export const ResultScreen = ({
       const imageWithWatermark = await applyWatermark(imageToProcess);
       
       const link = document.createElement("a");
-      link.href = imageWithWatermark;
-      link.download = `provador-timao-${Date.now()}.png`;
+      const teamSlug = team?.slug || "provador";
+      link.download = `${teamSlug}-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -405,7 +408,8 @@ export const ResultScreen = ({
       
       const link = document.createElement("a");
       link.href = generatedImage;
-      link.download = `provador-timao-${Date.now()}.png`;
+      const teamSlug2 = team?.slug || "provador";
+      link.download = `${teamSlug2}-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

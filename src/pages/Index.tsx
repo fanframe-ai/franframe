@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { WelcomeScreen } from "@/components/wizard/WelcomeScreen";
 import { TutorialScreen } from "@/components/wizard/TutorialScreen";
-import { ShirtSelectionScreen, type Shirt } from "@/components/wizard/ShirtSelectionScreen";
+import { ShirtSelectionScreen } from "@/components/wizard/ShirtSelectionScreen";
 import { BackgroundSelectionScreen } from "@/components/wizard/BackgroundSelectionScreen";
 import { UploadScreen } from "@/components/wizard/UploadScreen";
 import { ResultScreen } from "@/components/wizard/ResultScreen";
@@ -12,7 +12,8 @@ import { StepIndicator } from "@/components/wizard/StepIndicator";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
 import { useFanFrameCredits } from "@/hooks/useFanFrameCredits";
-import { FANFRAME_ENABLED, type Background } from "@/config/fanframe";
+import { FANFRAME_ENABLED } from "@/config/fanframe";
+import { useTeam, type TeamShirt, type TeamBackground } from "@/contexts/TeamContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -23,9 +24,10 @@ const STEP_LABELS = ["Início", "Créditos", "Tutorial", "Manto", "Cenário", "F
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<WizardStep>("welcome");
-  const [selectedShirt, setSelectedShirt] = useState<Shirt | null>(null);
-  const [selectedBackground, setSelectedBackground] = useState<Background | null>(null);
+  const [selectedShirt, setSelectedShirt] = useState<TeamShirt | null>(null);
+  const [selectedBackground, setSelectedBackground] = useState<TeamBackground | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const { team, isLoading: teamLoading } = useTeam();
 
   const { 
     isAuthenticated, 
@@ -100,11 +102,11 @@ const Index = () => {
     setCurrentStep(step);
   }, []);
 
-  const handleShirtSelect = useCallback((shirt: Shirt) => {
+  const handleShirtSelect = useCallback((shirt: TeamShirt) => {
     setSelectedShirt(shirt);
   }, []);
 
-  const handleBackgroundSelect = useCallback((background: Background) => {
+  const handleBackgroundSelect = useCallback((background: TeamBackground) => {
     setSelectedBackground(background);
   }, []);
 
@@ -142,7 +144,7 @@ const Index = () => {
   const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
 
   // Loading state
-  if (FANFRAME_ENABLED && !isAdminPreview && authLoading) {
+  if (FANFRAME_ENABLED && !isAdminPreview && (authLoading || teamLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

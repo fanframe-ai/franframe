@@ -18,12 +18,15 @@ import AdminSettings from "./pages/admin/Settings";
 
 import AdminPreview from "./pages/admin/Preview";
 import AdminAssets from "./pages/admin/Assets";
+import AdminTeams from "./pages/admin/Teams";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
+import { TeamProvider } from "./contexts/TeamContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <TeamProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -72,12 +75,18 @@ const App = () => (
               <AdminAssets />
             </ProtectedAdminRoute>
           } />
+          <Route path="/admin/teams" element={
+            <ProtectedAdminRoute>
+              <AdminTeams />
+            </ProtectedAdminRoute>
+          } />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </TeamProvider>
   </QueryClientProvider>
 );
 

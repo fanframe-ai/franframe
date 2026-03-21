@@ -8,9 +8,9 @@ import {
   Shield,
   Activity,
   Settings,
-  
   Eye,
-  Images
+  Images,
+  Users
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ const navItems = [
   
   { href: "/admin/preview", icon: Eye, label: "Preview" },
   { href: "/admin/assets", icon: Images, label: "Assets" },
+  { href: "/admin/teams", icon: Users, label: "Times" },
 ];
 
 export function AdminSidebar() {

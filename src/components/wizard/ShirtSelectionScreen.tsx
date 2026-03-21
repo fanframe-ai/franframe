@@ -1,44 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ASSET_URLS } from "@/config/fanframe";
+import { useTeam, type TeamShirt } from "@/contexts/TeamContext";
 import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
 
-export interface Shirt {
-  id: string;
-  name: string;
-  subtitle: string;
-  imageUrl: string;
-  assetPath: string;
-  promptDescription: string;
-}
-
-export const SHIRTS: Shirt[] = [
-  {
-    id: "manto-1",
-    name: "Manto I – O Timão",
-    subtitle: "O clássico alvinegro que carrega a história",
-    imageUrl: ASSET_URLS.shirts["manto-1"],
-    assetPath: ASSET_URLS.shirts["manto-1"],
-    promptDescription: "white Corinthians soccer jersey with black details, Nike logo on chest, Corinthians team crest in center, classic alvinegro design",
-  },
-  {
-    id: "manto-2",
-    name: "Manto II – O Fiel",
-    subtitle: "A força que vem da Fiel Torcida",
-    imageUrl: ASSET_URLS.shirts["manto-2"],
-    assetPath: ASSET_URLS.shirts["manto-2"],
-    promptDescription: "black Corinthians away soccer jersey with white accents, Nike logo on chest, Corinthians team crest in center",
-  },
-  {
-    id: "manto-3",
-    name: "Manto III – O Bando de Loucos",
-    subtitle: "Atitude e paixão corintiana",
-    imageUrl: ASSET_URLS.shirts["manto-3"],
-    assetPath: ASSET_URLS.shirts["manto-3"],
-    promptDescription: "dark grey Corinthians third jersey with black and white details, Nike logo on chest, Corinthians team crest",
-  },
-];
+// Re-export for backward compatibility
+export type Shirt = TeamShirt;
 
 interface ShirtSelectionScreenProps {
   selectedShirt: Shirt | null;
@@ -54,8 +21,11 @@ export const ShirtSelectionScreen = ({
   onBack,
 }: ShirtSelectionScreenProps) => {
   const canContinue = selectedShirt !== null;
+  const { team } = useTeam();
   const { getName, getSubtitle, isVisible } = useAssetTextOverrides("shirts_text_overrides");
-  const visibleShirts = SHIRTS.filter(s => isVisible(s.id));
+  
+  const shirts = team?.shirts || [];
+  const visibleShirts = shirts.filter(s => isVisible(s.id));
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">

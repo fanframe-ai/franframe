@@ -140,7 +140,26 @@ async function createAlert(supabase: ReturnType<typeof createClient>, type: stri
   }
 }
 
-async function getGenerationPrompt(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function getGenerationPrompt(supabase: ReturnType<typeof createClient>, teamSlug?: string): Promise<string> {
+  // First try team-specific prompt
+  if (teamSlug) {
+    try {
+      const { data: teamData } = await supabase
+        .from("teams")
+        .select("generation_prompt")
+        .eq("slug", teamSlug)
+        .single();
+      
+      if (teamData?.generation_prompt) {
+        console.log(`Using team-specific prompt for ${teamSlug}`);
+        return teamData.generation_prompt;
+      }
+    } catch (err) {
+      console.error("Error fetching team prompt:", err);
+    }
+  }
+  
+  // Fallback to system_settings
   try {
     const { data, error } = await supabase
       .from("system_settings")
@@ -158,6 +177,42 @@ async function getGenerationPrompt(supabase: ReturnType<typeof createClient>): P
   } catch (err) {
     console.error("Error fetching prompt:", err);
     return DEFAULT_PROMPT;
+  }
+}
+
+async function getTeamReplicateToken(supabase: ReturnType<typeof createClient>, teamSlug?: string): Promise<string | null> {
+  if (!teamSlug) return null;
+  
+  try {
+    const { data } = await supabase
+      .from("teams")
+      .select("replicate_api_token")
+      .eq("slug", teamSlug)
+      .single();
+    
+    if (data?.replicate_api_token) {
+      console.log(`Using team-specific Replicate token for ${teamSlug}`);
+      return data.replicate_api_token;
+    }
+  } catch (err) {
+    console.error("Error fetching team Replicate token:", err);
+  }
+  
+  return null;
+}
+
+async function getTeamId(supabase: ReturnType<typeof createClient>, teamSlug?: string): Promise<string | null> {
+  if (!teamSlug) return null;
+  
+  try {
+    const { data } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("slug", teamSlug)
+      .single();
+    return data?.id || null;
+  } catch {
+    return null;
   }
 }
 
@@ -463,11 +518,8 @@ serve(async (req) => {
     supabase = getSupabaseClient();
 
     stage = "validate_env";
-    const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
-    if (!REPLICATE_API_TOKEN) {
-      console.error(`[${generationId}] Missing env var: REPLICATE_API_TOKEN`);
-      throw new Error("REPLICATE_API_TOKEN is not configured");
-    }
+    // Will be resolved after parsing body (team may have its own token)
+    const DEFAULT_REPLICATE_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
 
     stage = "parse_body";
     const rawBody = await req.text();
@@ -484,12 +536,13 @@ serve(async (req) => {
       );
     }
 
-    const { userImageBase64, shirtAssetUrl, backgroundAssetUrl, shirtId, userId } = parsed as {
+    const { userImageBase64, shirtAssetUrl, backgroundAssetUrl, shirtId, userId, team_slug } = parsed as {
       userImageBase64?: string;
       shirtAssetUrl?: string;
       backgroundAssetUrl?: string;
       shirtId?: string;
       userId?: string;
+      team_slug?: string;
     };
 
     console.log(`[${generationId}] Parsed payload:`, {
@@ -498,6 +551,7 @@ serve(async (req) => {
       backgroundAssetUrl,
       shirtId,
       userId: userId ? `${userId.substring(0, 8)}...` : null,
+      team_slug: team_slug || "default",
     });
 
     stage = "validate_params";
@@ -573,14 +627,24 @@ serve(async (req) => {
       status: "processing",
     });
 
-    // Get generation prompt
+    // Get generation prompt (team-specific or fallback)
     stage = "fetch_prompt";
-    const textPrompt = await getGenerationPrompt(supabase);
+    const textPrompt = await getGenerationPrompt(supabase, team_slug);
     console.log(`[${generationId}] Prompt length: ${textPrompt.length} chars`);
+
+    // Resolve Replicate API token (team-specific or fallback)
+    stage = "resolve_replicate_token";
+    const teamReplicateToken = await getTeamReplicateToken(supabase, team_slug);
+    const REPLICATE_API_TOKEN = teamReplicateToken || DEFAULT_REPLICATE_TOKEN;
+    
+    if (!REPLICATE_API_TOKEN) {
+      console.error(`[${generationId}] No Replicate API token available`);
+      throw new Error("REPLICATE_API_TOKEN is not configured");
+    }
 
     // Call Replicate with webhook (async - no polling!)
     stage = "call_replicate";
-    console.log(`[${generationId}] Calling Replicate with webhook: ${WEBHOOK_URL}`);
+    console.log(`[${generationId}] Calling Replicate with webhook: ${WEBHOOK_URL}, using ${teamReplicateToken ? "team" : "default"} token`);
     
     const response = await fetch(REPLICATE_API_URL, {
       method: "POST",

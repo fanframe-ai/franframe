@@ -4,6 +4,7 @@ import {
   type ExchangeResponse 
 } from "@/config/fanframe";
 import { supabase } from "@/integrations/supabase/client";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -24,6 +25,7 @@ export function useFanFrameAuth() {
     balance: 0,
   });
   const justExchangedRef = useRef(false);
+  const { team } = useTeam();
 
   // Obter token do localStorage
   const getStoredToken = useCallback((): string | null => {
@@ -62,7 +64,7 @@ export function useFanFrameAuth() {
       const fetchStartTime = performance.now();
 
       const { data, error: invokeError } = await supabase.functions.invoke("fanframe-proxy", {
-        body: { action: "exchange", token: "exchange", body: { code } },
+        body: { action: "exchange", token: "exchange", body: { code }, team_slug: team?.slug },
       });
 
       const fetchEndTime = performance.now();

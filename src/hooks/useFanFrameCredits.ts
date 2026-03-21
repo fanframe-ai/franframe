@@ -6,6 +6,7 @@ import {
   type DebitResponse
 } from "@/config/fanframe";
 import { supabase } from "@/integrations/supabase/client";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface CreditsState {
   isLoading: boolean;
@@ -21,6 +22,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
     isLoading: false,
     error: null,
   });
+  const { team } = useTeam();
 
   const handleAuthError = useCallback(() => {
     console.log("[FanFrame] Token inválido/expirado (401), limpando...");
@@ -47,7 +49,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
       setState({ isLoading: true, error: null });
 
       const { data, error } = await supabase.functions.invoke("fanframe-proxy", {
-        body: { action: "balance", token: storedToken },
+        body: { action: "balance", token: storedToken, team_slug: team?.slug },
       });
 
       if (error) {
@@ -103,6 +105,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
         body: {
           action: "debit",
           token: storedToken,
+          team_slug: team?.slug,
           body: { generation_id: generationId },
         },
       });

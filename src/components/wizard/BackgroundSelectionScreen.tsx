@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BACKGROUNDS, type Background } from "@/config/fanframe";
+import { useTeam, type TeamBackground } from "@/contexts/TeamContext";
 import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
 
+// Re-export for backward compatibility
+export type { TeamBackground as Background } from "@/contexts/TeamContext";
+
 interface BackgroundSelectionScreenProps {
-  selectedBackground: Background | null;
-  onSelectBackground: (background: Background) => void;
+  selectedBackground: TeamBackground | null;
+  onSelectBackground: (background: TeamBackground) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -18,8 +21,11 @@ export const BackgroundSelectionScreen = ({
   onBack,
 }: BackgroundSelectionScreenProps) => {
   const canContinue = selectedBackground !== null;
+  const { team } = useTeam();
   const { getName, getSubtitle, isVisible } = useAssetTextOverrides("backgrounds_text_overrides");
-  const visibleBackgrounds = BACKGROUNDS.filter(b => isVisible(b.id));
+  
+  const backgrounds = team?.backgrounds || [];
+  const visibleBackgrounds = backgrounds.filter(b => isVisible(b.id));
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
