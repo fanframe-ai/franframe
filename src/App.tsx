@@ -70,14 +70,14 @@ const App = () => (
             </ProtectedAdminRoute>
           } />
           <Route path="/admin/preview" element={<AdminPreview />} />
-          <Route path="/admin/assets" element={
-            <ProtectedAdminRoute>
-              <AdminAssets />
-            </ProtectedAdminRoute>
-          } />
           <Route path="/admin/teams" element={
             <ProtectedAdminRoute>
               <AdminTeams />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/teams/:slug" element={
+            <ProtectedAdminRoute>
+              <AdminTeamEdit />
             </ProtectedAdminRoute>
           } />
           
