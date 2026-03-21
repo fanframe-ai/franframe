@@ -321,7 +321,7 @@ export const ResultScreen = ({
       
       Promise.all([
         loadImage(mainImage, imageBase64),
-        loadImage(watermark, "/watermark.webp")
+        loadImage(watermark, team?.watermark_url || "/watermark.webp")
       ])
         .then(() => {
           clearTimeout(timeout);
