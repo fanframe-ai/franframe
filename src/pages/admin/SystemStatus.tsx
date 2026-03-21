@@ -337,12 +337,12 @@ export default function AdminSystemStatus() {
     
     try {
       const response = await fetch(
-        "https://yxtglwbrdtwmxwrrhroy.supabase.co/functions/v1/health-check",
+        "https://qmjvsftlounkitclmzzw.supabase.co/functions/v1/health-check",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4dGdsd2JyZHR3bXh3cnJocm95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzg0NjUsImV4cCI6MjA4NTY1NDQ2NX0.l3VQIroGNVKYmGjfkZ7LNEHq1DuM2hxSo1M-yIuAxE4",
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtanZzZnRsb3Vua2l0Y2xtenp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2ODYwMzIsImV4cCI6MjA4ODI2MjAzMn0.HRQIpcyPb8ZJTLPQ9GzceqnrmrRlVT-JqVkun-l5JrI",
           },
         }
       );

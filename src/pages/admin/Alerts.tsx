@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AlertsList } from "@/components/admin/AlertsList";
+import { TeamSelector } from "@/components/admin/TeamSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ interface SystemAlert {
 }
 
 export default function AdminAlerts() {
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [filter, setFilter] = useState<"active" | "resolved" | "all">("active");
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,61 +30,39 @@ export default function AdminAlerts() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (filter === "active") {
-        query = query.eq("resolved", false);
-      } else if (filter === "resolved") {
-        query = query.eq("resolved", true);
-      }
+      if (filter === "active") query = query.eq("resolved", false);
+      else if (filter === "resolved") query = query.eq("resolved", true);
+      if (selectedTeam) query = query.eq("team_id", selectedTeam);
 
       const { data, error } = await query;
-
       if (error) throw error;
-
       setAlerts((data as SystemAlert[]) || []);
     } catch (err) {
       console.error("Error fetching alerts:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [filter]);
+  }, [filter, selectedTeam]);
 
   useEffect(() => {
     fetchAlerts();
-
-    // Subscribe to realtime updates
     const channel = supabase
       .channel("admin-alerts-page")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "system_alerts" },
-        () => fetchAlerts()
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "system_alerts" }, () => fetchAlerts())
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [fetchAlerts]);
 
   const resolveAlert = async (alertId: string) => {
     try {
       const { error } = await supabase
         .from("system_alerts")
-        .update({ 
-          resolved: true, 
-          resolved_at: new Date().toISOString() 
-        })
+        .update({ resolved: true, resolved_at: new Date().toISOString() })
         .eq("id", alertId);
-
       if (error) throw error;
-
-      // Update local state
-      setAlerts(prev => 
-        prev.map(a => 
-          a.id === alertId 
-            ? { ...a, resolved: true } 
-            : a
-        ).filter(a => filter === "all" || (filter === "active" ? !a.resolved : a.resolved))
+      setAlerts(prev =>
+        prev.map(a => a.id === alertId ? { ...a, resolved: true } : a)
+          .filter(a => filter === "all" || (filter === "active" ? !a.resolved : a.resolved))
       );
     } catch (err) {
       console.error("Error resolving alert:", err);
@@ -93,14 +73,9 @@ export default function AdminAlerts() {
     try {
       const { error } = await supabase
         .from("system_alerts")
-        .update({ 
-          resolved: true, 
-          resolved_at: new Date().toISOString() 
-        })
+        .update({ resolved: true, resolved_at: new Date().toISOString() })
         .eq("resolved", false);
-
       if (error) throw error;
-
       fetchAlerts();
     } catch (err) {
       console.error("Error resolving all alerts:", err);
@@ -112,75 +87,44 @@ export default function AdminAlerts() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Alertas do Sistema</h1>
-            <p className="text-muted-foreground">
-              Monitore e resolva alertas de performance e erros
-            </p>
+            <p className="text-muted-foreground">Monitore e resolva alertas de performance e erros</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <TeamSelector value={selectedTeam} onChange={setSelectedTeam} />
             {activeCount > 0 && filter === "active" && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={resolveAllAlerts}
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Resolver Todos
+              <Button variant="outline" size="sm" onClick={resolveAllAlerts}>
+                <CheckCircle className="h-4 w-4 mr-2" />Resolver Todos
               </Button>
             )}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={fetchAlerts}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
+            <Button variant="outline" size="sm" onClick={fetchAlerts} disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
           </div>
         </div>
 
-        {/* Filters */}
         <div className="flex gap-2">
           {(["active", "resolved", "all"] as const).map((f) => (
-            <Button
-              key={f}
-              variant={filter === f ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter(f)}
-            >
+            <Button key={f} variant={filter === f ? "default" : "outline"} size="sm" onClick={() => setFilter(f)}>
               {f === "active" && "Ativos"}
               {f === "resolved" && "Resolvidos"}
               {f === "all" && "Todos"}
               {f === "active" && activeCount > 0 && (
-                <Badge 
-                  variant="secondary" 
-                  className="ml-2 bg-destructive text-destructive-foreground"
-                >
-                  {activeCount}
-                </Badge>
+                <Badge variant="secondary" className="ml-2 bg-destructive text-destructive-foreground">{activeCount}</Badge>
               )}
             </Button>
           ))}
         </div>
 
-        {/* Alerts List */}
         <div className="bg-card border border-border rounded-xl p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <AlertsList 
-              alerts={alerts.filter(a => !a.resolved || filter !== "active")} 
-              onResolve={resolveAlert} 
-            />
+            <AlertsList alerts={alerts.filter(a => !a.resolved || filter !== "active")} onResolve={resolveAlert} />
           )}
         </div>
       </div>

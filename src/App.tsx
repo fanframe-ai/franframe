@@ -15,8 +15,6 @@ import AdminStats from "./pages/admin/Stats";
 import AdminAlerts from "./pages/admin/Alerts";
 import AdminSystemStatus from "./pages/admin/SystemStatus";
 import AdminSettings from "./pages/admin/Settings";
-
-import AdminPreview from "./pages/admin/Preview";
 import AdminTeams from "./pages/admin/Teams";
 import AdminTeamEdit from "./pages/admin/TeamEdit";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
@@ -39,47 +37,14 @@ const App = () => (
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={
-            <ProtectedAdminRoute>
-              <AdminDashboard />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/generations" element={
-            <ProtectedAdminRoute>
-              <AdminGenerations />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/stats" element={
-            <ProtectedAdminRoute>
-              <AdminStats />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/status" element={
-            <ProtectedAdminRoute>
-              <AdminSystemStatus />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/alerts" element={
-            <ProtectedAdminRoute>
-              <AdminAlerts />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/settings" element={
-            <ProtectedAdminRoute>
-              <AdminSettings />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/preview" element={<AdminPreview />} />
-          <Route path="/admin/teams" element={
-            <ProtectedAdminRoute>
-              <AdminTeams />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/teams/:slug" element={
-            <ProtectedAdminRoute>
-              <AdminTeamEdit />
-            </ProtectedAdminRoute>
-          } />
+          <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+          <Route path="/admin/generations" element={<ProtectedAdminRoute><AdminGenerations /></ProtectedAdminRoute>} />
+          <Route path="/admin/stats" element={<ProtectedAdminRoute><AdminStats /></ProtectedAdminRoute>} />
+          <Route path="/admin/status" element={<ProtectedAdminRoute><AdminSystemStatus /></ProtectedAdminRoute>} />
+          <Route path="/admin/alerts" element={<ProtectedAdminRoute><AdminAlerts /></ProtectedAdminRoute>} />
+          <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettings /></ProtectedAdminRoute>} />
+          <Route path="/admin/teams" element={<ProtectedAdminRoute><AdminTeams /></ProtectedAdminRoute>} />
+          <Route path="/admin/teams/:slug" element={<ProtectedAdminRoute><AdminTeamEdit /></ProtectedAdminRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

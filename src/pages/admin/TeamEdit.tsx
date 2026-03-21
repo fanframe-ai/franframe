@@ -283,6 +283,14 @@ export default function TeamEdit() {
               <Switch checked={form.is_active} onCheckedChange={(v) => updateField("is_active", v)} />
               <span className="text-sm text-muted-foreground">{form.is_active ? "Ativo" : "Inativo"}</span>
             </div>
+            {!isNew && form.subdomain && (
+              <Button variant="outline" asChild>
+                <a href={`https://${form.subdomain}.lovable.app`} target="_blank" rel="noopener noreferrer">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview
+                </a>
+              </Button>
+            )}
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Salvar

@@ -5,11 +5,10 @@ import {
   BarChart3, 
   Bell, 
   LogOut,
-  Shield,
   Activity,
   Settings,
-  Eye,
-  Users
+  Users,
+  Hexagon
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { cn } from "@/lib/utils";
@@ -22,7 +21,6 @@ const navItems = [
   { href: "/admin/status", icon: Activity, label: "Status" },
   { href: "/admin/alerts", icon: Bell, label: "Alertas" },
   { href: "/admin/settings", icon: Settings, label: "Configurações" },
-  { href: "/admin/preview", icon: Eye, label: "Preview" },
 ];
 
 export function AdminSidebar() {
@@ -35,11 +33,11 @@ export function AdminSidebar() {
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Shield className="h-5 w-5 text-primary" />
+            <Hexagon className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-bold text-lg">Admin Panel</h1>
-            <p className="text-xs text-muted-foreground">Provador Tricolor</p>
+            <h1 className="font-bold text-lg">FanFrame</h1>
+            <p className="text-xs text-muted-foreground">Management System</p>
           </div>
         </div>
       </div>

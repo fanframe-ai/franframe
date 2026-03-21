@@ -19,6 +19,7 @@ interface Generation {
   processing_time_ms: number | null;
   created_at: string;
   completed_at: string | null;
+  team_id: string | null;
 }
 
 interface SystemAlert {
@@ -37,7 +38,7 @@ interface HourlyData {
   failed: number;
 }
 
-export function useAdminStats() {
+export function useAdminStats(teamId?: string | null) {
   const [todayStats, setTodayStats] = useState<TodayStats>({
     totalGenerations: 0,
     successfulGenerations: 0,
@@ -57,11 +58,14 @@ export function useAdminStats() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { data: generations, error: genError } = await supabase
+      let query = supabase
         .from("generations")
         .select("*")
         .gte("created_at", today.toISOString());
 
+      if (teamId) query = query.eq("team_id", teamId);
+
+      const { data: generations, error: genError } = await query;
       if (genError) throw genError;
 
       const total = generations?.length || 0;
@@ -109,57 +113,58 @@ export function useAdminStats() {
           ...data,
         }))
       );
-
     } catch (err) {
       console.error("Error fetching today stats:", err);
       setError("Erro ao carregar estatísticas");
     }
-  }, []);
+  }, [teamId]);
 
   const fetchRecentGenerations = useCallback(async (limit = 50) => {
     try {
-      const { data, error: genError } = await supabase
+      let query = supabase
         .from("generations")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
 
+      if (teamId) query = query.eq("team_id", teamId);
+
+      const { data, error: genError } = await query;
       if (genError) throw genError;
 
       setRecentGenerations((data as Generation[]) || []);
     } catch (err) {
       console.error("Error fetching generations:", err);
     }
-  }, []);
+  }, [teamId]);
 
   const fetchActiveAlerts = useCallback(async () => {
     try {
-      const { data, error: alertError } = await supabase
+      let query = supabase
         .from("system_alerts")
         .select("*")
         .eq("resolved", false)
         .order("created_at", { ascending: false });
 
+      if (teamId) query = query.eq("team_id", teamId);
+
+      const { data, error: alertError } = await query;
       if (alertError) throw alertError;
 
       setActiveAlerts((data as SystemAlert[]) || []);
     } catch (err) {
       console.error("Error fetching alerts:", err);
     }
-  }, []);
+  }, [teamId]);
 
   const resolveAlert = async (alertId: string) => {
     try {
       const { error } = await supabase
         .from("system_alerts")
-        .update({ 
-          resolved: true, 
-          resolved_at: new Date().toISOString() 
-        })
+        .update({ resolved: true, resolved_at: new Date().toISOString() })
         .eq("id", alertId);
 
       if (error) throw error;
-
       setActiveAlerts(prev => prev.filter(a => a.id !== alertId));
     } catch (err) {
       console.error("Error resolving alert:", err);
@@ -179,31 +184,21 @@ export function useAdminStats() {
   useEffect(() => {
     fetchAllData();
 
-    // Set up realtime subscriptions
     const generationsChannel = supabase
       .channel("admin-generations")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "generations" },
-        () => {
-          fetchTodayStats();
-          fetchRecentGenerations();
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "generations" }, () => {
+        fetchTodayStats();
+        fetchRecentGenerations();
+      })
       .subscribe();
 
     const alertsChannel = supabase
       .channel("admin-alerts")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "system_alerts" },
-        () => {
-          fetchActiveAlerts();
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "system_alerts" }, () => {
+        fetchActiveAlerts();
+      })
       .subscribe();
 
-    // Refresh data every 30 seconds
     const interval = setInterval(fetchAllData, 30000);
 
     return () => {
