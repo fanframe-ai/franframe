@@ -539,12 +539,13 @@ serve(async (req) => {
       );
     }
 
-    const { userImageBase64, shirtAssetUrl, backgroundAssetUrl, shirtId, userId } = parsed as {
+    const { userImageBase64, shirtAssetUrl, backgroundAssetUrl, shirtId, userId, team_slug } = parsed as {
       userImageBase64?: string;
       shirtAssetUrl?: string;
       backgroundAssetUrl?: string;
       shirtId?: string;
       userId?: string;
+      team_slug?: string;
     };
 
     console.log(`[${generationId}] Parsed payload:`, {
@@ -553,6 +554,7 @@ serve(async (req) => {
       backgroundAssetUrl,
       shirtId,
       userId: userId ? `${userId.substring(0, 8)}...` : null,
+      team_slug: team_slug || "default",
     });
 
     stage = "validate_params";
