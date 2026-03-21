@@ -407,7 +407,8 @@ export const ResultScreen = ({
       
       const link = document.createElement("a");
       link.href = generatedImage;
-      link.download = `provador-timao-${Date.now()}.png`;
+      const teamSlug2 = team?.slug || "provador";
+      link.download = `${teamSlug2}-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
