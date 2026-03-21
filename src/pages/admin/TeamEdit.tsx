@@ -283,9 +283,9 @@ export default function TeamEdit() {
               <Switch checked={form.is_active} onCheckedChange={(v) => updateField("is_active", v)} />
               <span className="text-sm text-muted-foreground">{form.is_active ? "Ativo" : "Inativo"}</span>
             </div>
-            {!isNew && form.subdomain && (
+            {!isNew && form.slug && (
               <Button variant="outline" asChild>
-                <a href={`https://${form.subdomain}.lovable.app`} target="_blank" rel="noopener noreferrer">
+                <a href={`${window.location.origin}/${form.slug}`} target="_blank" rel="noopener noreferrer">
                   <Eye className="h-4 w-4 mr-2" />
                   Preview
                 </a>
