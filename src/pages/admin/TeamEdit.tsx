@@ -275,7 +275,7 @@ export default function TeamEdit() {
               {isNew ? "Criar Novo Provador" : `Editar: ${form.name}`}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {isNew ? "Configure todos os detalhes do novo time" : `${form.subdomain}.lovable.app`}
+              {isNew ? "Configure todos os detalhes do novo time" : `fanframe.lovable.app/${form.slug}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -283,9 +283,9 @@ export default function TeamEdit() {
               <Switch checked={form.is_active} onCheckedChange={(v) => updateField("is_active", v)} />
               <span className="text-sm text-muted-foreground">{form.is_active ? "Ativo" : "Inativo"}</span>
             </div>
-            {!isNew && form.subdomain && (
+            {!isNew && form.slug && (
               <Button variant="outline" asChild>
-                <a href={`https://${form.subdomain}.lovable.app`} target="_blank" rel="noopener noreferrer">
+                <a href={`${window.location.origin}/${form.slug}`} target="_blank" rel="noopener noreferrer">
                   <Eye className="h-4 w-4 mr-2" />
                   Preview
                 </a>
@@ -329,13 +329,16 @@ export default function TeamEdit() {
                     <p className="text-xs text-muted-foreground">Identificador único (não pode ser alterado depois)</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Subdomínio *</Label>
-                  <div className="flex items-center gap-2">
-                    <Input value={form.subdomain} onChange={(e) => updateField("subdomain", e.target.value)} placeholder="ffsaopaulo" />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">.lovable.app</span>
+                {form.slug && (
+                  <div className="space-y-2">
+                    <Label>URL do Provador</Label>
+                    <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
+                      <span className="text-sm text-muted-foreground">fanframe.lovable.app/</span>
+                      <span className="text-sm font-medium">{form.slug}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">URL pública onde o provador será acessado</p>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
