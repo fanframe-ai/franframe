@@ -64,7 +64,7 @@ export function useFanFrameAuth() {
       const fetchStartTime = performance.now();
 
       const { data, error: invokeError } = await supabase.functions.invoke("fanframe-proxy", {
-        body: { action: "exchange", token: "exchange", body: { code } },
+        body: { action: "exchange", token: "exchange", body: { code }, team_slug: team?.slug },
       });
 
       const fetchEndTime = performance.now();
