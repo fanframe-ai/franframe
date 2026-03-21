@@ -140,7 +140,26 @@ async function createAlert(supabase: ReturnType<typeof createClient>, type: stri
   }
 }
 
-async function getGenerationPrompt(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function getGenerationPrompt(supabase: ReturnType<typeof createClient>, teamSlug?: string): Promise<string> {
+  // First try team-specific prompt
+  if (teamSlug) {
+    try {
+      const { data: teamData } = await supabase
+        .from("teams")
+        .select("generation_prompt")
+        .eq("slug", teamSlug)
+        .single();
+      
+      if (teamData?.generation_prompt) {
+        console.log(`Using team-specific prompt for ${teamSlug}`);
+        return teamData.generation_prompt;
+      }
+    } catch (err) {
+      console.error("Error fetching team prompt:", err);
+    }
+  }
+  
+  // Fallback to system_settings
   try {
     const { data, error } = await supabase
       .from("system_settings")
@@ -158,6 +177,42 @@ async function getGenerationPrompt(supabase: ReturnType<typeof createClient>): P
   } catch (err) {
     console.error("Error fetching prompt:", err);
     return DEFAULT_PROMPT;
+  }
+}
+
+async function getTeamReplicateToken(supabase: ReturnType<typeof createClient>, teamSlug?: string): Promise<string | null> {
+  if (!teamSlug) return null;
+  
+  try {
+    const { data } = await supabase
+      .from("teams")
+      .select("replicate_api_token")
+      .eq("slug", teamSlug)
+      .single();
+    
+    if (data?.replicate_api_token) {
+      console.log(`Using team-specific Replicate token for ${teamSlug}`);
+      return data.replicate_api_token;
+    }
+  } catch (err) {
+    console.error("Error fetching team Replicate token:", err);
+  }
+  
+  return null;
+}
+
+async function getTeamId(supabase: ReturnType<typeof createClient>, teamSlug?: string): Promise<string | null> {
+  if (!teamSlug) return null;
+  
+  try {
+    const { data } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("slug", teamSlug)
+      .single();
+    return data?.id || null;
+  } catch {
+    return null;
   }
 }
 
