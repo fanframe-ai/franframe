@@ -4,6 +4,7 @@ import {
   type ExchangeResponse 
 } from "@/config/fanframe";
 import { supabase } from "@/integrations/supabase/client";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface AuthState {
   isAuthenticated: boolean;
