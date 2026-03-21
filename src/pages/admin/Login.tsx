@@ -4,7 +4,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Loader2 } from "lucide-react";
+import { Hexagon, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 export default function AdminLogin() {
@@ -32,10 +32,10 @@ export default function AdminLogin() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Shield className="h-8 w-8 text-primary" />
+            <Hexagon className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-muted-foreground mt-1">Provador da Fiel</p>
+          <h1 className="text-2xl font-bold">FanFrame</h1>
+          <p className="text-muted-foreground mt-1">Management System</p>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6">
