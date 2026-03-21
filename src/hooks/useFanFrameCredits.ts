@@ -6,6 +6,7 @@ import {
   type DebitResponse
 } from "@/config/fanframe";
 import { supabase } from "@/integrations/supabase/client";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface CreditsState {
   isLoading: boolean;
