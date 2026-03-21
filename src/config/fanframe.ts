@@ -1,31 +1,8 @@
 // FanFrame WordPress Integration Configuration
-// Seguindo estritamente a documentação oficial
-
-// Supabase Storage base URL for permanent assets (projeto conectado ao app)
-const STORAGE_BASE = "https://qmjvsftlounkitclmzzw.supabase.co/storage/v1/object/public/tryon-assets";
+// Now primarily driven by TeamContext, these remain as types and helpers
 
 // Flag para ativar/desativar integração
 export const FANFRAME_ENABLED = true;
-
-// API Base URL - WordPress REST API
-export const FANFRAME_API_BASE = "https://timaotourvirtual.com.br/wp-json/vf-fanframe/v1";
-
-// API Endpoints conforme documentação seção 5
-export const FANFRAME_ENDPOINTS = {
-  // 5.1 Exchange (trocar code por app_token)
-  exchange: `${FANFRAME_API_BASE}/handoff/exchange`,
-  // 5.2 Consultar saldo
-  balance: `${FANFRAME_API_BASE}/credits/balance`,
-  // 5.3 Debitar 1 crédito
-  debit: `${FANFRAME_API_BASE}/credits/debit`,
-} as const;
-
-// Credit purchase URLs (abrem em nova aba) - conforme seção 3
-export const FANFRAME_PURCHASE_URLS = {
-  credits1: "https://timaotourvirtual.com.br/buy-credits?pack=1",
-  credits3: "https://timaotourvirtual.com.br/buy-credits?pack=3", // CTA principal recomendado
-  credits7: "https://timaotourvirtual.com.br/buy-credits?pack=7",
-} as const;
 
 // LocalStorage keys - conforme documentação seção 9: "vf_app_token"
 export const FANFRAME_STORAGE_KEYS = {
@@ -64,7 +41,7 @@ export interface DebitResponse {
   reason?: string;
 }
 
-// Background interface
+// Background interface (kept for backward compat, re-exported from TeamContext types)
 export interface Background {
   id: string;
   name: string;
@@ -73,7 +50,10 @@ export interface Background {
   assetPath: string;
 }
 
-// Asset URLs from Supabase Storage (permanent, publicly accessible)
+// Supabase Storage base URL
+const STORAGE_BASE = "https://qmjvsftlounkitclmzzw.supabase.co/storage/v1/object/public/tryon-assets";
+
+// Legacy ASSET_URLS - kept as fallback, but TeamContext is the source of truth
 export const ASSET_URLS = {
   background: `${STORAGE_BASE}/backgrounds/mural.png`,
   shirts: {
@@ -93,6 +73,7 @@ export const ASSET_URLS = {
   },
 } as const;
 
+// Legacy BACKGROUNDS array - components should use useTeam().team.backgrounds instead
 export const BACKGROUNDS: Background[] = [
   {
     id: "mural",
@@ -126,11 +107,9 @@ export const BACKGROUNDS: Background[] = [
 
 // Helper para obter URL completa de um asset
 export const getAssetFullUrl = (assetPath: string): string => {
-  // Se já é URL absoluta (do Storage), retorna direto
   if (assetPath.startsWith('http')) {
     return assetPath;
   }
-  // Fallback para paths locais (não deve acontecer mais)
   if (typeof window !== 'undefined') {
     return `${window.location.origin}${assetPath}`;
   }
