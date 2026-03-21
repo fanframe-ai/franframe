@@ -275,7 +275,7 @@ export default function TeamEdit() {
               {isNew ? "Criar Novo Provador" : `Editar: ${form.name}`}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {isNew ? "Configure todos os detalhes do novo time" : `${form.subdomain}.lovable.app`}
+              {isNew ? "Configure todos os detalhes do novo time" : `fanframe.lovable.app/${form.slug}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
