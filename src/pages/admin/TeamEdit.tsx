@@ -304,11 +304,12 @@ export default function TeamEdit() {
 
         {/* Tabs */}
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-7 w-full">
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="integration">Integração</TabsTrigger>
             <TabsTrigger value="shirts">Camisas</TabsTrigger>
             <TabsTrigger value="backgrounds">Cenários</TabsTrigger>
+            <TabsTrigger value="texts">Textos</TabsTrigger>
             <TabsTrigger value="tutorial">Tutorial</TabsTrigger>
             <TabsTrigger value="branding">Branding</TabsTrigger>
           </TabsList>
