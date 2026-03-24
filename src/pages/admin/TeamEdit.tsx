@@ -127,6 +127,7 @@ export default function TeamEdit() {
       logo_url: data.logo_url,
       watermark_url: data.watermark_url,
       is_active: data.is_active ?? true,
+      text_overrides: (data.text_overrides as Record<string, string>) || {},
     };
 
     setForm(teamData);
