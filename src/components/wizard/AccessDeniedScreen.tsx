@@ -21,7 +21,7 @@ export const AccessDeniedScreen = () => {
 
         {/* Description */}
         <p className="text-muted-foreground text-sm sm:text-lg mb-6 sm:mb-8 px-2">
-          Para criar sua foto com a camisa do Corinthians, você precisa acessar pelo tour virtual.
+          Para criar sua foto com a camisa do {teamName}, você precisa acessar pelo tour virtual.
         </p>
 
         {/* Instructions */}
