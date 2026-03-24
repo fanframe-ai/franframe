@@ -506,7 +506,7 @@ export const ResultScreen = ({
           Ficou épico!
         </h2>
         <p className="text-muted-foreground text-xs sm:text-sm">
-          Você vestiu o manto do Corinthians.
+          Você vestiu o manto do {team?.name || "time"}.
         </p>
       </div>
 
