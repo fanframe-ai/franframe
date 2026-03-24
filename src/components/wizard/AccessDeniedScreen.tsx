@@ -1,5 +1,6 @@
 import { Lock, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTeam } from "@/contexts/TeamContext";
 
 export const AccessDeniedScreen = () => {
   return (
