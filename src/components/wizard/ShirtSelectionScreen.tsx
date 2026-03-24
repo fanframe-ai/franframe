@@ -32,7 +32,7 @@ export const ShirtSelectionScreen = ({
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
       <div className="text-center mb-4 animate-fade-in">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-1 uppercase tracking-tight px-2">
-          Qual manto você vai vestir?
+          {t.shirt_title || "Qual manto você vai vestir?"}
         </h2>
       </div>
 

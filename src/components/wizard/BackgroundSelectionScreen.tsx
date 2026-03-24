@@ -32,7 +32,7 @@ export const BackgroundSelectionScreen = ({
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
       <div className="text-center mb-4 animate-fade-in">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-1 uppercase tracking-tight px-2">
-          Escolha o cenário
+          {t.background_title || "Escolha o cenário"}
         </h2>
       </div>
 

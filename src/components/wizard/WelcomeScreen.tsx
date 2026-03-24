@@ -92,7 +92,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           )}
 
           <p className="text-xs sm:text-sm text-white/70 font-medium">
-            + de 10.000 torcedores já vestiram
+            {t.welcome_social_proof || "+ de 10.000 torcedores já vestiram"}
           </p>
           
           <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10 bg-white/5">
