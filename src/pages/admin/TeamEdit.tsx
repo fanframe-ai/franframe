@@ -235,6 +235,7 @@ export default function TeamEdit() {
       logo_url: form.logo_url || null,
       watermark_url: form.watermark_url || null,
       is_active: form.is_active,
+      text_overrides: form.text_overrides as any,
     };
 
     try {
