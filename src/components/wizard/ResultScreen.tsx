@@ -23,7 +23,7 @@ interface ResultScreenProps {
 }
 
 // Progress messages based on queue position
-const getProgressMessage = (progress: number, queuePosition: number) => {
+const getProgressMessage = (progress: number, queuePosition: number, teamName: string) => {
   if (queuePosition > 20) {
     return { 
       title: "Alta demanda! 🔥", 
@@ -41,10 +41,10 @@ const getProgressMessage = (progress: number, queuePosition: number) => {
   if (progress < 15) return { title: "Preparando o tecido...", subtitle: "Separando os melhores materiais" };
   if (progress < 30) return { title: "Cortando o manto...", subtitle: "Cada detalhe conta" };
   if (progress < 50) return { title: "Costurando o manto...", subtitle: "Com amor de torcedor" };
-  if (progress < 70) return { title: "Bordando o escudo...", subtitle: "O símbolo do Corinthians" };
+  if (progress < 70) return { title: "Bordando o escudo...", subtitle: `O símbolo do ${teamName}` };
   if (progress < 85) return { title: "Ajustando o caimento...", subtitle: "Perfeito pra você" };
   if (progress < 95) return { title: "Finalizando detalhes...", subtitle: "Quase pronto!" };
-  return { title: "Manto pronto!", subtitle: "Vai Corinthians!" };
+  return { title: "Manto pronto!", subtitle: `Vai ${teamName}!` };
 };
 
 export const ResultScreen = ({
