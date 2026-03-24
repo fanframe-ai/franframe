@@ -4,6 +4,7 @@ import { Upload, X, Image as ImageIcon, ArrowLeft, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useTeam } from "@/contexts/TeamContext";
 import { useConsentLog } from "@/hooks/useConsentLog";
 import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
 import heic2any from "heic2any";
