@@ -23,6 +23,7 @@ export const BackgroundSelectionScreen = ({
   const canContinue = selectedBackground !== null;
   const { team } = useTeam();
   const { getName, getSubtitle, isVisible } = useAssetTextOverrides("backgrounds_text_overrides");
+  const t = team?.text_overrides || {};
   
   const backgrounds = team?.backgrounds || [];
   const visibleBackgrounds = backgrounds.filter(b => isVisible(b.id));
