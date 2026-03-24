@@ -14,6 +14,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
   const teamName = team?.name || "Timão";
+  const t = team?.text_overrides || {};
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden safe-bottom">
