@@ -26,8 +26,8 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
       <div className="relative z-10 flex flex-col items-center text-center max-w-lg animate-fade-in">
         {/* Headline */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-3 sm:mb-4 leading-tight tracking-tighter">
-          VISTA A CAMISA
-          <span className="block gradient-text">DO {teamName.toUpperCase()}!</span>
+          {t.welcome_title || "VISTA A CAMISA"}
+          <span className="block gradient-text">{t.welcome_title ? "" : `DO ${teamName.toUpperCase()}!`}</span>
         </h1>
 
         {/* Single Subtitle */}
