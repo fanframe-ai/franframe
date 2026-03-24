@@ -23,6 +23,7 @@ export const ShirtSelectionScreen = ({
   const canContinue = selectedShirt !== null;
   const { team } = useTeam();
   const { getName, getSubtitle, isVisible } = useAssetTextOverrides("shirts_text_overrides");
+  const t = team?.text_overrides || {};
   
   const shirts = team?.shirts || [];
   const visibleShirts = shirts.filter(s => isVisible(s.id));
