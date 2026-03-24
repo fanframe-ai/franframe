@@ -14,6 +14,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
   const teamName = team?.name || "Timão";
+  const t = team?.text_overrides || {};
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden safe-bottom">
@@ -25,13 +26,13 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
       <div className="relative z-10 flex flex-col items-center text-center max-w-lg animate-fade-in">
         {/* Headline */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-3 sm:mb-4 leading-tight tracking-tighter">
-          VISTA A CAMISA
-          <span className="block gradient-text">DO {teamName.toUpperCase()}!</span>
+          {t.welcome_title || "VISTA A CAMISA"}
+          <span className="block gradient-text">{t.welcome_title ? "" : `DO ${teamName.toUpperCase()}!`}</span>
         </h1>
 
         {/* Single Subtitle */}
         <p className="text-base sm:text-lg md:text-xl text-white/80 font-medium mb-6 sm:mb-8 leading-relaxed max-w-xs sm:max-w-sm px-2">
-          IA que veste o manto do {teamName} em você. Resultado realista em segundos.
+          {(t.welcome_subtitle || `IA que veste o manto do {time} em você. Resultado realista em segundos.`).replace("{time}", teamName)}
         </p>
 
         {/* Before/After Preview */}
@@ -76,7 +77,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           size="lg"
           className="btn-mobile-cta w-full max-w-xs sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105"
         >
-          EXPERIMENTAR AGORA
+          {t.welcome_cta || "EXPERIMENTAR AGORA"}
         </Button>
 
         {/* Trust Elements */}
@@ -91,7 +92,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           )}
 
           <p className="text-xs sm:text-sm text-white/70 font-medium">
-            + de 10.000 torcedores já vestiram
+            {t.welcome_social_proof || "+ de 10.000 torcedores já vestiram"}
           </p>
           
           <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10 bg-white/5">

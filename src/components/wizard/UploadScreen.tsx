@@ -4,6 +4,7 @@ import { Upload, X, Image as ImageIcon, ArrowLeft, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useTeam } from "@/contexts/TeamContext";
 import { useConsentLog } from "@/hooks/useConsentLog";
 import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
 import heic2any from "heic2any";
@@ -36,6 +37,8 @@ export const UploadScreen = ({
   const { toast } = useToast();
   const { logConsent, CONSENT_TEXT } = useConsentLog();
   const { getStoredToken } = useFanFrameAuth();
+  const { team } = useTeam();
+  const t = team?.text_overrides || {};
 
   const convertHeicToJpeg = async (file: File): Promise<Blob> => {
     try {
@@ -146,10 +149,10 @@ export const UploadScreen = ({
       {/* Header */}
       <div className="text-center mb-3 sm:mb-4 animate-fade-in shrink-0">
         <h2 className="text-xl sm:text-3xl md:text-4xl font-black mb-1 sm:mb-2 uppercase tracking-tight">
-          Agora, sua foto
+          {t.upload_title || "Agora, sua foto"}
         </h2>
         <p className="text-muted-foreground text-xs sm:text-lg">
-          Corpo inteiro, roupa clara
+          {t.upload_subtitle || "Corpo inteiro, roupa clara"}
         </p>
       </div>
 
@@ -294,7 +297,7 @@ export const UploadScreen = ({
               PROCESSANDO...
             </>
           ) : (
-            "VESTIR O MANTO"
+            t.upload_cta || "VESTIR O MANTO"
           )}
         </Button>
       </div>

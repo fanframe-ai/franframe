@@ -17,6 +17,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
   const teamName = team?.name || "Corinthians";
+  const t = team?.text_overrides || {};
   
   const [beforeSrc, setBeforeSrc] = useState<string>(tutorialBefore);
   const [afterSrc, setAfterSrc] = useState<string>(tutorialAfter);
@@ -47,10 +48,10 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
       {/* Header */}
       <div className="text-center mb-3 sm:mb-6 animate-fade-in">
         <h2 className="text-xl sm:text-3xl md:text-4xl font-black mb-1 sm:mb-2 uppercase tracking-tight">
-          Como funciona
+          {t.tutorial_title || "Como funciona"}
         </h2>
         <p className="text-muted-foreground text-xs sm:text-lg">
-          Em 3 passos, você se vê vestindo o manto.
+          {t.tutorial_subtitle || "Em 3 passos, você se vê vestindo o manto."}
         </p>
       </div>
 

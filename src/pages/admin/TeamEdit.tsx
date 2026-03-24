@@ -56,6 +56,7 @@ interface TeamData {
   logo_url: string | null;
   watermark_url: string | null;
   is_active: boolean;
+  text_overrides: Record<string, string>;
 }
 
 const emptyTeam: TeamData = {
@@ -74,6 +75,7 @@ const emptyTeam: TeamData = {
   logo_url: null,
   watermark_url: null,
   is_active: true,
+  text_overrides: {},
 };
 
 export default function TeamEdit() {
@@ -125,6 +127,7 @@ export default function TeamEdit() {
       logo_url: data.logo_url,
       watermark_url: data.watermark_url,
       is_active: data.is_active ?? true,
+      text_overrides: (data.text_overrides as Record<string, string>) || {},
     };
 
     setForm(teamData);
@@ -232,6 +235,7 @@ export default function TeamEdit() {
       logo_url: form.logo_url || null,
       watermark_url: form.watermark_url || null,
       is_active: form.is_active,
+      text_overrides: form.text_overrides as any,
     };
 
     try {
@@ -300,11 +304,12 @@ export default function TeamEdit() {
 
         {/* Tabs */}
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-7 w-full">
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="integration">Integração</TabsTrigger>
             <TabsTrigger value="shirts">Camisas</TabsTrigger>
             <TabsTrigger value="backgrounds">Cenários</TabsTrigger>
+            <TabsTrigger value="texts">Textos</TabsTrigger>
             <TabsTrigger value="tutorial">Tutorial</TabsTrigger>
             <TabsTrigger value="branding">Branding</TabsTrigger>
           </TabsList>
@@ -509,6 +514,140 @@ export default function TeamEdit() {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          {/* === TEXTOS === */}
+          <TabsContent value="texts">
+            <Card>
+              <CardContent className="pt-6 space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold mb-1">Textos do Provador</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Personalize os textos exibidos em cada tela. Deixe vazio para usar o texto padrão.
+                  </p>
+                </div>
+
+                {/* Welcome */}
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Tela Inicial</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Título</Label>
+                      <Input
+                        value={form.text_overrides.welcome_title || ""}
+                        onChange={(e) => updateField("text_overrides", { ...form.text_overrides, welcome_title: e.target.value || undefined })}
+                        placeholder="VISTA A CAMISA"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Botão CTA</Label>
+                      <Input
+                        value={form.text_overrides.welcome_cta || ""}
+                        onChange={(e) => updateField("text_overrides", { ...form.text_overrides, welcome_cta: e.target.value || undefined })}
+                        placeholder="EXPERIMENTAR AGORA"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Subtítulo</Label>
+                    <Input
+                      value={form.text_overrides.welcome_subtitle || ""}
+                      onChange={(e) => updateField("text_overrides", { ...form.text_overrides, welcome_subtitle: e.target.value || undefined })}
+                      placeholder="IA que veste o manto do {time} em você. Resultado realista em segundos."
+                    />
+                    <p className="text-xs text-muted-foreground">Use {"{time}"} para inserir o nome do time automaticamente</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Prova Social</Label>
+                    <Input
+                      value={form.text_overrides.welcome_social_proof || ""}
+                      onChange={(e) => updateField("text_overrides", { ...form.text_overrides, welcome_social_proof: e.target.value || undefined })}
+                      placeholder="+ de 10.000 torcedores já vestiram"
+                    />
+                  </div>
+                </div>
+
+                {/* Tutorial */}
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Tela Tutorial</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Título</Label>
+                      <Input
+                        value={form.text_overrides.tutorial_title || ""}
+                        onChange={(e) => updateField("text_overrides", { ...form.text_overrides, tutorial_title: e.target.value || undefined })}
+                        placeholder="Como funciona"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Subtítulo</Label>
+                      <Input
+                        value={form.text_overrides.tutorial_subtitle || ""}
+                        onChange={(e) => updateField("text_overrides", { ...form.text_overrides, tutorial_subtitle: e.target.value || undefined })}
+                        placeholder="Em 3 passos, você se vê vestindo o manto."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shirt Selection */}
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Seleção de Camisa</h3>
+                  <div className="space-y-2">
+                    <Label>Título</Label>
+                    <Input
+                      value={form.text_overrides.shirt_title || ""}
+                      onChange={(e) => updateField("text_overrides", { ...form.text_overrides, shirt_title: e.target.value || undefined })}
+                      placeholder="Qual manto você vai vestir?"
+                    />
+                  </div>
+                </div>
+
+                {/* Background Selection */}
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Seleção de Cenário</h3>
+                  <div className="space-y-2">
+                    <Label>Título</Label>
+                    <Input
+                      value={form.text_overrides.background_title || ""}
+                      onChange={(e) => updateField("text_overrides", { ...form.text_overrides, background_title: e.target.value || undefined })}
+                      placeholder="Escolha o cenário"
+                    />
+                  </div>
+                </div>
+
+                {/* Upload */}
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Tela de Upload</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Título</Label>
+                      <Input
+                        value={form.text_overrides.upload_title || ""}
+                        onChange={(e) => updateField("text_overrides", { ...form.text_overrides, upload_title: e.target.value || undefined })}
+                        placeholder="Agora, sua foto"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Subtítulo</Label>
+                      <Input
+                        value={form.text_overrides.upload_subtitle || ""}
+                        onChange={(e) => updateField("text_overrides", { ...form.text_overrides, upload_subtitle: e.target.value || undefined })}
+                        placeholder="Corpo inteiro, roupa clara"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Botão CTA</Label>
+                    <Input
+                      value={form.text_overrides.upload_cta || ""}
+                      onChange={(e) => updateField("text_overrides", { ...form.text_overrides, upload_cta: e.target.value || undefined })}
+                      placeholder="VESTIR O MANTO"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* === TUTORIAL === */}

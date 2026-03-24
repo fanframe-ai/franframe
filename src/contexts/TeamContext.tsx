@@ -18,6 +18,20 @@ export interface TeamBackground {
   assetPath: string;
 }
 
+export interface TeamTextOverrides {
+  welcome_title?: string;
+  welcome_subtitle?: string;
+  welcome_cta?: string;
+  welcome_social_proof?: string;
+  tutorial_title?: string;
+  tutorial_subtitle?: string;
+  shirt_title?: string;
+  background_title?: string;
+  upload_title?: string;
+  upload_subtitle?: string;
+  upload_cta?: string;
+}
+
 export interface TeamConfig {
   id: string;
   slug: string;
@@ -35,6 +49,7 @@ export interface TeamConfig {
   logo_url: string | null;
   watermark_url: string | null;
   is_active: boolean;
+  text_overrides: TeamTextOverrides;
 }
 
 interface TeamContextValue {
@@ -123,6 +138,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           logo_url: data.logo_url,
           watermark_url: data.watermark_url,
           is_active: data.is_active ?? true,
+          text_overrides: (data.text_overrides as TeamTextOverrides) || {},
         };
 
         console.log("[TeamContext] Team loaded:", teamConfig.name);
