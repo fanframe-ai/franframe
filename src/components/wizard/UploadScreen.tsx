@@ -297,7 +297,7 @@ export const UploadScreen = ({
               PROCESSANDO...
             </>
           ) : (
-            {t.upload_cta || "VESTIR O MANTO"}
+            t.upload_cta || "VESTIR O MANTO"
           )}
         </Button>
       </div>
