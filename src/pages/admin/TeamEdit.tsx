@@ -75,6 +75,7 @@ const emptyTeam: TeamData = {
   logo_url: null,
   watermark_url: null,
   is_active: true,
+  text_overrides: {},
 };
 
 export default function TeamEdit() {
