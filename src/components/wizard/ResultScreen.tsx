@@ -525,7 +525,7 @@ export const ResultScreen = ({
             {generatedImage && (
               <img
                 src={generatedImage}
-                alt="Você com o manto do Corinthians"
+                alt={`Você com o manto do ${team?.name || "time"}`}
                 className="w-full h-full object-contain"
               />
             )}
