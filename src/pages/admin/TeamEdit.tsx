@@ -56,6 +56,7 @@ interface TeamData {
   logo_url: string | null;
   watermark_url: string | null;
   is_active: boolean;
+  text_overrides: Record<string, string>;
 }
 
 const emptyTeam: TeamData = {
