@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useTeam } from "@/contexts/TeamContext";
 
 export const AccessDeniedScreen = () => {
+  const { team } = useTeam();
+  const teamName = team?.name || "time";
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 safe-bottom">
       <div className="text-center animate-fade-in max-w-md">
