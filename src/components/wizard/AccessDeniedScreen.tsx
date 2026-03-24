@@ -47,7 +47,7 @@ export const AccessDeniedScreen = () => {
         <Button
           size="lg"
           className="w-full btn-mobile-cta"
-          onClick={() => window.open("https://corinthians.com.br", "_blank")}
+          onClick={() => window.open(team?.wordpress_api_base?.replace(/\/wp-json.*/, "") || "#", "_blank")}
         >
           Visitar Site Oficial
           <ExternalLink className="w-5 h-5 ml-2" />
