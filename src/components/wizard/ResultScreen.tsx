@@ -425,7 +425,7 @@ export const ResultScreen = ({
 
   // Loading state
   if (isGenerating) {
-    const { title, subtitle } = getProgressMessage(progress, queuePosition);
+    const { title, subtitle } = getProgressMessage(progress, queuePosition, team?.name || "Time");
     
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 safe-bottom">
