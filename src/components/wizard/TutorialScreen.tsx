@@ -16,7 +16,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
   
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
-  const teamName = team?.name || "Corinthians";
+  const teamName = team?.name || "Time";
   const t = team?.text_overrides || {};
   
   const [beforeSrc, setBeforeSrc] = useState<string>(tutorialBefore);
