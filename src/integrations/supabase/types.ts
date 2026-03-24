@@ -346,6 +346,7 @@ export type Database = {
           shirts: Json
           slug: string
           subdomain: string
+          text_overrides: Json | null
           tutorial_assets: Json | null
           updated_at: string | null
           watermark_url: string | null
@@ -366,6 +367,7 @@ export type Database = {
           shirts?: Json
           slug: string
           subdomain: string
+          text_overrides?: Json | null
           tutorial_assets?: Json | null
           updated_at?: string | null
           watermark_url?: string | null
@@ -386,6 +388,7 @@ export type Database = {
           shirts?: Json
           slug?: string
           subdomain?: string
+          text_overrides?: Json | null
           tutorial_assets?: Json | null
           updated_at?: string | null
           watermark_url?: string | null
