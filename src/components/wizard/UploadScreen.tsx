@@ -37,6 +37,8 @@ export const UploadScreen = ({
   const { toast } = useToast();
   const { logConsent, CONSENT_TEXT } = useConsentLog();
   const { getStoredToken } = useFanFrameAuth();
+  const { team } = useTeam();
+  const t = team?.text_overrides || {};
 
   const convertHeicToJpeg = async (file: File): Promise<Blob> => {
     try {
