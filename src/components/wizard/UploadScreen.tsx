@@ -149,10 +149,10 @@ export const UploadScreen = ({
       {/* Header */}
       <div className="text-center mb-3 sm:mb-4 animate-fade-in shrink-0">
         <h2 className="text-xl sm:text-3xl md:text-4xl font-black mb-1 sm:mb-2 uppercase tracking-tight">
-          Agora, sua foto
+          {t.upload_title || "Agora, sua foto"}
         </h2>
         <p className="text-muted-foreground text-xs sm:text-lg">
-          Corpo inteiro, roupa clara
+          {t.upload_subtitle || "Corpo inteiro, roupa clara"}
         </p>
       </div>
 
