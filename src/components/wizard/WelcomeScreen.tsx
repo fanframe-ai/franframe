@@ -32,7 +32,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
 
         {/* Single Subtitle */}
         <p className="text-base sm:text-lg md:text-xl text-white/80 font-medium mb-6 sm:mb-8 leading-relaxed max-w-xs sm:max-w-sm px-2">
-          IA que veste o manto do {teamName} em você. Resultado realista em segundos.
+          {(t.welcome_subtitle || `IA que veste o manto do {time} em você. Resultado realista em segundos.`).replace("{time}", teamName)}
         </p>
 
         {/* Before/After Preview */}
