@@ -77,7 +77,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           size="lg"
           className="btn-mobile-cta w-full max-w-xs sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105"
         >
-          EXPERIMENTAR AGORA
+          {t.welcome_cta || "EXPERIMENTAR AGORA"}
         </Button>
 
         {/* Trust Elements */}
