@@ -323,17 +323,32 @@ export default function TeamEdit() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Nome do Time *</Label>
-                    <Input value={form.name} onChange={(e) => updateField("name", e.target.value)} placeholder="São Paulo FC" />
+                    <Input
+                      value={form.name}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        updateField("name", name);
+                        if (isNew) {
+                          const base = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                          if (base) {
+                            updateField("slug", `${base}-${generateHash()}`);
+                          } else {
+                            updateField("slug", "");
+                          }
+                        }
+                      }}
+                      placeholder="São Paulo FC"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Slug *</Label>
+                    <Label>Slug (URL) *</Label>
                     <Input
                       value={form.slug}
                       onChange={(e) => updateField("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                      placeholder="saopaulo"
+                      placeholder="saopaulo-a1b2c3"
                       disabled={!isNew}
                     />
-                    <p className="text-xs text-muted-foreground">Identificador único (não pode ser alterado depois)</p>
+                    <p className="text-xs text-muted-foreground">Gerado automaticamente com hash de segurança. Pode ser editado antes de salvar.</p>
                   </div>
                 </div>
                 {form.slug && (
