@@ -57,8 +57,8 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           
           {/* After */}
           <div className="relative">
-            <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 ring-2 sm:ring-4 ring-offset-1 sm:ring-offset-2 ring-offset-black shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-              style={{ borderColor: team?.primary_color || '#FFFFFF', ringColor: undefined, boxShadow: `0 0 20px ${team?.primary_color || '#FFFFFF'}33` }}
+            <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 ring-offset-1 sm:ring-offset-2 ring-offset-black"
+              style={{ borderColor: team?.primary_color || '#FFFFFF', boxShadow: `0 0 20px ${team?.primary_color || '#FFFFFF'}33` }}
             >
               <img 
                 src={tutorialAfter} 
