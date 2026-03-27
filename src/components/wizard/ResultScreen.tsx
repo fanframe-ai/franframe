@@ -487,7 +487,8 @@ export const ResultScreen = ({
           <Button
             onClick={handleRetry}
             size="lg"
-            className="btn-mobile-cta bg-white text-black hover:bg-white/90"
+            className="btn-mobile-cta hover:opacity-90"
+            style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
           >
             <RefreshCw className="w-5 h-5 mr-2" />
             Tentar Novamente
@@ -537,7 +538,8 @@ export const ResultScreen = ({
       <div className="w-full max-w-md space-y-2 animate-fade-in shrink-0" style={{ animationDelay: "0.3s" }}>
         <Button
           onClick={handleDownload}
-          className="w-full h-10 bg-white text-black hover:bg-white/90 transition-all text-sm font-bold"
+          className="w-full h-10 hover:opacity-90 transition-all text-sm font-bold"
+          style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
         >
           <Download className="w-4 h-4 mr-2" />
           Baixar Foto

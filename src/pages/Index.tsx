@@ -161,8 +161,14 @@ const Index = () => {
   const currentStepNumber = STEP_ORDER.indexOf(currentStep) + 1;
   const showStepIndicator = currentStep !== "welcome" && currentStep !== "result" && currentStep !== "history";
 
+  // Apply team colors as CSS custom properties
+  const teamColorStyles = team ? {
+    '--team-primary': team.primary_color,
+    '--team-secondary': team.secondary_color,
+  } as React.CSSProperties : {};
+
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden" style={teamColorStyles}>
       {/* Credits Display */}
       {FANFRAME_ENABLED && !isAdminPreview && (
         <div className="fixed top-14 right-2 sm:top-16 sm:right-4 z-50 safe-right">

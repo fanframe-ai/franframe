@@ -70,10 +70,11 @@ export const ShirtSelectionScreen = ({
                 <div
                   className={cn(
                     "flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center transition-all",
-                    isSelected ? "bg-white border-white" : "border-white/30"
+                    isSelected ? "border-white" : "border-white/30"
                   )}
+                  style={isSelected ? { backgroundColor: team?.primary_color || '#FFFFFF' } : {}}
                 >
-                  {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: team?.secondary_color || '#000000' }} />}
                 </div>
               </div>
             </button>
@@ -86,7 +87,8 @@ export const ShirtSelectionScreen = ({
           onClick={onContinue}
           disabled={!canContinue}
           size="lg"
-          className="btn-mobile-cta bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 order-1"
+          className="btn-mobile-cta transition-all duration-300 hover:scale-105 hover:opacity-90 disabled:opacity-50 disabled:hover:scale-100 order-1"
+          style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
         >
           Continuar
         </Button>
