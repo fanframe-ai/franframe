@@ -221,10 +221,13 @@ export default function TeamEdit() {
 
   // --- Save ---
   const handleSave = async () => {
-    if (!form.slug || !form.name || !form.subdomain || !form.wordpress_api_base) {
-      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
-      return;
-    }
+    // Auto-fill required fields with defaults if empty
+    const slug = form.slug || `time-${generateHash()}`;
+    const name = form.name || "Novo Provador";
+    const subdomain = form.subdomain || slug;
+    const wordpress_api_base = form.wordpress_api_base || "https://example.com/wp-json";
+    
+    const formToSave = { ...form, slug, name, subdomain, wordpress_api_base };
 
     setSaving(true);
 
