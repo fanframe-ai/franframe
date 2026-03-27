@@ -57,7 +57,9 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           
           {/* After */}
           <div className="relative">
-            <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 border-white ring-2 sm:ring-4 ring-white/30 ring-offset-1 sm:ring-offset-2 ring-offset-black shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 ring-offset-1 sm:ring-offset-2 ring-offset-black"
+              style={{ borderColor: team?.primary_color || '#FFFFFF', boxShadow: `0 0 20px ${team?.primary_color || '#FFFFFF'}33` }}
+            >
               <img 
                 src={tutorialAfter} 
                 alt="Depois" 
@@ -65,7 +67,9 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs uppercase tracking-wider bg-white text-black px-2 sm:px-3 py-0.5 sm:py-1 rounded font-semibold">
+            <span className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs uppercase tracking-wider px-2 sm:px-3 py-0.5 sm:py-1 rounded font-semibold"
+              style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+            >
               Depois
             </span>
           </div>

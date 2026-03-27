@@ -80,12 +80,14 @@ export const BuyCreditsScreen = ({
         {packages.map((pkg) => (
           <div
             key={pkg.credits}
-            className={`glass-card p-4 sm:p-5 rounded-xl relative ${
-              pkg.highlight ? "ring-2 ring-[#F1AF07]" : ""
-            }`}
+            className="glass-card p-4 sm:p-5 rounded-xl relative"
+            style={pkg.highlight ? { boxShadow: `0 0 0 2px ${team?.primary_color || '#F1AF07'}` } : {}}
           >
             {pkg.badge && (
-              <span className="absolute -top-2 right-3 sm:right-4 px-2 py-0.5 text-[10px] sm:text-xs font-bold bg-[#F1AF07] text-black rounded-full whitespace-nowrap">
+              <span 
+                className="absolute -top-2 right-3 sm:right-4 px-2 py-0.5 text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap"
+                style={{ backgroundColor: team?.primary_color || '#F1AF07', color: team?.secondary_color || '#000000' }}
+              >
                 {pkg.badge}
               </span>
             )}
@@ -102,9 +104,10 @@ export const BuyCreditsScreen = ({
                 onClick={(e) => handlePurchaseClick(pkg, e)}
                 className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-9 px-4 py-2 touch-target flex-shrink-0 ${
                   pkg.highlight 
-                    ? "bg-[#F1AF07] text-black hover:bg-[#F1AF07]/90" 
+                    ? "hover:opacity-90" 
                     : "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground"
                 }`}
+                style={pkg.highlight ? { backgroundColor: team?.primary_color || '#F1AF07', color: team?.secondary_color || '#000000' } : {}}
               >
                 <CreditCard className="w-4 h-4" />
                 Comprar

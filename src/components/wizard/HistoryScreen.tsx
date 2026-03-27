@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, X, Clock, Loader2 } from "lucide-react";
 import { useGenerationHistory, type HistoryEntry } from "@/hooks/useGenerationHistory";
 import { useToast } from "@/hooks/use-toast";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface HistoryScreenProps {
   onBack: () => void;
@@ -18,6 +19,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
   const { entries, isLoading } = useGenerationHistory();
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
   const { toast } = useToast();
+  const { team } = useTeam();
 
   const handleDownload = async (entry: HistoryEntry) => {
     try {
@@ -81,7 +83,11 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
           <p className="text-muted-foreground text-sm max-w-xs">
             Suas fotos geradas aparecerão aqui para você baixar quando quiser.
           </p>
-          <Button onClick={onBack} className="mt-6 bg-white text-black hover:bg-white/90">
+          <Button 
+            onClick={onBack} 
+            className="mt-6 hover:opacity-90"
+            style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+          >
             Gerar minha primeira foto
           </Button>
         </div>

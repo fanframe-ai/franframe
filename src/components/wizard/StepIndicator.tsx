@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -7,14 +8,17 @@ interface StepIndicatorProps {
 }
 
 export const StepIndicator = ({ currentStep, totalSteps, labels }: StepIndicatorProps) => {
+  const { team } = useTeam();
+  const pc = team?.primary_color || '#FFFFFF';
+
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-white/10 safe-top">
       <div className="max-w-2xl mx-auto px-4 py-1.5">
         {/* Progress bar */}
         <div className="relative h-0.5 bg-white/10 rounded-full overflow-hidden mb-1">
           <div 
-            className="absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            className="absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${(currentStep / totalSteps) * 100}%`, backgroundColor: pc }}
           />
         </div>
         
@@ -30,21 +34,25 @@ export const StepIndicator = ({ currentStep, totalSteps, labels }: StepIndicator
                 <div
                   className={cn(
                     "w-2 h-2 rounded-full transition-all duration-300",
-                    isActive && "bg-white scale-125",
-                    isCompleted && "bg-white/60",
                     !isActive && !isCompleted && "bg-white/20"
                   )}
+                  style={{
+                    ...(isActive ? { backgroundColor: pc, transform: 'scale(1.25)' } : {}),
+                    ...(isCompleted ? { backgroundColor: pc, opacity: 0.6 } : {}),
+                  }}
                 />
-                {/* Only show current step label on mobile, all on desktop */}
                 {labels && labels[i] && (
                   <span 
                     className={cn(
                       "text-[8px] uppercase tracking-wider transition-all duration-300",
-                      "hidden sm:block", // Hide all on mobile by default
-                      isActive && "!block text-white font-semibold", // Show current on mobile
-                      isCompleted && "text-white/60",
+                      "hidden sm:block",
+                      isActive && "!block font-semibold",
                       !isActive && !isCompleted && "text-white/30"
                     )}
+                    style={{
+                      ...(isActive ? { color: pc } : {}),
+                      ...(isCompleted ? { color: pc, opacity: 0.6 } : {}),
+                    }}
                   >
                     {labels[i]}
                   </span>
