@@ -77,7 +77,19 @@ const emptyTeam: TeamData = {
   logo_url: null,
   watermark_url: null,
   is_active: true,
-  text_overrides: {},
+  text_overrides: {
+    welcome_title: "VISTA A CAMISA",
+    welcome_cta: "EXPERIMENTAR AGORA",
+    welcome_subtitle: "IA que veste o manto do {time} em você. Resultado realista em segundos.",
+    welcome_social_proof: "+ de 10.000 torcedores já vestiram",
+    tutorial_title: "Como funciona",
+    tutorial_subtitle: "Em 3 passos, você se vê vestindo o manto.",
+    shirt_title: "Qual manto você vai vestir?",
+    background_title: "Escolha o cenário",
+    upload_title: "Agora, sua foto",
+    upload_subtitle: "Corpo inteiro, roupa clara",
+    upload_cta: "ENVIAR FOTO",
+  },
 };
 
 export default function TeamEdit() {
