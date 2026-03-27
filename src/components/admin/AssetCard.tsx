@@ -46,6 +46,7 @@ export function AssetCard({
   const [editName, setEditName] = useState(label);
   const [editSubtitle, setEditSubtitle] = useState(subtitle || "");
   const [editPrompt, setEditPrompt] = useState(promptDescription || "");
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -59,9 +60,11 @@ export function AssetCard({
     setPreviewUrl(currentUrl);
   }, [currentUrl]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Arquivo inválido", description: "Apenas imagens são aceitas", variant: "destructive" });
+      return;
+    }
     setUploading(true);
     setDone(false);
     try {
@@ -83,6 +86,32 @@ export function AssetCard({
     }
   };
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
   const handleSaveText = () => {
     onTextChange?.(editName, editSubtitle, editPrompt);
     setEditing(false);
@@ -91,10 +120,16 @@ export function AssetCard({
   const hasImage = previewUrl && previewUrl !== "/placeholder.svg";
 
   return (
-    <div className={cn(
-      "bg-card border border-border rounded-xl overflow-hidden transition-all",
-      !visible && "opacity-50"
-    )}>
+    <div
+      className={cn(
+        "bg-card border-2 rounded-xl overflow-hidden transition-all",
+        isDragging ? "border-primary ring-2 ring-primary/30 scale-[1.02]" : "border-border",
+        !visible && "opacity-50"
+      )}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
       <div className="relative bg-muted" style={{ aspectRatio }}>
         {hasImage ? (
           <img
@@ -108,7 +143,7 @@ export function AssetCard({
             onClick={() => inputRef.current?.click()}
           >
             <Upload className="h-8 w-8" />
-            <span className="text-sm">Clique para enviar imagem</span>
+            <span className="text-sm">{isDragging ? "Solte a imagem aqui" : "Arraste ou clique para enviar"}</span>
           </div>
         )}
         {done && (
