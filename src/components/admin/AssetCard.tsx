@@ -46,6 +46,7 @@ export function AssetCard({
   const [editName, setEditName] = useState(label);
   const [editSubtitle, setEditSubtitle] = useState(subtitle || "");
   const [editPrompt, setEditPrompt] = useState(promptDescription || "");
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
