@@ -59,6 +59,8 @@ interface TeamData {
   text_overrides: Record<string, string>;
 }
 
+const generateHash = () => Math.random().toString(36).substring(2, 8);
+
 const emptyTeam: TeamData = {
   slug: "",
   name: "",
