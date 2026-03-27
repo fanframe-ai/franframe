@@ -120,12 +120,16 @@ export function AssetCard({
   const hasImage = previewUrl && previewUrl !== "/placeholder.svg";
 
   return (
-    <div className={cn(
-      "bg-card border border-border rounded-xl overflow-hidden transition-all",
-      !visible && "opacity-50"
-    )}>
-      <div className="relative bg-muted" style={{ aspectRatio }}>
-        {hasImage ? (
+    <div
+      className={cn(
+        "bg-card border-2 rounded-xl overflow-hidden transition-all",
+        isDragging ? "border-primary ring-2 ring-primary/30 scale-[1.02]" : "border-border",
+        !visible && "opacity-50"
+      )}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
           <img
             src={previewUrl}
             alt={label}
