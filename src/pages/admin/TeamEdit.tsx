@@ -221,10 +221,13 @@ export default function TeamEdit() {
 
   // --- Save ---
   const handleSave = async () => {
-    if (!form.slug || !form.name || !form.subdomain || !form.wordpress_api_base) {
-      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
-      return;
-    }
+    // Auto-fill required fields with defaults if empty
+    const slug = form.slug || `time-${generateHash()}`;
+    const name = form.name || "Novo Provador";
+    const subdomain = form.subdomain || slug;
+    const wordpress_api_base = form.wordpress_api_base || "https://example.com/wp-json";
+    
+    const formToSave = { ...form, slug, name, subdomain, wordpress_api_base };
 
     setSaving(true);
 
@@ -234,22 +237,22 @@ export default function TeamEdit() {
     });
 
     const payload = {
-      slug: form.slug,
-      name: form.name,
-      subdomain: form.subdomain,
-      wordpress_api_base: form.wordpress_api_base,
+      slug: formToSave.slug,
+      name: formToSave.name,
+      subdomain: formToSave.subdomain,
+      wordpress_api_base: formToSave.wordpress_api_base,
       purchase_urls: purchaseUrlsObj,
-      replicate_api_token: form.replicate_api_token || null,
-      generation_prompt: form.generation_prompt || null,
-      shirts: form.shirts as any,
-      backgrounds: form.backgrounds as any,
-      tutorial_assets: form.tutorial_assets as any,
-      primary_color: form.primary_color,
-      secondary_color: form.secondary_color,
-      logo_url: form.logo_url || null,
-      watermark_url: form.watermark_url || null,
-      is_active: form.is_active,
-      text_overrides: form.text_overrides as any,
+      replicate_api_token: formToSave.replicate_api_token || null,
+      generation_prompt: formToSave.generation_prompt || null,
+      shirts: formToSave.shirts as any,
+      backgrounds: formToSave.backgrounds as any,
+      tutorial_assets: formToSave.tutorial_assets as any,
+      primary_color: formToSave.primary_color,
+      secondary_color: formToSave.secondary_color,
+      logo_url: formToSave.logo_url || null,
+      watermark_url: formToSave.watermark_url || null,
+      is_active: formToSave.is_active,
+      text_overrides: formToSave.text_overrides as any,
     };
 
     try {
