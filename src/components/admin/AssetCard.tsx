@@ -130,6 +130,8 @@ export function AssetCard({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
     >
+      <div className="relative bg-muted" style={{ aspectRatio }}>
+        {hasImage ? (
           <img
             src={previewUrl}
             alt={label}
@@ -141,7 +143,7 @@ export function AssetCard({
             onClick={() => inputRef.current?.click()}
           >
             <Upload className="h-8 w-8" />
-            <span className="text-sm">Clique para enviar imagem</span>
+            <span className="text-sm">{isDragging ? "Solte a imagem aqui" : "Arraste ou clique para enviar"}</span>
           </div>
         )}
         {done && (
