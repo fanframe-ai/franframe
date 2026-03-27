@@ -70,10 +70,11 @@ export const ShirtSelectionScreen = ({
                 <div
                   className={cn(
                     "flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center transition-all",
-                    isSelected ? "bg-white border-white" : "border-white/30"
+                    isSelected ? "border-white" : "border-white/30"
                   )}
+                  style={isSelected ? { backgroundColor: team?.primary_color || '#FFFFFF' } : {}}
                 >
-                  {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: team?.secondary_color || '#000000' }} />}
                 </div>
               </div>
             </button>
