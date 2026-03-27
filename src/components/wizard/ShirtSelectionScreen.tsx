@@ -86,7 +86,8 @@ export const ShirtSelectionScreen = ({
           onClick={onContinue}
           disabled={!canContinue}
           size="lg"
-          className="btn-mobile-cta bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 order-1"
+          className="btn-mobile-cta transition-all duration-300 hover:scale-105 hover:opacity-90 disabled:opacity-50 disabled:hover:scale-100 order-1"
+          style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
         >
           Continuar
         </Button>
