@@ -106,9 +106,10 @@ export const BuyCreditsScreen = ({
                 onClick={(e) => handlePurchaseClick(pkg, e)}
                 className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-9 px-4 py-2 touch-target flex-shrink-0 ${
                   pkg.highlight 
-                    ? "bg-[#F1AF07] text-black hover:bg-[#F1AF07]/90" 
+                    ? "hover:opacity-90" 
                     : "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground"
                 }`}
+                style={pkg.highlight ? { backgroundColor: team?.primary_color || '#F1AF07', color: team?.secondary_color || '#000000' } : {}}
               >
                 <CreditCard className="w-4 h-4" />
                 Comprar

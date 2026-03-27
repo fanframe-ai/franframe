@@ -83,7 +83,11 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
           <p className="text-muted-foreground text-sm max-w-xs">
             Suas fotos geradas aparecerão aqui para você baixar quando quiser.
           </p>
-          <Button onClick={onBack} className="mt-6 bg-white text-black hover:bg-white/90">
+          <Button 
+            onClick={onBack} 
+            className="mt-6 hover:opacity-90"
+            style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+          >
             Gerar minha primeira foto
           </Button>
         </div>
