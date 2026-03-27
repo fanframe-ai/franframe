@@ -67,7 +67,9 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs uppercase tracking-wider bg-white text-black px-2 sm:px-3 py-0.5 sm:py-1 rounded font-semibold">
+            <span className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs uppercase tracking-wider px-2 sm:px-3 py-0.5 sm:py-1 rounded font-semibold"
+              style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+            >
               Depois
             </span>
           </div>

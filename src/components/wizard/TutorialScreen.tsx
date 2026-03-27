@@ -93,7 +93,9 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
                   onError={() => setAfterSrc(afterExampleLocal)}
                 />
               </div>
-              <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase bg-white text-black px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
+              <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 rounded"
+                style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+              >
                 Depois
               </span>
             </div>
