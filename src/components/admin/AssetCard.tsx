@@ -60,9 +60,11 @@ export function AssetCard({
     setPreviewUrl(currentUrl);
   }, [currentUrl]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Arquivo inválido", description: "Apenas imagens são aceitas", variant: "destructive" });
+      return;
+    }
     setUploading(true);
     setDone(false);
     try {
@@ -82,6 +84,32 @@ export function AssetCard({
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
   };
 
   const handleSaveText = () => {
