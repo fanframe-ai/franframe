@@ -81,11 +81,15 @@ export const BuyCreditsScreen = ({
           <div
             key={pkg.credits}
             className={`glass-card p-4 sm:p-5 rounded-xl relative ${
-              pkg.highlight ? "ring-2 ring-[#F1AF07]" : ""
+              pkg.highlight ? "ring-2" : ""
             }`}
+            style={pkg.highlight ? { ringColor: team?.primary_color, borderColor: team?.primary_color, boxShadow: `0 0 0 2px ${team?.primary_color || '#F1AF07'}` } : {}}
           >
             {pkg.badge && (
-              <span className="absolute -top-2 right-3 sm:right-4 px-2 py-0.5 text-[10px] sm:text-xs font-bold bg-[#F1AF07] text-black rounded-full whitespace-nowrap">
+              <span 
+                className="absolute -top-2 right-3 sm:right-4 px-2 py-0.5 text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap"
+                style={{ backgroundColor: team?.primary_color || '#F1AF07', color: team?.secondary_color || '#000000' }}
+              >
                 {pkg.badge}
               </span>
             )}
