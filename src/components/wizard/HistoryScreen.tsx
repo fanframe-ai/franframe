@@ -19,6 +19,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
   const { entries, isLoading } = useGenerationHistory();
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
   const { toast } = useToast();
+  const { team } = useTeam();
 
   const handleDownload = async (entry: HistoryEntry) => {
     try {
