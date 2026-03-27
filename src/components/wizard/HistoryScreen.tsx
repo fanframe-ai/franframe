@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, X, Clock, Loader2 } from "lucide-react";
 import { useGenerationHistory, type HistoryEntry } from "@/hooks/useGenerationHistory";
 import { useToast } from "@/hooks/use-toast";
+import { useTeam } from "@/contexts/TeamContext";
 
 interface HistoryScreenProps {
   onBack: () => void;
