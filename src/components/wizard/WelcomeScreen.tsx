@@ -75,7 +75,11 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
         <Button
           onClick={onStart}
           size="lg"
-          className="btn-mobile-cta w-full max-w-xs sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105"
+          className="btn-mobile-cta w-full max-w-xs sm:w-auto transition-all duration-300 hover:scale-105 hover:opacity-90"
+          style={{ 
+            backgroundColor: team?.primary_color || '#FFFFFF', 
+            color: team?.secondary_color || '#000000' 
+          }}
         >
           {t.welcome_cta || "EXPERIMENTAR AGORA"}
         </Button>

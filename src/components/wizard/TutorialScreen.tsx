@@ -128,7 +128,11 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
         <Button
           onClick={onContinue}
           size="lg"
-          className="btn-mobile-cta bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 order-1"
+          className="btn-mobile-cta transition-all duration-300 hover:scale-105 hover:opacity-90 order-1"
+          style={{ 
+            backgroundColor: team?.primary_color || '#FFFFFF', 
+            color: team?.secondary_color || '#000000' 
+          }}
         >
           COMEÇAR AGORA
         </Button>
