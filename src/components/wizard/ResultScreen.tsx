@@ -398,6 +398,7 @@ export const ResultScreen = ({
       const imageWithWatermark = await applyWatermark(imageToProcess);
       
       const link = document.createElement("a");
+      link.href = imageWithWatermark;
       const teamSlug = team?.slug || "provador";
       link.download = `${teamSlug}-${Date.now()}.png`;
       document.body.appendChild(link);
