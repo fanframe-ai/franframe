@@ -20,6 +20,7 @@ interface ResultScreenProps {
   onBalanceUpdate: (newBalance: number) => void;
   onNoCredits: () => void;
   onHistory?: () => void;
+  onTestDebit?: () => Promise<boolean>;
 }
 
 // Progress messages based on queue position
