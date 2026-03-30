@@ -305,28 +305,38 @@ export const ResultScreen = ({
     };
   }, [startGeneration]);
 
-  const applyWatermark = async (imageBase64: string): Promise<string> => {
+  const fetchImageAsBlob = async (imageUrl: string): Promise<Blob> => {
+    const response = await fetch(imageUrl);
+    return await response.blob();
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  };
+
+  const applyWatermark = async (imageBase64: string): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const mainImage = new Image();
       const watermark = new Image();
       
       mainImage.crossOrigin = "anonymous";
+      watermark.crossOrigin = "anonymous";
       
       const timeout = setTimeout(() => {
-        console.error("Watermark timeout - images took too long to load");
         reject(new Error("Timeout loading images"));
       }, 10000);
       
       const loadImage = (img: HTMLImageElement, src: string): Promise<void> => {
         return new Promise((res, rej) => {
-          img.onload = () => {
-            console.log("Image loaded:", src.substring(0, 50));
-            res();
-          };
-          img.onerror = (e) => {
-            console.error("Failed to load image:", src.substring(0, 50), e);
-            rej(new Error(`Failed to load: ${src.substring(0, 50)}`));
-          };
+          img.onload = () => res();
+          img.onerror = (e) => rej(new Error(`Failed to load: ${src.substring(0, 50)}`));
           img.src = src;
         });
       };
@@ -360,11 +370,13 @@ export const ResultScreen = ({
           ctx.drawImage(watermark, x, y, watermarkWidth, watermarkHeight);
           ctx.globalAlpha = 1.0;
           
-          resolve(canvas.toDataURL("image/png"));
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Failed to convert canvas to blob"));
+          }, "image/png");
         })
         .catch((error) => {
           clearTimeout(timeout);
-          console.error("Error in applyWatermark:", error);
           reject(error);
         });
     });
@@ -372,6 +384,9 @@ export const ResultScreen = ({
 
   const handleDownload = async () => {
     if (!generatedImage) return;
+
+    const teamSlug = team?.slug || "provador";
+    const filename = `${teamSlug}-${Date.now()}.png`;
 
     try {
       console.log("Starting download with watermark...");
@@ -381,29 +396,17 @@ export const ResultScreen = ({
       
       if (isUrl) {
         console.log("Converting URL to base64 for watermark...");
-        try {
-          const response = await fetch(generatedImage);
-          const blob = await response.blob();
-          imageToProcess = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        } catch (fetchError) {
-          console.warn("Could not fetch image, trying direct approach:", fetchError);
-        }
+        const blob = await fetchImageAsBlob(generatedImage);
+        imageToProcess = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
       }
       
-      const imageWithWatermark = await applyWatermark(imageToProcess);
-      
-      const link = document.createElement("a");
-      link.href = imageWithWatermark;
-      const teamSlug = team?.slug || "provador";
-      link.download = `${teamSlug}-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const watermarkedBlob = await applyWatermark(imageToProcess);
+      downloadBlob(watermarkedBlob, filename);
 
       toast({
         title: "Download iniciado!",
@@ -418,13 +421,18 @@ export const ResultScreen = ({
         variant: "destructive",
       });
       
-      const link = document.createElement("a");
-      link.href = generatedImage;
-      const teamSlug2 = team?.slug || "provador";
-      link.download = `${teamSlug2}-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Fallback: download without watermark using blob
+      try {
+        const blob = await fetchImageAsBlob(generatedImage);
+        downloadBlob(blob, filename);
+      } catch (fallbackError) {
+        console.error("Fallback download also failed:", fallbackError);
+        toast({
+          title: "Erro no download",
+          description: "Não foi possível baixar a imagem.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
