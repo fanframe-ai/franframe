@@ -160,7 +160,10 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
                         {exhausted && link.is_active && <Badge variant="destructive">Esgotado</Badge>}
                         {link.is_active && !exhausted && <Badge variant="default">Ativo</Badge>}
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <code className="text-xs bg-muted px-2 py-0.5 rounded block truncate mt-1">
+                        /{teamSlug}?test_token={link.token}
+                      </code>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                         <span>Créditos: {link.credits_used}/{link.credits_total} usados ({remaining} restantes)</span>
                         <span>•</span>
                         <span>Criado: {new Date(link.created_at).toLocaleDateString("pt-BR")}</span>
