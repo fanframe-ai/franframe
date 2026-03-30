@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { TestLinksManager } from "@/components/admin/TestLinksManager";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AssetCard } from "@/components/admin/AssetCard";
