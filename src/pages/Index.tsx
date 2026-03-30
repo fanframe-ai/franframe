@@ -46,6 +46,14 @@ const Index = () => {
     clearGenerationId 
   } = useFanFrameCredits(logout);
 
+  const {
+    isTestMode,
+    testBalance,
+    isLoading: testTokenLoading,
+    debitTestCredit,
+    refreshTestBalance,
+  } = useTestToken();
+
   // Detectar retorno do pagamento PagBank
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
