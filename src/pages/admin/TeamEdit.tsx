@@ -765,6 +765,7 @@ export default function TeamEdit() {
                       storagePath={`${form.slug}/branding/logo.png`}
                       aspectRatio="1/1"
                       onImageUploaded={(url) => updateField("logo_url", url)}
+                      onRemove={form.logo_url ? () => updateField("logo_url", null) : undefined}
                     />
                   </div>
                   <div className="space-y-4">
@@ -776,6 +777,7 @@ export default function TeamEdit() {
                       storagePath={`${form.slug}/branding/watermark.webp`}
                       aspectRatio="1/1"
                       onImageUploaded={(url) => updateField("watermark_url", url)}
+                      onRemove={form.watermark_url ? () => updateField("watermark_url", null) : undefined}
                     />
                   </div>
                 </div>
