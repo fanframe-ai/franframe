@@ -396,6 +396,53 @@ export type Database = {
         }
         Relationships: []
       }
+      test_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credits_total: number
+          credits_used: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          label: string
+          team_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credits_total?: number
+          credits_used?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          team_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credits_total?: number
+          credits_used?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          team_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_links_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

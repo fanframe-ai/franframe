@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { TestLinksManager } from "@/components/admin/TestLinksManager";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AssetCard } from "@/components/admin/AssetCard";
@@ -321,7 +322,7 @@ export default function TeamEdit() {
 
         {/* Tabs */}
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid grid-cols-7 w-full">
+          <TabsList className="grid grid-cols-8 w-full">
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="integration">Integração</TabsTrigger>
             <TabsTrigger value="shirts">Camisas</TabsTrigger>
@@ -329,6 +330,7 @@ export default function TeamEdit() {
             <TabsTrigger value="texts">Textos</TabsTrigger>
             <TabsTrigger value="tutorial">Tutorial</TabsTrigger>
             <TabsTrigger value="branding">Branding</TabsTrigger>
+            <TabsTrigger value="test-links">Links Teste</TabsTrigger>
           </TabsList>
 
           {/* === GERAL === */}
@@ -783,6 +785,19 @@ export default function TeamEdit() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* === LINKS DE TESTE === */}
+          <TabsContent value="test-links">
+            {form.id ? (
+              <TestLinksManager teamId={form.id} teamSlug={form.slug} />
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Salve o provador primeiro para criar links de teste.
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

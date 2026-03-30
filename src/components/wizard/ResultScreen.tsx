@@ -20,6 +20,7 @@ interface ResultScreenProps {
   onBalanceUpdate: (newBalance: number) => void;
   onNoCredits: () => void;
   onHistory?: () => void;
+  onTestDebit?: () => Promise<boolean>;
 }
 
 // Progress messages based on queue position
@@ -56,6 +57,7 @@ export const ResultScreen = ({
   onBalanceUpdate,
   onNoCredits,
   onHistory,
+  onTestDebit,
 }: ResultScreenProps) => {
   const [isGenerating, setIsGenerating] = useState(true);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -123,20 +125,29 @@ export const ResultScreen = ({
     }
     hasDebitedRef.current = true;
     
-    // Debit credit after successful generation
-    const localGenerationId = generateGenerationId();
-    const debitResult = await debitCredit(localGenerationId);
-
-    if (!debitResult.success) {
-      console.warn("[ResultScreen] Débito falhou após geração:", debitResult.errorCode);
-      
-      if (debitResult.errorCode === FANFRAME_ERROR_CODES.noCredits) {
+    // Use test debit if in test mode
+    if (onTestDebit) {
+      const success = await onTestDebit();
+      if (!success) {
+        console.warn("[ResultScreen] Test debit falhou");
         onBalanceUpdate(0);
       }
     } else {
-      console.log("[ResultScreen] Débito autorizado! Saldo após:", debitResult.balanceAfter);
-      if (debitResult.balanceAfter !== undefined) {
-        onBalanceUpdate(debitResult.balanceAfter);
+      // Debit credit after successful generation via WordPress
+      const localGenerationId = generateGenerationId();
+      const debitResult = await debitCredit(localGenerationId);
+
+      if (!debitResult.success) {
+        console.warn("[ResultScreen] Débito falhou após geração:", debitResult.errorCode);
+        
+        if (debitResult.errorCode === FANFRAME_ERROR_CODES.noCredits) {
+          onBalanceUpdate(0);
+        }
+      } else {
+        console.log("[ResultScreen] Débito autorizado! Saldo após:", debitResult.balanceAfter);
+        if (debitResult.balanceAfter !== undefined) {
+          onBalanceUpdate(debitResult.balanceAfter);
+        }
       }
     }
 

@@ -12,6 +12,7 @@ import { StepIndicator } from "@/components/wizard/StepIndicator";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
 import { useFanFrameCredits } from "@/hooks/useFanFrameCredits";
+import { useTestToken } from "@/hooks/useTestToken";
 import { FANFRAME_ENABLED } from "@/config/fanframe";
 import { useTeam, type TeamShirt, type TeamBackground } from "@/contexts/TeamContext";
 import { Loader2 } from "lucide-react";
@@ -44,6 +45,14 @@ const Index = () => {
     isLoading: creditsLoading,
     clearGenerationId 
   } = useFanFrameCredits(logout);
+
+  const {
+    isTestMode,
+    testBalance,
+    isLoading: testTokenLoading,
+    debitTestCredit,
+    refreshTestBalance,
+  } = useTestToken();
 
   // Detectar retorno do pagamento PagBank
   useEffect(() => {
@@ -144,7 +153,7 @@ const Index = () => {
   const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
 
   // Loading state
-  if (FANFRAME_ENABLED && !isAdminPreview && (authLoading || teamLoading)) {
+  if (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && (authLoading || teamLoading || testTokenLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -152,12 +161,12 @@ const Index = () => {
     );
   }
 
-  // Not authenticated
-  if (FANFRAME_ENABLED && !isAdminPreview && !isAuthenticated) {
+  // Not authenticated (skip auth check for test mode and admin preview)
+  if (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && !isAuthenticated) {
     return <AccessDeniedScreen />;
   }
 
-  const effectiveBalance = isAdminPreview ? 999 : balance;
+  const effectiveBalance = isAdminPreview ? 999 : isTestMode ? testBalance : balance;
   const currentStepNumber = STEP_ORDER.indexOf(currentStep) + 1;
   const showStepIndicator = currentStep !== "welcome" && currentStep !== "result" && currentStep !== "history";
 
@@ -170,12 +179,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden" style={teamColorStyles}>
       {/* Credits Display */}
-      {FANFRAME_ENABLED && !isAdminPreview && (
+      {(FANFRAME_ENABLED || isTestMode) && !isAdminPreview && (
         <div className="fixed top-14 right-2 sm:top-16 sm:right-4 z-50 safe-right">
           <CreditsDisplay 
-            balance={balance} 
-            isLoading={creditsLoading}
-            onRefresh={handleRefreshBalance}
+            balance={effectiveBalance} 
+            isLoading={isTestMode ? false : creditsLoading}
+            onRefresh={isTestMode ? refreshTestBalance : handleRefreshBalance}
           />
         </div>
       )}
@@ -191,6 +200,11 @@ const Index = () => {
       {currentStep === "welcome" && (
         <WelcomeScreen 
           onStart={async () => {
+            if (isTestMode) {
+              await refreshTestBalance();
+              goToStep(testBalance <= 0 ? "buy-credits" : "tutorial");
+              return;
+            }
             // Buscar saldo fresco ao iniciar
             const freshBalance = await fetchBalance();
             if (freshBalance !== null) {
@@ -250,6 +264,15 @@ const Index = () => {
           onImageUpload={handleImageUpload}
           onClearImage={handleClearImage}
           onContinue={async () => {
+            if (isTestMode) {
+              await refreshTestBalance();
+              if (testBalance <= 0) {
+                goToStep("buy-credits");
+                return;
+              }
+              goToStep("result");
+              return;
+            }
             // Sempre buscar saldo fresco antes de gerar
             const freshBalance = await fetchBalance();
             if (freshBalance !== null) {
@@ -276,6 +299,13 @@ const Index = () => {
           onBalanceUpdate={handleBalanceUpdate}
           onNoCredits={handleNoCredits}
           onHistory={() => goToStep("history")}
+          onTestDebit={isTestMode ? async () => {
+            const success = await debitTestCredit();
+            if (success) {
+              await refreshTestBalance();
+            }
+            return success;
+          } : undefined}
         />
       )}
 
