@@ -153,7 +153,7 @@ const Index = () => {
   const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
 
   // Loading state
-  if (FANFRAME_ENABLED && !isAdminPreview && (authLoading || teamLoading)) {
+  if (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && (authLoading || teamLoading || testTokenLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -161,12 +161,12 @@ const Index = () => {
     );
   }
 
-  // Not authenticated
-  if (FANFRAME_ENABLED && !isAdminPreview && !isAuthenticated) {
+  // Not authenticated (skip auth check for test mode and admin preview)
+  if (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && !isAuthenticated) {
     return <AccessDeniedScreen />;
   }
 
-  const effectiveBalance = isAdminPreview ? 999 : balance;
+  const effectiveBalance = isAdminPreview ? 999 : isTestMode ? testBalance : balance;
   const currentStepNumber = STEP_ORDER.indexOf(currentStep) + 1;
   const showStepIndicator = currentStep !== "welcome" && currentStep !== "result" && currentStep !== "history";
 
