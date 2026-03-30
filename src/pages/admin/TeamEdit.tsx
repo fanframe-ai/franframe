@@ -786,6 +786,19 @@ export default function TeamEdit() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* === LINKS DE TESTE === */}
+          <TabsContent value="test-links">
+            {form.id ? (
+              <TestLinksManager teamId={form.id} teamSlug={form.slug} />
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Salve o provador primeiro para criar links de teste.
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
