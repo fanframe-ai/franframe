@@ -171,12 +171,16 @@ export const TestResultScreen = ({
   const handleDownload = async () => {
     if (!generatedImage) return;
     try {
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = generatedImage;
+      link.href = blobUrl;
       link.download = `teste-timao-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
       toast({ title: "Download iniciado!" });
     } catch (err) {
       console.error("Download error:", err);
