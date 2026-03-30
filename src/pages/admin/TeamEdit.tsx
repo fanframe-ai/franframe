@@ -372,7 +372,7 @@ export default function TeamEdit() {
                   <div className="space-y-2">
                     <Label>URL do Provador</Label>
                     <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
-                      <span className="text-sm text-muted-foreground">fanframe.lovable.app/</span>
+                      <span className="text-sm text-muted-foreground">franframe.vercel.app/</span>
                       <span className="text-sm font-medium">{form.slug}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">URL pública onde o provador será acessado</p>
