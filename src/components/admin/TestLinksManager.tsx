@@ -33,7 +33,7 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
   const [newCredits, setNewCredits] = useState(5);
   const { toast } = useToast();
 
-  const baseUrl = window.location.origin;
+  const publishedUrl = "https://franframe.lovable.app";
 
   const fetchLinks = async () => {
     const { data, error } = await supabase
@@ -86,15 +86,16 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
     toast({ title: "Link removido" });
   };
 
+  const buildUrl = (token: string) => `${publishedUrl}/${teamSlug}-${token}`;
+
   const copyLink = (token: string) => {
-    const url = `${baseUrl}/${teamSlug}?test_token=${token}`;
+    const url = buildUrl(token);
     navigator.clipboard.writeText(url);
     toast({ title: "Link copiado!", description: url });
   };
 
   const openLink = (token: string) => {
-    const url = `${baseUrl}/${teamSlug}?test_token=${token}`;
-    window.open(url, "_blank");
+    window.open(buildUrl(token), "_blank");
   };
 
   if (loading) {
@@ -161,7 +162,7 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
                         {link.is_active && !exhausted && <Badge variant="default">Ativo</Badge>}
                       </div>
                       <code className="text-xs bg-muted px-2 py-0.5 rounded block truncate mt-1">
-                        /{teamSlug}?test_token={link.token}
+                        {teamSlug}-{link.token}
                       </code>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                         <span>Créditos: {link.credits_used}/{link.credits_total} usados ({remaining} restantes)</span>
