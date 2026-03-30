@@ -12,6 +12,7 @@ import { StepIndicator } from "@/components/wizard/StepIndicator";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
 import { useFanFrameCredits } from "@/hooks/useFanFrameCredits";
+import { useTestToken } from "@/hooks/useTestToken";
 import { FANFRAME_ENABLED } from "@/config/fanframe";
 import { useTeam, type TeamShirt, type TeamBackground } from "@/contexts/TeamContext";
 import { Loader2 } from "lucide-react";
