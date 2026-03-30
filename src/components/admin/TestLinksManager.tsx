@@ -96,8 +96,7 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
   };
 
   const openLink = (token: string) => {
-    // Use current origin + query param for reliable testing
-    window.open(buildDirectUrl(token), "_blank");
+    window.open(`${publishedUrl}/${teamSlug}?test_token=${token}`, "_blank");
   };
 
   if (loading) {
