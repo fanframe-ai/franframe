@@ -57,6 +57,7 @@ export const ResultScreen = ({
   onBalanceUpdate,
   onNoCredits,
   onHistory,
+  onTestDebit,
 }: ResultScreenProps) => {
   const [isGenerating, setIsGenerating] = useState(true);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
