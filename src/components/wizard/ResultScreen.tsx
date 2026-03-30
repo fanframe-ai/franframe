@@ -389,6 +389,18 @@ export const ResultScreen = ({
     const filename = `${teamSlug}-${Date.now()}.png`;
 
     try {
+      // If no watermark configured, download directly without watermark
+      if (!team?.watermark_url) {
+        console.log("No watermark configured, downloading directly...");
+        const blob = await fetchImageAsBlob(generatedImage);
+        downloadBlob(blob, filename);
+        toast({
+          title: "Download iniciado!",
+          description: "Sua foto está sendo baixada",
+        });
+        return;
+      }
+
       console.log("Starting download with watermark...");
       
       const isUrl = generatedImage.startsWith("http");
