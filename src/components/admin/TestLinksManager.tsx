@@ -86,15 +86,16 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
     toast({ title: "Link removido" });
   };
 
+  const buildUrl = (token: string) => `${publishedUrl}/${teamSlug}-${token}`;
+
   const copyLink = (token: string) => {
-    const url = `${baseUrl}/${teamSlug}?test_token=${token}`;
+    const url = buildUrl(token);
     navigator.clipboard.writeText(url);
     toast({ title: "Link copiado!", description: url });
   };
 
   const openLink = (token: string) => {
-    const url = `${baseUrl}/${teamSlug}?test_token=${token}`;
-    window.open(url, "_blank");
+    window.open(buildUrl(token), "_blank");
   };
 
   if (loading) {
