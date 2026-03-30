@@ -86,16 +86,18 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
     toast({ title: "Link removido" });
   };
 
-  const buildUrl = (token: string) => `${publishedUrl}/${teamSlug}-${token}`;
+  const buildCleanUrl = (token: string) => `${publishedUrl}/${teamSlug}-${token}`;
+  const buildDirectUrl = (token: string) => `${window.location.origin}/${teamSlug}?test_token=${token}`;
 
   const copyLink = (token: string) => {
-    const url = buildUrl(token);
+    const url = buildCleanUrl(token);
     navigator.clipboard.writeText(url);
     toast({ title: "Link copiado!", description: url });
   };
 
   const openLink = (token: string) => {
-    window.open(buildUrl(token), "_blank");
+    // Use current origin + query param for reliable testing
+    window.open(buildDirectUrl(token), "_blank");
   };
 
   if (loading) {
