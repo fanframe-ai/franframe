@@ -33,7 +33,7 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
   const [newCredits, setNewCredits] = useState(5);
   const { toast } = useToast();
 
-  const publishedUrl = "https://franframe.lovable.app";
+  const publishedUrl = "https://franframe.vercel.app";
 
   const fetchLinks = async () => {
     const { data, error } = await supabase
