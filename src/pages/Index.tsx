@@ -179,12 +179,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden" style={teamColorStyles}>
       {/* Credits Display */}
-      {FANFRAME_ENABLED && !isAdminPreview && (
+      {(FANFRAME_ENABLED || isTestMode) && !isAdminPreview && (
         <div className="fixed top-14 right-2 sm:top-16 sm:right-4 z-50 safe-right">
           <CreditsDisplay 
-            balance={balance} 
-            isLoading={creditsLoading}
-            onRefresh={handleRefreshBalance}
+            balance={effectiveBalance} 
+            isLoading={isTestMode ? false : creditsLoading}
+            onRefresh={isTestMode ? refreshTestBalance : handleRefreshBalance}
           />
         </div>
       )}
