@@ -299,6 +299,13 @@ const Index = () => {
           onBalanceUpdate={handleBalanceUpdate}
           onNoCredits={handleNoCredits}
           onHistory={() => goToStep("history")}
+          onTestDebit={isTestMode ? async () => {
+            const success = await debitTestCredit();
+            if (success) {
+              await refreshTestBalance();
+            }
+            return success;
+          } : undefined}
         />
       )}
 
