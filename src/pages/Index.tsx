@@ -200,6 +200,11 @@ const Index = () => {
       {currentStep === "welcome" && (
         <WelcomeScreen 
           onStart={async () => {
+            if (isTestMode) {
+              await refreshTestBalance();
+              goToStep(testBalance <= 0 ? "buy-credits" : "tutorial");
+              return;
+            }
             // Buscar saldo fresco ao iniciar
             const freshBalance = await fetchBalance();
             if (freshBalance !== null) {
