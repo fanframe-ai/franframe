@@ -1,73 +1,56 @@
 
+Objetivo: corrigir o download quando existe marca d’água, porque hoje ao falhar a aplicação da watermark o sistema cai no fallback errado e abre a URL da imagem em vez de baixar.
 
-# Plano: Transformar Admin Panel em FanFrame Management System
+1. Corrigir o fallback de download no resultado
+- Arquivo principal: `src/components/wizard/ResultScreen.tsx`
+- Hoje o fluxo tenta:
+  - buscar a imagem gerada
+  - aplicar watermark via canvas
+  - baixar
+- Quando isso falha, o `catch` cria um `<a>` com `href = generatedImage`, o que em muitos navegadores apenas redireciona para a URL do bucket.
+- Vou ajustar esse fallback para seguir o mesmo padrão que já funciona em:
+  - `src/components/wizard/TestResultScreen.tsx`
+  - `src/components/wizard/HistoryScreen.tsx`
+- Ou seja: fazer `fetch` da imagem, converter para `Blob`, gerar `URL.createObjectURL(blob)` e só então disparar o download.
 
-## Problema
-O admin ainda parece o painel do Corinthians: sidebar diz "Provador Tricolor", Settings tem prompt hardcoded do Corinthians, SystemStatus aponta para outro projeto Supabase (`yxtglwbrdtwmxwrrhroy`), Generations/Stats/Dashboard nao filtram por time, e Preview nao permite escolher qual time visualizar.
+2. Deixar o fluxo com watermark mais robusto
+- Ainda em `ResultScreen.tsx`, vou melhorar a lógica de `handleDownload` para ter dois caminhos claros:
+  - sucesso: aplica watermark e baixa a imagem final
+  - fallback: se a watermark falhar, baixa a imagem original por blob sem redirecionar o usuário
+- Isso evita que qualquer erro de canvas/CORS/loading quebre a experiência.
 
-## Visao da Solucao
+3. Revisar o carregamento da marca d’água
+- A função `applyWatermark` já usa `team?.watermark_url || "/watermark.webp"`.
+- Vou manter essa lógica, mas estruturar melhor o tratamento de erro para que falhas no carregamento da watermark não acionem navegação acidental.
+- Se necessário, o plano inclui também definir `crossOrigin` no asset da watermark para reduzir chance de problema em canvas com imagem do bucket.
 
-Rebranding completo para **"FanFrame"** e reorganizacao da navegacao em 3 blocos:
+4. Validar os cenários afetados
+- Cenários a verificar após a implementação:
+  - baixar foto com watermark personalizada
+  - baixar foto quando a watermark estiver ausente
+  - baixar foto quando a watermark existir mas falhar ao carregar
+  - confirmar que em nenhum desses casos o navegador abre a URL da imagem
+- Também vou conferir se o nome do arquivo continua correto com o slug do time.
 
+Detalhes técnicos
+- Causa raiz encontrada:
+  - em `src/components/wizard/ResultScreen.tsx`, o `catch` final usa `link.href = generatedImage`
+  - isso depende do comportamento do navegador e normalmente vira navegação para o arquivo remoto
+- Referência do padrão correto já existente no projeto:
+  - `src/components/wizard/TestResultScreen.tsx`
+  - `src/components/wizard/HistoryScreen.tsx`
+- Ajuste planejado:
 ```text
-SIDEBAR "FanFrame"
-├── Dashboard (visao global com seletor de time)
-├── Provadores (lista + editor de times - ja existe)
-├── Geracoes (com filtro por time)
-├── Estatisticas (com filtro por time)
-├── Status do Sistema (apontando pro projeto correto)
-├── Alertas (com filtro por time)
-└── Configuracoes (apenas config global do sistema)
+generatedImage/url remota
+  -> fetch
+  -> blob
+  -> URL.createObjectURL(blob)
+  -> anchor.download
+  -> click()
+  -> revokeObjectURL()
 ```
 
-## Mudancas
-
-### 1. Rebranding Sidebar
-- **`AdminSidebar.tsx`**: Trocar "Admin Panel" / "Provador Tricolor" por "FanFrame" com icone/logo proprio
-- Remover "Preview" da sidebar (mover para dentro do editor de cada time)
-
-### 2. Dashboard com seletor de time
-- **`Dashboard.tsx`**: Adicionar dropdown de seletor de time (todos / time especifico)
-- **`useAdminStats.ts`**: Aceitar `teamId` opcional para filtrar queries por `team_id`
-- Cards e graficos filtram pelo time selecionado
-
-### 3. Geracoes com filtro por time
-- **`Generations.tsx`**: Adicionar dropdown de time junto aos filtros existentes
-- Query filtra por `team_id` quando selecionado
-
-### 4. Estatisticas com filtro por time
-- **`Stats.tsx`**: Mesmo padrao — dropdown de time + queries filtradas
-
-### 5. Alertas com filtro por time
-- **`Alerts.tsx`**: Adicionar filtro por time
-
-### 6. Corrigir SystemStatus
-- **`SystemStatus.tsx`**: Trocar URLs hardcoded do projeto antigo (`yxtglwbrdtwmxwrrhroy`) pelo projeto atual (`qmjvsftlounkitclmzzw`)
-
-### 7. Simplificar Settings
-- **`Settings.tsx`**: Remover prompt e token Replicate (agora sao por time no TeamEdit). Manter apenas configuracoes globais do sistema (ou transformar em pagina de informacoes do sistema tipo versao, projeto Supabase, etc.)
-
-### 8. Preview dentro do time
-- Mover funcionalidade de Preview para dentro do `TeamEdit.tsx` como uma aba ou botao que abre o provador do time selecionado em nova aba
-- Remover rota `/admin/preview`
-
-## Componente reutilizavel: TeamSelector
-Criar um componente `<TeamSelector />` (dropdown com todos os times + opcao "Todos") que sera usado em Dashboard, Geracoes, Stats e Alertas.
-
-## Arquivos afetados
-
-| Arquivo | Acao |
-|---|---|
-| `AdminSidebar.tsx` | Rebrand para FanFrame, remover Preview |
-| `Dashboard.tsx` | Adicionar TeamSelector, filtrar dados |
-| `useAdminStats.ts` | Aceitar teamId, filtrar queries |
-| `Generations.tsx` | Adicionar TeamSelector |
-| `Stats.tsx` | Adicionar TeamSelector |
-| `Alerts.tsx` | Adicionar TeamSelector |
-| `SystemStatus.tsx` | Corrigir URLs do projeto Supabase |
-| `Settings.tsx` | Remover config por time, simplificar |
-| `TeamEdit.tsx` | Adicionar botao "Preview" que abre o provador |
-| `Preview.tsx` | Remover arquivo |
-| `App.tsx` | Remover rota `/admin/preview` |
-| Novo: `TeamSelector.tsx` | Componente dropdown de selecao de time |
-
+Impacto esperado
+- O botão “Baixar Foto” volta a iniciar download automático mesmo quando a marca d’água dá erro.
+- O usuário não será mais redirecionado para o link da imagem.
+- O comportamento ficará consistente entre resultado normal, resultado de teste e histórico.
