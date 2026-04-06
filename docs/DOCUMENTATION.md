@@ -1,14 +1,16 @@
-# Documentação do Projeto - Provador Tricolor Virtual
+# Documentação do Projeto - FanFrame
 
 ## Visão Geral
 
-O **Provador Tricolor Virtual** é uma aplicação web que permite aos usuários experimentarem virtualmente as camisetas do São Paulo FC. Os usuários fazem upload de uma foto sua, escolhem uma camisa e um cenário de fundo, e a aplicação utiliza IA (Replicate) para gerar uma imagem realista do usuário vestindo a camisa escolhida.
+O **FanFrame** é uma plataforma multi-tenant de provadores virtuais. Permite criar e gerenciar múltiplos times/clientes em uma única infraestrutura, onde cada time possui seu próprio provador virtual com camisas, cenários, branding e configurações independentes. Os usuários fazem upload de uma foto, escolhem uma camisa e um cenário, e a aplicação utiliza IA (Replicate) para gerar uma imagem realista vestindo a camisa escolhida.
 
-### URL de Produção
-- **Preview**: https://id-preview--47c5ea96-0d25-45da-b5ea-f5537a49e6b6.lovable.app
-- **Produção**: https://sptryon.lovable.app
+### URLs
+
+- **Produção**: https://franframe.vercel.app
+- **Preview Lovable**: https://franframe.lovable.app
 
 ### Supabase
+
 - **Project ID**: yxtglwbrdtwmxwrrhroy
 - **URL**: https://yxtglwbrdtwmxwrrhroy.supabase.co
 
@@ -20,10 +22,17 @@ O **Provador Tricolor Virtual** é uma aplicação web que permite aos usuários
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            FRONTEND (React/Vite)                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
+│  Rotas:                                                                     │
+│  /              → Redireciona para /admin                                  │
+│  /:slug         → Provador virtual do time (ex: /redbull, /saopaulo)       │
+│  /admin/*       → Painel administrativo                                    │
+│                                                                             │
 │  src/                                                                       │
-│  ├── pages/Index.tsx          → Página principal (wizard de navegação)      │
+│  ├── pages/TeamProvador.tsx   → Carrega time pelo slug da URL              │
+│  ├── pages/Index.tsx          → Wizard do provador virtual                 │
+│  ├── contexts/TeamContext.tsx  → Context multi-tenant                       │
 │  ├── components/wizard/       → Componentes do wizard                       │
-│  ├── hooks/                   → Hooks customizados (auth, credits)          │
+│  ├── hooks/                   → Hooks customizados                          │
 │  └── config/fanframe.ts       → Configuração do sistema FanFrame            │
 └────────────────────────────────────┬────────────────────────────────────────┘
                                      │
@@ -31,20 +40,20 @@ O **Provador Tricolor Virtual** é uma aplicação web que permite aos usuários
                     │                │                │
                     ▼                ▼                ▼
 ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────┐
-│   FanFrame API       │  │  Supabase Edge       │  │  Supabase Database       │
-│   (WordPress)        │  │  Functions           │  │  (PostgreSQL)            │
+│   WordPress API      │  │  Supabase Edge       │  │  Supabase Database       │
+│   (por time)         │  │  Functions           │  │  (PostgreSQL)            │
 ├──────────────────────┤  ├──────────────────────┤  ├──────────────────────────┤
-│ • Autenticação       │  │ • generate-tryon     │  │ • generations            │
-│ • Saldo de créditos  │  │ • replicate-webhook  │  │ • generation_queue       │
-│ • Débito de créditos │  │ • health-check       │  │ • daily_stats            │
-│ • Compra de créditos │  │ • create-first-admin │  │ • system_alerts          │
-└──────────────────────┘  └──────────┬───────────┘  │ • health_checks          │
-                                     │              │ • user_roles             │
-                                     ▼              └──────────────────────────┘
-                          ┌──────────────────────┐
-                          │   Replicate API      │
-                          │   (Virtual Try-On)   │
-                          └──────────────────────┘
+│ • Autenticação       │  │ • generate-tryon     │  │ • teams                  │
+│ • Saldo de créditos  │  │ • replicate-webhook  │  │ • generations            │
+│ • Débito de créditos │  │ • health-check       │  │ • generation_queue       │
+│ • Compra de créditos │  │ • create-first-admin │  │ • daily_stats            │
+└──────────────────────┘  └──────────┬───────────┘  │ • system_alerts          │
+                                     │              │ • health_checks          │
+                                     ▼              │ • user_roles             │
+                          ┌──────────────────────┐  │ • test_links             │
+                          │   Replicate API      │  │ • system_settings        │
+                          │   (Virtual Try-On)   │  │ • consent_logs           │
+                          └──────────────────────┘  └──────────────────────────┘
 ```
 
 ---
@@ -52,48 +61,84 @@ O **Provador Tricolor Virtual** é uma aplicação web que permite aos usuários
 ## Stack Tecnológica
 
 ### Frontend
-- **React 18** - Framework UI
-- **Vite** - Build tool
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Estilização
-- **shadcn/ui** - Componentes UI
-- **React Query** - Cache e estado do servidor
-- **React Router DOM** - Navegação
-- **Lucide React** - Ícones
+- **React 18** + **TypeScript 5** — Framework UI
+- **Vite 5** — Build tool
+- **Tailwind CSS v3** — Estilização com design tokens semânticos
+- **shadcn/ui** — Componentes UI
+- **React Query** — Cache e estado do servidor
+- **React Router DOM** — Navegação (SPA)
+- **Lucide React** — Ícones
 
 ### Backend (Supabase)
-- **PostgreSQL** - Banco de dados
-- **Supabase Edge Functions (Deno)** - Funções serverless
-- **Supabase Auth** - Autenticação (admin panel)
-- **Row Level Security (RLS)** - Segurança de dados
+- **PostgreSQL** — Banco de dados multi-tenant
+- **Supabase Edge Functions (Deno)** — Funções serverless
+- **Supabase Auth** — Autenticação (painel admin)
+- **Row Level Security (RLS)** — Segurança de dados
+- **Supabase Realtime** — Subscriptions para status de geração
 
 ### APIs Externas
-- **Replicate API** - Geração de imagens (Virtual Try-On)
-- **FanFrame WordPress API** - Sistema de créditos e autenticação de usuários
+- **Replicate API** — Geração de imagens (Virtual Try-On), token configurável por time
+- **WordPress REST API** — Sistema de créditos e autenticação de usuários (URL configurável por time)
+
+### Deploy
+- **Vercel** — Hospedagem de produção com SPA rewrites
+- **Lovable** — Ambiente de desenvolvimento e preview
 
 ---
 
-## Fluxo do Usuário
+## Multi-Tenancy
+
+O sistema é multi-tenant. Cada time é uma linha na tabela `teams` com configurações isoladas:
+
+| Configuração | Descrição |
+|---|---|
+| `slug` | Identificador na URL (ex: `redbull`, `saopaulo`) |
+| `name` | Nome do time |
+| `shirts` | JSON com camisas disponíveis |
+| `backgrounds` | JSON com cenários de fundo |
+| `wordpress_api_base` | URL da API WordPress para créditos |
+| `replicate_api_token` | Token da API Replicate (próprio do time) |
+| `generation_prompt` | Prompt customizado para IA |
+| `primary_color` / `secondary_color` | Cores do branding |
+| `logo_url` / `watermark_url` | Logo e marca d'água |
+| `text_overrides` | Textos customizados da interface |
+| `tutorial_assets` | Assets do tutorial |
+| `purchase_urls` | URLs de compra de créditos |
+
+### Fluxo de Acesso
+
+```
+1. Usuário acessa franframe.vercel.app/{slug}
+2. TeamProvador.tsx busca o time pelo slug na tabela teams
+3. TeamContext carrega todas as configurações do time
+4. O provador virtual renderiza com branding e assets do time
+```
+
+---
+
+## Fluxo do Usuário (Provador Virtual)
 
 ```
 1. ACESSO
-   └── Usuário acessa via QR Code no Memorial SPFC com parâmetro ?code=XXX
+   └── Usuário acessa via franframe.vercel.app/{slug}?code=XXX
        ou com token salvo no localStorage
+       ou via link de teste: franframe.vercel.app/{slug}?test_token=XXX
 
-2. AUTENTICAÇÃO (FanFrame)
-   └── Exchange do code por app_token
-   └── Token salvo em localStorage (vf_app_token)
+2. AUTENTICAÇÃO
+   ├── Modo normal: Exchange do code por app_token via WordPress API do time
+   └── Modo teste: Validação do test_token na tabela test_links do Supabase
 
-3. WIZARD (5 etapas)
-   ├── Welcome → Tela inicial
+3. WIZARD (7 etapas)
+   ├── Welcome → Tela inicial com branding do time
    ├── Buy Credits → Comprar/atualizar créditos
    ├── Tutorial → Explicação do processo
-   ├── Shirt Selection → Escolher camisa + cenário
+   ├── Shirt Selection → Escolher camisa
+   ├── Background Selection → Escolher cenário
    ├── Upload → Fazer upload da foto
    └── Result → Ver imagem gerada
 
 4. GERAÇÃO (Arquitetura Assíncrona)
-   ├── Débito de 1 crédito via FanFrame API
+   ├── Débito de 1 crédito (WordPress API ou test_links)
    ├── Chamada à Edge Function generate-tryon
    ├── Criação de job na fila (generation_queue)
    ├── Chamada assíncrona ao Replicate
@@ -101,368 +146,240 @@ O **Provador Tricolor Virtual** é uma aplicação web que permite aos usuários
    └── Imagem retornada via Realtime subscription
 
 5. RESULTADO
-   ├── Download da imagem (com watermark)
+   ├── Aplicação de marca d'água (se configurada no time)
+   ├── Download da imagem
    └── Compartilhamento (WhatsApp, Twitter)
 ```
 
 ---
 
-## Estrutura de Arquivos
+## Links de Teste
 
-### Páginas e Componentes Principais
+O sistema suporta links de teste que funcionam sem integração WordPress, com créditos limitados armazenados no Supabase.
+
+- Criados pelo painel admin em `/admin/teams/{slug}`
+- Formato: `franframe.vercel.app/{slug}?test_token=XXX`
+- Tabela: `test_links` (token, credits_total, credits_used, is_active, expires_at)
+- Hook: `useTestToken.ts`
+
+---
+
+## Estrutura de Arquivos
 
 ```
 src/
 ├── pages/
-│   ├── Index.tsx              # Página principal - controla o wizard
-│   ├── NotFound.tsx           # Página 404
-│   └── admin/                 # Painel administrativo
+│   ├── TeamProvador.tsx         # Carrega time pelo slug e renderiza Index
+│   ├── Index.tsx                # Wizard principal do provador
+│   ├── NotFound.tsx             # Página 404
+│   ├── TermosDeUso.tsx          # Termos de uso
+│   ├── UploadAssets.tsx         # Upload de assets
+│   └── admin/                   # Painel administrativo
 │       ├── Dashboard.tsx
+│       ├── Teams.tsx            # Lista de provadores/times
+│       ├── TeamEdit.tsx         # Edição de time (assets, branding, prompts)
 │       ├── Generations.tsx
+│       ├── Stats.tsx
 │       ├── Alerts.tsx
+│       ├── SystemStatus.tsx
+│       ├── Settings.tsx
 │       └── Login.tsx
 │
 ├── components/
-│   ├── wizard/                # Componentes do wizard
-│   │   ├── WelcomeScreen.tsx      # Tela inicial
-│   │   ├── BuyCreditsScreen.tsx   # Compra de créditos
-│   │   ├── TutorialScreen.tsx     # Tutorial
-│   │   ├── ShirtSelectionScreen.tsx # Seleção de camisa e fundo
-│   │   ├── UploadScreen.tsx       # Upload de foto
-│   │   ├── ResultScreen.tsx       # Resultado final
-│   │   ├── StepIndicator.tsx      # Indicador de progresso
-│   │   └── AccessDeniedScreen.tsx # Acesso negado
+│   ├── wizard/                  # Componentes do wizard
+│   │   ├── WelcomeScreen.tsx
+│   │   ├── BuyCreditsScreen.tsx
+│   │   ├── TutorialScreen.tsx
+│   │   ├── ShirtSelectionScreen.tsx
+│   │   ├── BackgroundSelectionScreen.tsx
+│   │   ├── UploadScreen.tsx
+│   │   ├── ResultScreen.tsx
+│   │   ├── HistoryScreen.tsx
+│   │   ├── TestResultScreen.tsx
+│   │   ├── StepIndicator.tsx
+│   │   └── AccessDeniedScreen.tsx
 │   │
-│   ├── admin/                 # Componentes do admin
+│   ├── admin/                   # Componentes do admin
 │   │   ├── AdminLayout.tsx
 │   │   ├── AdminSidebar.tsx
+│   │   ├── ProtectedAdminRoute.tsx
 │   │   ├── GenerationsTable.tsx
 │   │   ├── AlertsList.tsx
-│   │   └── ProtectedAdminRoute.tsx
+│   │   ├── StatsCard.tsx
+│   │   ├── TeamSelector.tsx
+│   │   ├── TestLinksManager.tsx
+│   │   └── AssetCard.tsx
 │   │
-│   └── ui/                    # Componentes shadcn/ui
-│       └── ... (button, card, dialog, etc.)
+│   └── ui/                      # Componentes shadcn/ui
+│
+├── contexts/
+│   └── TeamContext.tsx           # Context multi-tenant do time
 │
 ├── hooks/
-│   ├── useFanFrameAuth.ts     # Autenticação FanFrame
-│   ├── useFanFrameCredits.ts  # Gerenciamento de créditos
-│   ├── useQueueSubscription.ts # Realtime para fila
-│   ├── useAdminAuth.ts        # Autenticação admin
-│   └── useAdminStats.ts       # Estatísticas admin
+│   ├── useFanFrameAuth.ts       # Autenticação via WordPress
+│   ├── useFanFrameCredits.ts    # Gerenciamento de créditos
+│   ├── useTestToken.ts          # Links de teste
+│   ├── useQueueSubscription.ts  # Realtime para fila de geração
+│   ├── useAdminAuth.ts          # Autenticação admin (Supabase Auth)
+│   ├── useAdminStats.ts         # Estatísticas admin
+│   ├── useConsentLog.ts         # Log de consentimento
+│   ├── useGenerationHistory.ts  # Histórico de gerações
+│   └── useAssetTextOverrides.ts # Overrides de texto do time
 │
 ├── config/
-│   └── fanframe.ts            # Configuração FanFrame + assets
+│   └── fanframe.ts              # Constantes e configuração base
 │
 └── integrations/
     └── supabase/
-        ├── client.ts          # Cliente Supabase (auto-gerado)
-        └── types.ts           # Tipos do banco (auto-gerado)
-```
-
----
-
-## Configuração FanFrame (`src/config/fanframe.ts`)
-
-Este arquivo contém TODA a configuração do sistema FanFrame e assets.
-
-### Constantes Importantes
-
-```typescript
-// Flag para ativar/desativar integração
-export const FANFRAME_ENABLED = true;
-
-// API Base URL - WordPress REST API
-export const FANFRAME_API_BASE = "https://tricolorvirtualexperience.net/wp-json/vf-fanframe/v1";
-
-// Endpoints da API
-export const FANFRAME_ENDPOINTS = {
-  exchange: `${FANFRAME_API_BASE}/handoff/exchange`,  // Trocar code por token
-  balance: `${FANFRAME_API_BASE}/credits/balance`,    // Consultar saldo
-  debit: `${FANFRAME_API_BASE}/credits/debit`,        // Debitar crédito
-};
-
-// Chaves do localStorage
-export const FANFRAME_STORAGE_KEYS = {
-  appToken: "vf_app_token",           // Token de autenticação
-  generationId: "vf_generation_id",   // ID da geração (idempotência)
-};
-```
-
-### Assets Disponíveis
-
-```typescript
-// Camisas
-export const SHIRTS = [
-  { id: "manto-1", name: "Manto Principal", ... },
-  { id: "manto-2", name: "Manto Reserva", ... },
-  { id: "manto-3", name: "Manto III", ... },
-];
-
-// Cenários de fundo
-export const BACKGROUNDS = [
-  { id: "morumbi", name: "Estádio Morumbi", assetPath: "/assets/background.webp" },
-  { id: "memorial", name: "Memorial SPFC", assetPath: "src/assets/background-memorial.jpg" },
-  { id: "idolos", name: "Galeria dos Ídolos", assetPath: "src/assets/background-idolos.jpg" },
-  { id: "trofeus", name: "Sala de Troféus", assetPath: "src/assets/background-trofeus.jpg" },
-];
-```
-
----
-
-## Sistema de Autenticação FanFrame
-
-### Hook: `useFanFrameAuth`
-
-Gerencia a autenticação do usuário via FanFrame.
-
-#### Fluxo de Autenticação
-
-```
-1. Usuário acessa com ?code=XXXX na URL
-   ↓
-2. Hook detecta o code e chama exchangeCodeForToken()
-   ↓
-3. POST /handoff/exchange { "code": "XXXX" }
-   ↓
-4. Resposta: { ok: true, app_token: "...", balance: 5 }
-   ↓
-5. Token salvo em localStorage["vf_app_token"]
-   ↓
-6. Code removido da URL
-```
-
-#### Estados
-
-```typescript
-interface AuthState {
-  isAuthenticated: boolean;  // Usuário autenticado?
-  isLoading: boolean;        // Carregando?
-  error: string | null;      // Erro ocorrido
-  balance: number;           // Saldo de créditos
-}
-```
-
----
-
-## Sistema de Créditos FanFrame
-
-### Hook: `useFanFrameCredits`
-
-Gerencia o saldo e débito de créditos.
-
-#### Métodos Principais
-
-```typescript
-// Consultar saldo
-const balance = await fetchBalance();
-// GET /credits/balance
-// Header: X-Fanframe-Token: <app_token>
-// Resposta: { ok: true, balance: 5 }
-
-// Debitar 1 crédito (antes de gerar imagem)
-const result = await debitCredit(generationId);
-// POST /credits/debit
-// Body: { "generation_id": "uuid" }
-// Resposta sucesso: { ok: true, balance_after: 4 }
-// Resposta sem crédito: { ok: false, reason: "no_credits" }
-```
-
-#### Idempotência
-
-O `generation_id` garante que retries não debitem múltiplos créditos:
-
-```typescript
-// Gerar ou recuperar ID existente
-const generationId = generateGenerationId();
-// Salvo em localStorage["vf_generation_id"]
-
-// Após geração bem-sucedida
-clearGenerationId();
+        ├── client.ts            # Cliente Supabase
+        └── types.ts             # Tipos do banco (auto-gerado)
 ```
 
 ---
 
 ## Edge Functions
 
-### `generate-tryon` (Principal)
+### `generate-tryon`
+Inicia a geração de imagem via Replicate.
 
-Edge function responsável por iniciar a geração de imagem usando Replicate.
-
-#### Endpoint
 ```
 POST /functions/v1/generate-tryon
-```
-
-#### Payload
-```typescript
-{
-  userImageBase64: string;    // Foto do usuário (base64)
-  shirtAssetUrl: string;      // URL completa da camisa
-  backgroundAssetUrl: string; // URL completa do cenário
-  shirtId: string;            // ID da camisa (para logs)
-  userId?: string;            // ID do usuário (opcional)
-}
-```
-
-#### Resposta
-```typescript
-// Sucesso
-{
-  queueId: "uuid",
-  message: "Generation queued successfully",
-  status: "pending"
-}
-
-// Erro
-{
-  error: "Error message"
-}
+Body: { userImageBase64, shirtAssetUrl, backgroundAssetUrl, shirtId, userId?, teamId? }
+Response: { queueId, message, status }
 ```
 
 ### `replicate-webhook`
+Recebe callbacks do Replicate quando a geração é concluída. Atualiza `generation_queue` e notifica via Realtime.
 
-Recebe callbacks do Replicate quando a geração é concluída.
+### `health-check`
+Verifica status dos serviços.
 
-#### Endpoint
-```
-POST /functions/v1/replicate-webhook
-```
-
-#### Fluxo
-1. Replicate envia resultado da geração
-2. Webhook atualiza `generation_queue` com resultado
-3. Cliente recebe atualização via Realtime subscription
+### `create-first-admin`
+Cria o primeiro usuário admin (requer `ACCESS_PASSWORD`).
 
 ---
 
-## Banco de Dados (Supabase)
+## Banco de Dados
 
-### Tabelas
+### Tabelas Principais
 
-#### `generations`
-Registra todas as gerações de imagem.
-
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid | ID da geração |
-| external_user_id | text | ID do usuário FanFrame |
-| shirt_id | text | ID da camisa usada |
-| status | enum | pending, processing, completed, failed |
-| processing_time_ms | integer | Tempo de processamento |
-| error_message | text | Mensagem de erro (se houver) |
-| created_at | timestamp | Data de criação |
-| completed_at | timestamp | Data de conclusão |
+#### `teams`
+Configuração de cada time/provador. Contém slug, assets (shirts/backgrounds como JSON), branding, tokens de API, prompts e URLs.
 
 #### `generation_queue`
-Fila de gerações assíncronas.
+Fila de gerações assíncronas com status (pending → processing → completed/failed), referência ao time (`team_id`), URLs de assets e resultado.
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid | ID da fila |
-| user_id | text | ID do usuário |
-| shirt_id | text | ID da camisa |
-| user_image_url | text | URL da imagem do usuário |
-| shirt_asset_url | text | URL da camisa |
-| background_asset_url | text | URL do background |
-| status | text | pending, processing, completed, failed |
-| replicate_prediction_id | text | ID da predição no Replicate |
-| result_image_url | text | URL da imagem gerada |
-| error_message | text | Mensagem de erro |
-| created_at | timestamp | Data de criação |
-| started_at | timestamp | Data de início do processamento |
-| completed_at | timestamp | Data de conclusão |
+#### `generations`
+Registro de todas as gerações com métricas (tempo de processamento, status, erros).
 
-#### `system_alerts`
-Alertas do sistema para o painel admin.
-
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid | ID do alerta |
-| type | enum | error_spike, slow_processing, high_usage, api_error |
-| severity | enum | info, warning, critical |
-| message | text | Mensagem do alerta |
-| resolved | boolean | Alerta resolvido? |
+#### `test_links`
+Links de teste com créditos limitados, vinculados a um time.
 
 #### `user_roles`
-Controle de acesso ao painel administrativo.
+Controle de acesso ao painel admin (roles: `admin`, `super_admin`).
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| user_id | uuid | ID do usuário Supabase Auth |
-| role | enum | admin, super_admin |
+#### `system_alerts`
+Alertas do sistema (error_spike, slow_processing, high_usage, api_error) com severidade e status de resolução.
+
+#### `daily_stats`
+Estatísticas diárias por time.
+
+#### `consent_logs`
+Registro de consentimento dos usuários.
+
+#### `health_checks`
+Registros de verificação de saúde dos serviços.
+
+#### `system_settings`
+Configurações globais do sistema (chave-valor).
 
 ---
 
-## Secrets (Variáveis de Ambiente)
+## Painel Administrativo
 
-### Secrets Obrigatórios no Supabase
+Acessível em `/admin` com autenticação via Supabase Auth.
 
+### Funcionalidades
+- **Dashboard** — Visão geral com métricas e seletor de time
+- **Provadores (Teams)** — CRUD de times com configuração visual de assets, branding e prompts
+- **Gerações** — Tabela de todas as gerações com filtros
+- **Estatísticas** — Gráficos e métricas por período
+- **Status do Sistema** — Health checks dos serviços
+- **Alertas** — Alertas ativos e histórico
+- **Configurações** — Settings globais
+
+### Acesso Admin
+```
+Email: admin@franframe.com
+```
+
+---
+
+## Secrets e Variáveis
+
+### Supabase Secrets
 | Nome | Descrição |
 |------|-----------|
-| `REPLICATE_API_TOKEN` | API Token do Replicate para geração de imagens |
-| `ACCESS_PASSWORD` | Senha para criar primeiro admin (opcional) |
+| `REPLICATE_API_TOKEN` | Token padrão do Replicate (fallback se time não tiver próprio) |
+| `ACCESS_PASSWORD` | Senha para criar primeiro admin |
 
-### Variáveis do Frontend (.env)
-
+### Frontend (.env)
 ```env
 VITE_SUPABASE_PROJECT_ID="yxtglwbrdtwmxwrrhroy"
 VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGc..."
 VITE_SUPABASE_URL="https://yxtglwbrdtwmxwrrhroy.supabase.co"
 ```
 
-**IMPORTANTE**: O arquivo `.env` é auto-gerado pelo Lovable Cloud e não deve ser editado manualmente.
+---
+
+## Deploy (Vercel)
+
+O arquivo `vercel.json` configura SPA rewrites para que todas as rotas sejam tratadas pelo React Router:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
 
 ---
 
 ## Troubleshooting
 
-### Erro: "Sessão expirada" (401)
+### Erro 404 na Vercel
+**Causa**: Rota do React Router não reconhecida pelo servidor.
+**Solução**: Verificar se `vercel.json` tem o rewrite configurado.
 
-**Causa**: Token FanFrame expirado ou inválido.
+### Sessão expirada (401)
+**Causa**: Token WordPress expirado.
+**Solução**: Usuário deve reabrir pelo link original com `?code=`.
 
-**Solução**: 
-- Usuário deve reabrir pelo QR Code do Memorial
-- O token é limpo automaticamente e o usuário redirecionado
+### Sem créditos
+**Causa**: Saldo zerado.
+**Solução**: Comprar créditos via link configurado no time ou usar link de teste.
 
-### Erro: "no_credits"
+### Download abre link em vez de baixar
+**Causa**: CORS ou fallback incorreto.
+**Solução**: O sistema usa fetch → blob → createObjectURL → anchor.download para garantir download direto.
 
-**Causa**: Usuário sem créditos para gerar imagem.
-
-**Solução**: 
-- Usuário deve comprar créditos via FanFrame
-- Botões de compra redirecionam para site externo
-
-### Imagem não gerada / Timeout
-
-**Causa**: Processamento demorado do Replicate (normal: 30-60s).
-
-**Solução**:
-- O sistema usa webhooks para receber o resultado
-- Verificar logs da edge function `replicate-webhook`
-
-### Admin não consegue acessar
-
-**Causa**: Usuário não tem role de admin.
-
-**Solução**:
-```sql
--- Criar primeiro admin (necessita ACCESS_PASSWORD configurado)
--- Ou inserir diretamente:
-INSERT INTO user_roles (user_id, role)
-VALUES ('uuid_do_usuario', 'super_admin');
-```
-
----
-
-## Contatos e Recursos
-
-- **Documentação Supabase**: https://supabase.com/docs
-- **Documentação Replicate**: https://replicate.com/docs
-- **Documentação FanFrame**: Documento interno fornecido pelo Memorial SPFC
+### Marca d'água aparecendo sem configuração
+**Causa**: Campo `watermark_url` preenchido no time.
+**Solução**: Limpar o campo de marca d'água no branding do time via painel admin.
 
 ---
 
 ## Changelog
+
+### v2.0.0 (Abril 2026)
+- Migração para plataforma multi-tenant FanFrame
+- Roteamento por slug (`/{slug}`)
+- Configuração isolada por time (branding, assets, prompts, tokens)
+- Sistema de links de teste com créditos independentes
+- Deploy na Vercel (franframe.vercel.app)
+- Painel admin unificado com gerenciamento visual de times
+- Download robusto com fallback blob
 
 ### v1.1.0 (Fevereiro 2026)
 - Migração para Replicate API
@@ -471,8 +388,7 @@ VALUES ('uuid_do_usuario', 'super_admin');
 - Realtime subscriptions para status
 
 ### v1.0.0 (Janeiro 2026)
-- Lançamento inicial
-- Integração FanFrame
+- Lançamento inicial (Provador Tricolor Virtual)
+- Integração FanFrame/WordPress
 - Painel administrativo
-- 4 cenários de fundo (Morumbi, Memorial, Ídolos, Troféus)
-- 3 camisas (Manto 1, 2 e 3)
+- 4 cenários de fundo, 3 camisas
