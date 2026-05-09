@@ -35,18 +35,11 @@ interface BackgroundItem {
   visible: boolean;
 }
 
-interface PurchaseUrlEntry {
-  label: string;
-  url: string;
-}
-
 interface TeamData {
   id?: string;
   slug: string;
   name: string;
   subdomain: string;
-  wordpress_api_base: string;
-  purchase_urls: Record<string, string>;
   replicate_api_token: string | null;
   generation_prompt: string | null;
   shirts: ShirtItem[];
@@ -66,8 +59,6 @@ const emptyTeam: TeamData = {
   slug: "",
   name: "",
   subdomain: "",
-  wordpress_api_base: "",
-  purchase_urls: {},
   replicate_api_token: null,
   generation_prompt: null,
   shirts: [],
@@ -103,7 +94,6 @@ export default function TeamEdit() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [showToken, setShowToken] = useState(false);
-  const [purchaseUrls, setPurchaseUrls] = useState<PurchaseUrlEntry[]>([]);
 
   useEffect(() => {
     if (!isNew && slug) {
@@ -130,8 +120,6 @@ export default function TeamEdit() {
       slug: data.slug,
       name: data.name,
       subdomain: data.subdomain,
-      wordpress_api_base: data.wordpress_api_base,
-      purchase_urls: (data.purchase_urls as Record<string, string>) || {},
       replicate_api_token: data.replicate_api_token,
       generation_prompt: data.generation_prompt,
       shirts: (data.shirts as unknown as ShirtItem[]) || [],
@@ -146,9 +134,6 @@ export default function TeamEdit() {
     };
 
     setForm(teamData);
-    setPurchaseUrls(
-      Object.entries(teamData.purchase_urls).map(([label, url]) => ({ label, url }))
-    );
     setLoading(false);
   };
 
@@ -205,44 +190,21 @@ export default function TeamEdit() {
     updateField("backgrounds", form.backgrounds.filter((_, i) => i !== index));
   };
 
-  // --- Purchase URLs ---
-  const addPurchaseUrl = () => {
-    setPurchaseUrls([...purchaseUrls, { label: "", url: "" }]);
-  };
-
-  const updatePurchaseUrl = (index: number, field: "label" | "url", value: string) => {
-    const urls = [...purchaseUrls];
-    urls[index][field] = value;
-    setPurchaseUrls(urls);
-  };
-
-  const removePurchaseUrl = (index: number) => {
-    setPurchaseUrls(purchaseUrls.filter((_, i) => i !== index));
-  };
-
   // --- Save ---
   const handleSave = async () => {
     // Auto-fill required fields with defaults if empty
     const slug = form.slug || `time-${generateHash()}`;
     const name = form.name || "Novo Provador";
     const subdomain = form.subdomain || slug;
-    const wordpress_api_base = form.wordpress_api_base || "https://example.com/wp-json";
-    
-    const formToSave = { ...form, slug, name, subdomain, wordpress_api_base };
+
+    const formToSave = { ...form, slug, name, subdomain };
 
     setSaving(true);
-
-    const purchaseUrlsObj: Record<string, string> = {};
-    purchaseUrls.forEach((p) => {
-      if (p.label && p.url) purchaseUrlsObj[p.label] = p.url;
-    });
 
     const payload = {
       slug: formToSave.slug,
       name: formToSave.name,
       subdomain: formToSave.subdomain,
-      wordpress_api_base: formToSave.wordpress_api_base,
-      purchase_urls: purchaseUrlsObj,
       replicate_api_token: formToSave.replicate_api_token || null,
       generation_prompt: formToSave.generation_prompt || null,
       shirts: formToSave.shirts as any,
