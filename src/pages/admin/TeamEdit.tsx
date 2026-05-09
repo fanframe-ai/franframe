@@ -349,16 +349,6 @@ export default function TeamEdit() {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-2">
-                  <Label>URL da API WordPress *</Label>
-                  <Input
-                    value={form.wordpress_api_base}
-                    onChange={(e) => updateField("wordpress_api_base", e.target.value)}
-                    placeholder="https://example.com/wp-json/vf-fanframe/v1"
-                  />
-                  <p className="text-xs text-muted-foreground">Endpoint base da API FanFrame no WordPress do time</p>
-                </div>
-
-                <div className="space-y-2">
                   <Label>Token Replicate API</Label>
                   <div className="flex gap-2">
                     <Input
@@ -383,37 +373,6 @@ export default function TeamEdit() {
                     rows={4}
                   />
                   <p className="text-xs text-muted-foreground">Prompt customizado para a IA de troca de roupa</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>URLs de Compra de Créditos</Label>
-                    <Button size="sm" variant="outline" onClick={addPurchaseUrl}>
-                      <Plus className="h-4 w-4 mr-1" /> Adicionar
-                    </Button>
-                  </div>
-                  {purchaseUrls.length === 0 && (
-                    <p className="text-sm text-muted-foreground py-2">Nenhuma URL de compra configurada</p>
-                  )}
-                  {purchaseUrls.map((entry, i) => (
-                    <div key={i} className="flex gap-2 items-center">
-                      <Input
-                        value={entry.label}
-                        onChange={(e) => updatePurchaseUrl(i, "label", e.target.value)}
-                        placeholder="Nome do pacote (ex: 5 créditos)"
-                        className="flex-1"
-                      />
-                      <Input
-                        value={entry.url}
-                        onChange={(e) => updatePurchaseUrl(i, "url", e.target.value)}
-                        placeholder="https://loja.com/pacote"
-                        className="flex-1"
-                      />
-                      <Button size="icon" variant="ghost" className="text-destructive shrink-0" onClick={() => removePurchaseUrl(i)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </Card>
