@@ -1,22 +1,27 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { WelcomeScreen } from "@/components/wizard/WelcomeScreen";
 import { TutorialScreen } from "@/components/wizard/TutorialScreen";
 import { ShirtSelectionScreen } from "@/components/wizard/ShirtSelectionScreen";
 import { BackgroundSelectionScreen } from "@/components/wizard/BackgroundSelectionScreen";
 import { UploadScreen } from "@/components/wizard/UploadScreen";
 import { ResultScreen } from "@/components/wizard/ResultScreen";
+import { BuyCreditsScreen } from "@/components/wizard/BuyCreditsScreen";
 import { HistoryScreen } from "@/components/wizard/HistoryScreen";
+import { AccessDeniedScreen } from "@/components/wizard/AccessDeniedScreen";
 import { StepIndicator } from "@/components/wizard/StepIndicator";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
+import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
+import { useFanFrameCredits } from "@/hooks/useFanFrameCredits";
 import { useTestToken } from "@/hooks/useTestToken";
+import { FANFRAME_ENABLED } from "@/config/fanframe";
 import { useTeam, type TeamShirt, type TeamBackground } from "@/contexts/TeamContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-type WizardStep = "welcome" | "tutorial" | "shirt" | "background" | "upload" | "result" | "history";
+type WizardStep = "welcome" | "buy-credits" | "tutorial" | "shirt" | "background" | "upload" | "result" | "history";
 
-const STEP_ORDER: WizardStep[] = ["welcome", "tutorial", "shirt", "background", "upload", "result"];
-const STEP_LABELS = ["Início", "Tutorial", "Manto", "Cenário", "Foto", "Resultado"];
+const STEP_ORDER: WizardStep[] = ["welcome", "buy-credits", "tutorial", "shirt", "background", "upload", "result"];
+const STEP_LABELS = ["Início", "Créditos", "Tutorial", "Manto", "Cenário", "Foto", "Resultado"];
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<WizardStep>("welcome");
@@ -25,6 +30,22 @@ const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const { team, isLoading: teamLoading } = useTeam();
 
+  const { 
+    isAuthenticated, 
+    isLoading: authLoading, 
+    balance, 
+    updateBalance,
+    logout,
+    getStoredToken,
+    justExchangedRef,
+  } = useFanFrameAuth();
+
+  const { 
+    fetchBalance, 
+    isLoading: creditsLoading,
+    clearGenerationId 
+  } = useFanFrameCredits(logout);
+
   const {
     isTestMode,
     testBalance,
@@ -32,6 +53,59 @@ const Index = () => {
     debitTestCredit,
     refreshTestBalance,
   } = useTestToken();
+
+  // Detectar retorno do pagamento PagBank
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get("payment");
+    
+    if (paymentStatus === "success") {
+      // Limpar parâmetros da URL
+      window.history.replaceState({}, "", window.location.pathname);
+      
+      // Mostrar toast de sucesso
+      toast({
+        title: "Pagamento em processamento! 🎉",
+        description: "Seu saldo será atualizado em instantes",
+      });
+      
+      // Atualizar saldo após pequeno delay para dar tempo do webhook processar
+      setTimeout(async () => {
+        const newBalance = await fetchBalance();
+        if (newBalance !== null) {
+          updateBalance(newBalance);
+        }
+      }, 2000);
+    }
+  }, [fetchBalance, updateBalance]);
+
+  // Fetch balance on initial auth (skip if we just exchanged - balance already set)
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadInitialBalance = async () => {
+      // Se acabou de fazer exchange, o balance já veio correto do response
+      if (justExchangedRef.current) {
+        console.log("[Index] Skipping balance fetch - just exchanged, balance already set");
+        justExchangedRef.current = false;
+        return;
+      }
+      
+      if (isAuthenticated && getStoredToken()) {
+        const newBalance = await fetchBalance();
+        if (isMounted && newBalance !== null) {
+          updateBalance(newBalance);
+        }
+      }
+    };
+    
+    loadInitialBalance();
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const goToStep = useCallback((step: WizardStep) => {
     setCurrentStep(step);
@@ -54,25 +128,32 @@ const Index = () => {
   }, []);
 
   const handleTryAgain = useCallback(() => {
+    clearGenerationId();
     setSelectedShirt(null);
     setSelectedBackground(null);
     goToStep("shirt");
-  }, [goToStep]);
+  }, [clearGenerationId, goToStep]);
+
+  const handleBalanceUpdate = useCallback((newBalance: number) => {
+    updateBalance(newBalance);
+  }, [updateBalance]);
 
   const handleNoCredits = useCallback(() => {
-    toast({
-      title: "Sem créditos disponíveis",
-      description: "Solicite um link de acesso para o seu time.",
-      variant: "destructive",
-    });
-    goToStep("welcome");
+    goToStep("buy-credits");
   }, [goToStep]);
+
+  const handleRefreshBalance = useCallback(async () => {
+    const newBalance = await fetchBalance();
+    if (newBalance !== null) {
+      updateBalance(newBalance);
+    }
+  }, [fetchBalance, updateBalance]);
 
   // Check if running inside admin preview
   const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
 
   // Loading state
-  if (teamLoading || testTokenLoading) {
+  if (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && (authLoading || teamLoading || testTokenLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -80,8 +161,12 @@ const Index = () => {
     );
   }
 
-  const effectiveBalance = isAdminPreview ? 999 : isTestMode ? testBalance : 0;
-  const hasCredits = effectiveBalance > 0;
+  // Not authenticated (skip auth check for test mode and admin preview)
+  if (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && !isAuthenticated) {
+    return <AccessDeniedScreen />;
+  }
+
+  const effectiveBalance = isAdminPreview ? 999 : isTestMode ? testBalance : balance;
   const currentStepNumber = STEP_ORDER.indexOf(currentStep) + 1;
   const showStepIndicator = currentStep !== "welcome" && currentStep !== "result" && currentStep !== "history";
 
@@ -94,12 +179,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden" style={teamColorStyles}>
       {/* Credits Display */}
-      {isTestMode && !isAdminPreview && (
+      {(FANFRAME_ENABLED || isTestMode) && !isAdminPreview && (
         <div className="fixed top-14 right-2 sm:top-16 sm:right-4 z-50 safe-right">
           <CreditsDisplay 
             balance={effectiveBalance} 
-            isLoading={false}
-            onRefresh={refreshTestBalance}
+            isLoading={isTestMode ? false : creditsLoading}
+            onRefresh={isTestMode ? refreshTestBalance : handleRefreshBalance}
           />
         </div>
       )}
@@ -117,21 +202,35 @@ const Index = () => {
           onStart={async () => {
             if (isTestMode) {
               await refreshTestBalance();
-              if (testBalance <= 0) {
-                handleNoCredits();
-                return;
-              }
+              goToStep(testBalance <= 0 ? "buy-credits" : "tutorial");
+              return;
             }
-            goToStep("tutorial");
+            // Buscar saldo fresco ao iniciar
+            const freshBalance = await fetchBalance();
+            if (freshBalance !== null) {
+              updateBalance(freshBalance);
+            }
+            const currentBalance = freshBalance ?? effectiveBalance;
+            goToStep(FANFRAME_ENABLED && currentBalance <= 0 ? "buy-credits" : "tutorial");
           }}
           onHistory={() => goToStep("history")}
+        />
+      )}
+
+      {currentStep === "buy-credits" && (
+        <BuyCreditsScreen 
+          balance={effectiveBalance}
+          onRefreshBalance={handleRefreshBalance}
+          isRefreshing={creditsLoading}
+          onContinue={effectiveBalance > 0 ? () => goToStep("tutorial") : undefined}
+          fetchBalance={fetchBalance}
         />
       )}
 
       {currentStep === "tutorial" && (
         <TutorialScreen 
           onContinue={() => goToStep("shirt")} 
-          onBack={() => goToStep("welcome")}
+          onBack={() => goToStep(FANFRAME_ENABLED && effectiveBalance <= 0 ? "buy-credits" : "welcome")}
         />
       )}
 
@@ -149,8 +248,8 @@ const Index = () => {
           selectedBackground={selectedBackground}
           onSelectBackground={handleBackgroundSelect}
           onContinue={() => {
-            if (!hasCredits) {
-              handleNoCredits();
+            if (effectiveBalance <= 0) {
+              goToStep("buy-credits");
               return;
             }
             goToStep("upload");
@@ -168,11 +267,20 @@ const Index = () => {
             if (isTestMode) {
               await refreshTestBalance();
               if (testBalance <= 0) {
-                handleNoCredits();
+                goToStep("buy-credits");
                 return;
               }
-            } else if (!isAdminPreview) {
-              handleNoCredits();
+              goToStep("result");
+              return;
+            }
+            // Sempre buscar saldo fresco antes de gerar
+            const freshBalance = await fetchBalance();
+            if (freshBalance !== null) {
+              updateBalance(freshBalance);
+            }
+            const currentBalance = freshBalance ?? effectiveBalance;
+            if (currentBalance <= 0) {
+              goToStep("buy-credits");
               return;
             }
             goToStep("result");
@@ -188,6 +296,7 @@ const Index = () => {
           selectedBackground={selectedBackground}
           balance={effectiveBalance}
           onTryAgain={handleTryAgain}
+          onBalanceUpdate={handleBalanceUpdate}
           onNoCredits={handleNoCredits}
           onHistory={() => goToStep("history")}
           onTestDebit={isTestMode ? async () => {
