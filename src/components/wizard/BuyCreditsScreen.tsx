@@ -25,8 +25,6 @@ export const BuyCreditsScreen = ({
   onContinue,
 }: BuyCreditsScreenProps) => {
   const { team } = useTeam();
-  
-  const purchaseUrls = team?.purchase_urls || {};
 
   const handlePurchaseClick = (pkg: PackageInfo, event: React.MouseEvent<HTMLAnchorElement>) => {
     const timestamp = new Date().toISOString();
@@ -39,21 +37,21 @@ export const BuyCreditsScreen = ({
       credits: 1, 
       price: "R$ 5,90", 
       highlight: false,
-      checkoutUrl: purchaseUrls.credits1 || "https://timaotourvirtual.com.br/checkout?add-to-cart=67822"
+      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67822"
     },
     { 
       credits: 3, 
       price: "R$ 16,90", 
       highlight: true,
       badge: "Mais Popular",
-      checkoutUrl: purchaseUrls.credits3 || "https://timaotourvirtual.com.br/checkout?add-to-cart=67824"
+      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67824"
     },
     { 
       credits: 7, 
       price: "R$ 34,90", 
       highlight: false,
       badge: "Melhor Valor",
-      checkoutUrl: purchaseUrls.credits7 || "https://timaotourvirtual.com.br/checkout?add-to-cart=67825"
+      checkoutUrl: "https://timaotourvirtual.com.br/checkout?add-to-cart=67825"
     },
   ];
 
