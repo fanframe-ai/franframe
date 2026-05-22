@@ -35,11 +35,6 @@ interface BackgroundItem {
   visible: boolean;
 }
 
-interface PurchaseUrlEntry {
-  label: string;
-  url: string;
-}
-
 interface TeamData {
   id?: string;
   slug: string;
@@ -99,7 +94,6 @@ export default function TeamEdit() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [showToken, setShowToken] = useState(false);
-  const [purchaseUrls, setPurchaseUrls] = useState<PurchaseUrlEntry[]>([]);
 
   useEffect(() => {
     if (!isNew && slug) {
@@ -194,21 +188,6 @@ export default function TeamEdit() {
 
   const removeBackground = (index: number) => {
     updateField("backgrounds", form.backgrounds.filter((_, i) => i !== index));
-  };
-
-  // --- Purchase URLs ---
-  const addPurchaseUrl = () => {
-    setPurchaseUrls([...purchaseUrls, { label: "", url: "" }]);
-  };
-
-  const updatePurchaseUrl = (index: number, field: "label" | "url", value: string) => {
-    const urls = [...purchaseUrls];
-    urls[index][field] = value;
-    setPurchaseUrls(urls);
-  };
-
-  const removePurchaseUrl = (index: number) => {
-    setPurchaseUrls(purchaseUrls.filter((_, i) => i !== index));
   };
 
   // --- Save ---
