@@ -8,6 +8,7 @@ import { useTeam } from "@/contexts/TeamContext";
 import { useConsentLog } from "@/hooks/useConsentLog";
 import { useFanFrameAuth } from "@/hooks/useFanFrameAuth";
 import heic2any from "heic2any";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 // Formatos suportados pela API OpenAI
 const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/webp"];
@@ -38,6 +39,7 @@ export const UploadScreen = ({
   const { logConsent, CONSENT_TEXT } = useConsentLog();
   const { getStoredToken } = useFanFrameAuth();
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   const t = team?.text_overrides || {};
 
   const convertHeicToJpeg = async (file: File): Promise<Blob> => {

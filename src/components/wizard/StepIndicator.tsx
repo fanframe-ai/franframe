@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useTeam } from "@/contexts/TeamContext";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -9,6 +10,7 @@ interface StepIndicatorProps {
 
 export const StepIndicator = ({ currentStep, totalSteps, labels }: StepIndicatorProps) => {
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   const pc = accent;
 
   return (

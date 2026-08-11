@@ -5,6 +5,7 @@ import { useTeam } from "@/contexts/TeamContext";
 import { ASSET_URLS } from "@/config/fanframe";
 import beforeExampleLocal from "@/assets/before-example.jpg";
 import afterExampleLocal from "@/assets/after-example.png";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface TutorialScreenProps {
   onContinue: () => void;
@@ -13,6 +14,7 @@ interface TutorialScreenProps {
 
 export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;

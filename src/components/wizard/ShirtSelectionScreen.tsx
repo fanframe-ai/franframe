@@ -3,6 +3,7 @@ import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeam, type TeamShirt } from "@/contexts/TeamContext";
 import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 // Re-export for backward compatibility
 export type Shirt = TeamShirt;
@@ -22,6 +23,7 @@ export const ShirtSelectionScreen = ({
 }: ShirtSelectionScreenProps) => {
   const canContinue = selectedShirt !== null;
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   const { getName, getSubtitle, isVisible } = useAssetTextOverrides("shirts_text_overrides");
   const t = team?.text_overrides || {};
   

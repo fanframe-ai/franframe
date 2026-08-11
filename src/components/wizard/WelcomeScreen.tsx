@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { useTeam } from "@/contexts/TeamContext";
 import { ASSET_URLS } from "@/config/fanframe";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -10,6 +11,7 @@ interface WelcomeScreenProps {
 
 export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;

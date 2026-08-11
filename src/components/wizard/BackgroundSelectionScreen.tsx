@@ -3,6 +3,7 @@ import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeam, type TeamBackground } from "@/contexts/TeamContext";
 import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 // Re-export for backward compatibility
 export type { TeamBackground as Background } from "@/contexts/TeamContext";
@@ -22,6 +23,7 @@ export const BackgroundSelectionScreen = ({
 }: BackgroundSelectionScreenProps) => {
   const canContinue = selectedBackground !== null;
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   const { getName, getSubtitle, isVisible } = useAssetTextOverrides("backgrounds_text_overrides");
   const t = team?.text_overrides || {};
   

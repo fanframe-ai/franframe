@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFanFrameCredits } from "@/hooks/useFanFrameCredits";
 import { FANFRAME_ERROR_CODES, getAssetFullUrl } from "@/config/fanframe";
 import { useQueueSubscription, useQueueStatusCheck } from "@/hooks/useQueueSubscription";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface ResultScreenProps {
   userImage: string;
@@ -71,6 +72,7 @@ export const ResultScreen = ({
   const hasDebitedRef = useRef(false);
   const { toast } = useToast();
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
 
   const { 
     debitCredit, 

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Coins, RefreshCw, CreditCard } from "lucide-react";
 import { useTeam } from "@/contexts/TeamContext";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface BuyCreditsScreenProps {
   balance: number;
@@ -25,6 +26,7 @@ export const BuyCreditsScreen = ({
   onContinue,
 }: BuyCreditsScreenProps) => {
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
 
   const handlePurchaseClick = (pkg: PackageInfo, event: React.MouseEvent<HTMLAnchorElement>) => {
     const timestamp = new Date().toISOString();
