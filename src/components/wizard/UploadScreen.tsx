@@ -290,7 +290,7 @@ export const UploadScreen = ({
           disabled={!uploadedImage || isConverting || !hasConsented || isLoggingConsent}
           size="lg"
           className="flex-1 transition-all duration-300 hover:scale-105 hover:opacity-90 disabled:opacity-50 disabled:hover:scale-100 h-12 text-base font-bold"
-          style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+          style={{ backgroundColor: accent, color: accentFg }}
         >
           {isLoggingConsent ? (
             <>

@@ -86,7 +86,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
           <Button 
             onClick={onBack} 
             className="mt-6 hover:opacity-90"
-            style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+            style={{ backgroundColor: accent, color: accentFg }}
           >
             Gerar minha primeira foto
           </Button>
