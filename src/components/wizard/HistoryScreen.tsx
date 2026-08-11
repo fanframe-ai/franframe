@@ -4,6 +4,7 @@ import { ArrowLeft, Download, X, Clock, Loader2 } from "lucide-react";
 import { useGenerationHistory, type HistoryEntry } from "@/hooks/useGenerationHistory";
 import { useToast } from "@/hooks/use-toast";
 import { useTeam } from "@/contexts/TeamContext";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface HistoryScreenProps {
   onBack: () => void;
@@ -20,6 +21,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
   const { toast } = useToast();
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
 
   const handleDownload = async (entry: HistoryEntry) => {
     try {
@@ -86,7 +88,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
           <Button 
             onClick={onBack} 
             className="mt-6 hover:opacity-90"
-            style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+            style={{ backgroundColor: accent, color: accentFg }}
           >
             Gerar minha primeira foto
           </Button>

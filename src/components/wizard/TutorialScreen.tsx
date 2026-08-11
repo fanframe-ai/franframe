@@ -5,6 +5,7 @@ import { useTeam } from "@/contexts/TeamContext";
 import { ASSET_URLS } from "@/config/fanframe";
 import beforeExampleLocal from "@/assets/before-example.jpg";
 import afterExampleLocal from "@/assets/after-example.png";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface TutorialScreenProps {
   onContinue: () => void;
@@ -13,6 +14,7 @@ interface TutorialScreenProps {
 
 export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
@@ -94,7 +96,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
                 />
               </div>
               <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 rounded"
-                style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+                style={{ backgroundColor: accent, color: accentFg }}
               >
                 Depois
               </span>
@@ -132,8 +134,8 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
           size="lg"
           className="btn-mobile-cta transition-all duration-300 hover:scale-105 hover:opacity-90 order-1"
           style={{ 
-            backgroundColor: team?.primary_color || '#FFFFFF', 
-            color: team?.secondary_color || '#000000' 
+            backgroundColor: accent, 
+            color: accentFg 
           }}
         >
           COMEÇAR AGORA

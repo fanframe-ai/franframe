@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Coins, RefreshCw, CreditCard } from "lucide-react";
 import { useTeam } from "@/contexts/TeamContext";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface BuyCreditsScreenProps {
   balance: number;
@@ -25,6 +26,7 @@ export const BuyCreditsScreen = ({
   onContinue,
 }: BuyCreditsScreenProps) => {
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
 
   const handlePurchaseClick = (pkg: PackageInfo, event: React.MouseEvent<HTMLAnchorElement>) => {
     const timestamp = new Date().toISOString();
@@ -79,12 +81,12 @@ export const BuyCreditsScreen = ({
           <div
             key={pkg.credits}
             className="glass-card p-4 sm:p-5 rounded-xl relative"
-            style={pkg.highlight ? { boxShadow: `0 0 0 2px ${team?.primary_color || '#F1AF07'}` } : {}}
+            style={pkg.highlight ? { boxShadow: `0 0 0 2px ${accent}` } : {}}
           >
             {pkg.badge && (
               <span 
                 className="absolute -top-2 right-3 sm:right-4 px-2 py-0.5 text-[10px] sm:text-xs font-bold rounded-full whitespace-nowrap"
-                style={{ backgroundColor: team?.primary_color || '#F1AF07', color: team?.secondary_color || '#000000' }}
+                style={{ backgroundColor: accent, color: accentFg }}
               >
                 {pkg.badge}
               </span>
@@ -105,7 +107,7 @@ export const BuyCreditsScreen = ({
                     ? "hover:opacity-90" 
                     : "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground"
                 }`}
-                style={pkg.highlight ? { backgroundColor: team?.primary_color || '#F1AF07', color: team?.secondary_color || '#000000' } : {}}
+                style={pkg.highlight ? { backgroundColor: accent, color: accentFg } : {}}
               >
                 <CreditCard className="w-4 h-4" />
                 Comprar

@@ -3,6 +3,7 @@ import { Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeam, type TeamBackground } from "@/contexts/TeamContext";
 import { useAssetTextOverrides } from "@/hooks/useAssetTextOverrides";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 // Re-export for backward compatibility
 export type { TeamBackground as Background } from "@/contexts/TeamContext";
@@ -22,6 +23,7 @@ export const BackgroundSelectionScreen = ({
 }: BackgroundSelectionScreenProps) => {
   const canContinue = selectedBackground !== null;
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   const { getName, getSubtitle, isVisible } = useAssetTextOverrides("backgrounds_text_overrides");
   const t = team?.text_overrides || {};
   
@@ -72,9 +74,9 @@ export const BackgroundSelectionScreen = ({
                     "flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center transition-all",
                     isSelected ? "border-white" : "border-white/30"
                   )}
-                  style={isSelected ? { backgroundColor: team?.primary_color || '#FFFFFF' } : {}}
+                  style={isSelected ? { backgroundColor: accent } : {}}
                 >
-                  {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: team?.secondary_color || '#000000' }} />}
+                  {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: accentFg }} />}
                 </div>
               </div>
             </button>
@@ -88,7 +90,7 @@ export const BackgroundSelectionScreen = ({
           disabled={!canContinue}
           size="lg"
           className="btn-mobile-cta transition-all duration-300 hover:scale-105 hover:opacity-90 disabled:opacity-50 disabled:hover:scale-100 order-1"
-          style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+          style={{ backgroundColor: accent, color: accentFg }}
         >
           Continuar
         </Button>

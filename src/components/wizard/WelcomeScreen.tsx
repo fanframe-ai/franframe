@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { useTeam } from "@/contexts/TeamContext";
 import { ASSET_URLS } from "@/config/fanframe";
+import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -10,6 +11,7 @@ interface WelcomeScreenProps {
 
 export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
   const { team } = useTeam();
+  const { accent, accentFg } = useTeamAccent();
   
   const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
   const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
@@ -58,7 +60,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           {/* After */}
           <div className="relative">
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 ring-offset-1 sm:ring-offset-2 ring-offset-black"
-              style={{ borderColor: team?.primary_color || '#FFFFFF', boxShadow: `0 0 20px ${team?.primary_color || '#FFFFFF'}33` }}
+              style={{ borderColor: accent, boxShadow: `0 0 20px ${accent}33` }}
             >
               <img 
                 src={tutorialAfter} 
@@ -68,7 +70,7 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
               />
             </div>
             <span className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs uppercase tracking-wider px-2 sm:px-3 py-0.5 sm:py-1 rounded font-semibold"
-              style={{ backgroundColor: team?.primary_color || '#FFFFFF', color: team?.secondary_color || '#000000' }}
+              style={{ backgroundColor: accent, color: accentFg }}
             >
               Depois
             </span>
@@ -81,8 +83,8 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           size="lg"
           className="btn-mobile-cta w-full max-w-xs sm:w-auto transition-all duration-300 hover:scale-105 hover:opacity-90"
           style={{ 
-            backgroundColor: team?.primary_color || '#FFFFFF', 
-            color: team?.secondary_color || '#000000' 
+            backgroundColor: accent, 
+            color: accentFg 
           }}
         >
           {t.welcome_cta || "EXPERIMENTAR AGORA"}
