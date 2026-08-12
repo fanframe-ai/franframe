@@ -66,6 +66,7 @@ export const ResultScreen = ({
   const [progress, setProgress] = useState(0);
   const [queueId, setQueueId] = useState<string | null>(null);
   const [queuePosition, setQueuePosition] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasStartedRef = useRef(false);
