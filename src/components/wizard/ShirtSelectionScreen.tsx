@@ -24,11 +24,16 @@ export const ShirtSelectionScreen = ({
   const canContinue = selectedShirt !== null;
   const { team } = useTeam();
   const { accent, accentFg } = useTeamAccent();
-  const { getName, getSubtitle, isVisible } = useAssetTextOverrides("shirts_text_overrides");
+  const { getName, getSubtitle, isVisible } = useAssetTextOverrides(
+    "shirts_text_overrides",
+    team?.slug === "corinthians"
+  );
   const t = team?.text_overrides || {};
   
   const shirts = team?.shirts || [];
-  const visibleShirts = shirts.filter(s => isVisible(s.id));
+  const visibleShirts = shirts.filter(
+    (s) => (s as { visible?: boolean }).visible !== false && isVisible(s.id)
+  );
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-4 pt-16 safe-bottom">
