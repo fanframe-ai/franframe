@@ -600,11 +600,12 @@ export const ResultScreen = ({
       <div className="w-full max-w-md space-y-2 animate-fade-in shrink-0" style={{ animationDelay: "0.3s" }}>
         <Button
           onClick={handleDownload}
+          disabled={isDownloading}
           className="w-full h-10 hover:opacity-90 transition-all text-sm font-bold"
           style={{ backgroundColor: accent, color: accentFg }}
         >
           <Download className="w-4 h-4 mr-2" />
-          Baixar Foto
+          {isDownloading ? "Baixando..." : "Baixar Foto"}
         </Button>
 
         <Button
