@@ -5,10 +5,14 @@ interface TextOverrides {
   [id: string]: { name?: string; subtitle?: string; hidden?: boolean };
 }
 
-export function useAssetTextOverrides(settingsKey: string) {
+export function useAssetTextOverrides(settingsKey: string, enabled: boolean = true) {
   const [overrides, setOverrides] = useState<TextOverrides>({});
 
   useEffect(() => {
+    if (!enabled) {
+      setOverrides({});
+      return;
+    }
     (async () => {
       const { data } = await supabase
         .from("system_settings")
@@ -19,7 +23,7 @@ export function useAssetTextOverrides(settingsKey: string) {
         try { setOverrides(JSON.parse(data.value)); } catch {}
       }
     })();
-  }, [settingsKey]);
+  }, [settingsKey, enabled]);
 
   const getName = (id: string, fallback: string) => overrides[id]?.name ?? fallback;
   const getSubtitle = (id: string, fallback: string) => overrides[id]?.subtitle ?? fallback;
