@@ -13,7 +13,7 @@ const corsHeaders = {
 
 const DEBUG_LOG_TRUNCATE = 2500;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const REPLICATE_API_URL = "https://api.replicate.com/v1/models/bytedance/seedream-4.5/predictions";
+const REPLICATE_API_URL = "https://api.replicate.com/v1/models/bytedance/seedream-5-pro/predictions";
 
 // Webhook URL for async callbacks
 const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/replicate-webhook`;
@@ -658,8 +658,7 @@ serve(async (req) => {
           image_input: [userImageUrl, shirtAssetUrl, backgroundAssetUrl],
           size: "2K",
           aspect_ratio: "match_input_image",
-          max_images: 1,
-          sequential_image_generation: "disabled",
+          output_format: "png",
         },
         webhook: WEBHOOK_URL,
         webhook_events_filter: ["completed"],
