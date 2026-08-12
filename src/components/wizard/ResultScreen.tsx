@@ -66,6 +66,7 @@ export const ResultScreen = ({
   const [progress, setProgress] = useState(0);
   const [queueId, setQueueId] = useState<string | null>(null);
   const [queuePosition, setQueuePosition] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasStartedRef = useRef(false);
@@ -308,19 +309,43 @@ export const ResultScreen = ({
   }, [startGeneration]);
 
   const fetchImageAsBlob = async (imageUrl: string): Promise<Blob> => {
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { mode: "cors", cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.blob();
   };
 
-  const downloadBlob = (blob: Blob, filename: string) => {
+  const downloadBlob = async (blob: Blob, filename: string) => {
+    const file = new File([blob], filename, { type: blob.type || "image/png" });
+
+    // iOS/Safari mobile ignora o atributo download: usa Web Share API (salvar em Fotos)
+    const canShareFile =
+      typeof navigator !== "undefined" &&
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [file] });
+    const isIOS =
+      typeof navigator !== "undefined" &&
+      (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+
+    if (isIOS && canShareFile) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") return;
+      }
+    }
+
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = blobUrl;
     link.download = filename;
+    link.rel = "noopener";
+    link.style.display = "none";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
   };
 
   const applyWatermark = async (imageBase64: string): Promise<Blob> => {
@@ -385,7 +410,8 @@ export const ResultScreen = ({
   };
 
   const handleDownload = async () => {
-    if (!generatedImage) return;
+    if (!generatedImage || isDownloading) return;
+    setIsDownloading(true);
 
     const teamSlug = team?.slug || "provador";
     const filename = `${teamSlug}-${Date.now()}.png`;
@@ -395,7 +421,7 @@ export const ResultScreen = ({
       if (!team?.watermark_url) {
         console.log("No watermark configured, downloading directly...");
         const blob = await fetchImageAsBlob(generatedImage);
-        downloadBlob(blob, filename);
+        await downloadBlob(blob, filename);
         toast({
           title: "Download iniciado!",
           description: "Sua foto está sendo baixada",
@@ -420,7 +446,7 @@ export const ResultScreen = ({
       }
       
       const watermarkedBlob = await applyWatermark(imageToProcess);
-      downloadBlob(watermarkedBlob, filename);
+      await downloadBlob(watermarkedBlob, filename);
 
       toast({
         title: "Download iniciado!",
@@ -438,7 +464,7 @@ export const ResultScreen = ({
       // Fallback: download without watermark using blob
       try {
         const blob = await fetchImageAsBlob(generatedImage);
-        downloadBlob(blob, filename);
+        await downloadBlob(blob, filename);
       } catch (fallbackError) {
         console.error("Fallback download also failed:", fallbackError);
         toast({
@@ -447,6 +473,8 @@ export const ResultScreen = ({
           variant: "destructive",
         });
       }
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -572,11 +600,12 @@ export const ResultScreen = ({
       <div className="w-full max-w-md space-y-2 animate-fade-in shrink-0" style={{ animationDelay: "0.3s" }}>
         <Button
           onClick={handleDownload}
+          disabled={isDownloading}
           className="w-full h-10 hover:opacity-90 transition-all text-sm font-bold"
           style={{ backgroundColor: accent, color: accentFg }}
         >
           <Download className="w-4 h-4 mr-2" />
-          Baixar Foto
+          {isDownloading ? "Baixando..." : "Baixar Foto"}
         </Button>
 
         <Button
