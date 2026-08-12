@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Copy, Trash2, Loader2, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Plus, Copy, Trash2, Loader2, Link as LinkIcon, ExternalLink, Check, Pencil, X } from "lucide-react";
 
 interface TestLink {
   id: string;
@@ -31,6 +31,9 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("Link de teste");
   const [newCredits, setNewCredits] = useState(5);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editCredits, setEditCredits] = useState(5);
+  const [savingEdit, setSavingEdit] = useState(false);
   const { toast } = useToast();
 
   const publishedUrl = "https://franframe.vercel.app";
@@ -84,6 +87,35 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
     await supabase.from("test_links").delete().eq("id", id);
     fetchLinks();
     toast({ title: "Link removido" });
+  };
+
+  const startEdit = (link: TestLink) => {
+    setEditingId(link.id);
+    setEditCredits(link.credits_total);
+  };
+
+  const saveEdit = async (link: TestLink) => {
+    if (editCredits < link.credits_used) {
+      toast({
+        title: "Valor inválido",
+        description: `Já foram usados ${link.credits_used} créditos`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("test_links")
+      .update({ credits_total: editCredits } as any)
+      .eq("id", link.id);
+    setSavingEdit(false);
+    if (error) {
+      toast({ title: "Erro ao atualizar créditos", description: error.message, variant: "destructive" });
+      return;
+    }
+    setEditingId(null);
+    toast({ title: "Créditos atualizados!" });
+    fetchLinks();
   };
 
   const buildCleanUrl = (token: string) => `${publishedUrl}/${teamSlug}-${token}`;
