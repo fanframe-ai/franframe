@@ -152,8 +152,11 @@ const Index = () => {
   // Check if running inside admin preview
   const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
 
-  // Loading state
-  if (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && (authLoading || teamLoading || testTokenLoading)) {
+  // Loading state — never render the wizard before the team config is resolved
+  if (
+    teamLoading ||
+    (FANFRAME_ENABLED && !isAdminPreview && !isTestMode && (authLoading || testTokenLoading))
+  ) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

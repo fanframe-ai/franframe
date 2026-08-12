@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { useTeam } from "@/contexts/TeamContext";
-import { ASSET_URLS } from "@/config/fanframe";
 import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface WelcomeScreenProps {
@@ -13,8 +12,8 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
   const { team } = useTeam();
   const { accent, accentFg } = useTeamAccent();
   
-  const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
-  const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
+  const tutorialBefore = team?.tutorial_assets?.before || "";
+  const tutorialAfter = team?.tutorial_assets?.after || "";
   const teamName = team?.name || "Timão";
   const t = team?.text_overrides || {};
 
@@ -42,12 +41,16 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
           {/* Before */}
           <div className="relative">
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 border-white/20">
-              <img 
-                src={tutorialBefore} 
-                alt="Antes" 
-                loading="eager"
-                className="w-full h-full object-cover object-[center_20%]"
-              />
+              {tutorialBefore ? (
+                <img
+                  src={tutorialBefore}
+                  alt="Antes"
+                  loading="eager"
+                  className="w-full h-full object-cover object-[center_20%]"
+                />
+              ) : (
+                <div className="w-full h-full bg-secondary" />
+              )}
             </div>
             <span className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs uppercase tracking-wider bg-black/80 px-2 sm:px-3 py-0.5 sm:py-1 rounded text-white/60">
               Antes
@@ -62,12 +65,16 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
             <div className="w-28 h-36 sm:w-32 sm:h-40 md:w-40 md:h-52 rounded-xl overflow-hidden border-2 ring-offset-1 sm:ring-offset-2 ring-offset-black"
               style={{ borderColor: accent, boxShadow: `0 0 20px ${accent}33` }}
             >
-              <img 
-                src={tutorialAfter} 
-                alt="Depois" 
-                loading="eager"
-                className="w-full h-full object-cover"
-              />
+              {tutorialAfter ? (
+                <img
+                  src={tutorialAfter}
+                  alt="Depois"
+                  loading="eager"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-secondary" />
+              )}
             </div>
             <span className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs uppercase tracking-wider px-2 sm:px-3 py-0.5 sm:py-1 rounded font-semibold"
               style={{ backgroundColor: accent, color: accentFg }}
