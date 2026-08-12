@@ -197,11 +197,38 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
                       <code className="text-xs bg-muted px-2 py-0.5 rounded block truncate mt-1">
                         {teamSlug}-{link.token}
                       </code>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                        <span>Créditos: {link.credits_used}/{link.credits_total} usados ({remaining} restantes)</span>
-                        <span>•</span>
-                        <span>Criado: {new Date(link.created_at).toLocaleDateString("pt-BR")}</span>
-                      </div>
+                      {editingId === link.id ? (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Label className="text-xs">Créditos totais</Label>
+                          <Input
+                            type="number"
+                            min={link.credits_used}
+                            max={1000}
+                            className="h-8 w-24"
+                            value={editCredits}
+                            onChange={(e) => setEditCredits(Number(e.target.value))}
+                          />
+                          <Button size="icon" variant="ghost" className="h-8 w-8" disabled={savingEdit} onClick={() => saveEdit(link)} title="Salvar">
+                            {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingId(null)} title="Cancelar">
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span>Créditos: {link.credits_used}/{link.credits_total} usados ({remaining} restantes)</span>
+                          <button
+                            type="button"
+                            onClick={() => startEdit(link)}
+                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <Pencil className="h-3 w-3" /> Editar
+                          </button>
+                          <span>•</span>
+                          <span>Criado: {new Date(link.created_at).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Switch
