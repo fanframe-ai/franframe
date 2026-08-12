@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Copy, Trash2, Loader2, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Plus, Copy, Trash2, Loader2, Link as LinkIcon, ExternalLink, Check, Pencil, X } from "lucide-react";
 
 interface TestLink {
   id: string;
@@ -31,6 +31,9 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("Link de teste");
   const [newCredits, setNewCredits] = useState(5);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editCredits, setEditCredits] = useState(5);
+  const [savingEdit, setSavingEdit] = useState(false);
   const { toast } = useToast();
 
   const publishedUrl = "https://franframe.vercel.app";
@@ -84,6 +87,35 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
     await supabase.from("test_links").delete().eq("id", id);
     fetchLinks();
     toast({ title: "Link removido" });
+  };
+
+  const startEdit = (link: TestLink) => {
+    setEditingId(link.id);
+    setEditCredits(link.credits_total);
+  };
+
+  const saveEdit = async (link: TestLink) => {
+    if (editCredits < link.credits_used) {
+      toast({
+        title: "Valor inválido",
+        description: `Já foram usados ${link.credits_used} créditos`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("test_links")
+      .update({ credits_total: editCredits } as any)
+      .eq("id", link.id);
+    setSavingEdit(false);
+    if (error) {
+      toast({ title: "Erro ao atualizar créditos", description: error.message, variant: "destructive" });
+      return;
+    }
+    setEditingId(null);
+    toast({ title: "Créditos atualizados!" });
+    fetchLinks();
   };
 
   const buildCleanUrl = (token: string) => `${publishedUrl}/${teamSlug}-${token}`;
@@ -165,11 +197,38 @@ export function TestLinksManager({ teamId, teamSlug }: TestLinksManagerProps) {
                       <code className="text-xs bg-muted px-2 py-0.5 rounded block truncate mt-1">
                         {teamSlug}-{link.token}
                       </code>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                        <span>Créditos: {link.credits_used}/{link.credits_total} usados ({remaining} restantes)</span>
-                        <span>•</span>
-                        <span>Criado: {new Date(link.created_at).toLocaleDateString("pt-BR")}</span>
-                      </div>
+                      {editingId === link.id ? (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Label className="text-xs">Créditos totais</Label>
+                          <Input
+                            type="number"
+                            min={link.credits_used}
+                            max={1000}
+                            className="h-8 w-24"
+                            value={editCredits}
+                            onChange={(e) => setEditCredits(Number(e.target.value))}
+                          />
+                          <Button size="icon" variant="ghost" className="h-8 w-8" disabled={savingEdit} onClick={() => saveEdit(link)} title="Salvar">
+                            {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingId(null)} title="Cancelar">
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span>Créditos: {link.credits_used}/{link.credits_total} usados ({remaining} restantes)</span>
+                          <button
+                            type="button"
+                            onClick={() => startEdit(link)}
+                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <Pencil className="h-3 w-3" /> Editar
+                          </button>
+                          <span>•</span>
+                          <span>Criado: {new Date(link.created_at).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Switch
