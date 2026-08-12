@@ -1,10 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Camera, ShirtIcon, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
-import { useState } from "react";
 import { useTeam } from "@/contexts/TeamContext";
-import { ASSET_URLS } from "@/config/fanframe";
-import beforeExampleLocal from "@/assets/before-example.jpg";
-import afterExampleLocal from "@/assets/after-example.png";
 import { useTeamAccent } from "@/hooks/useTeamAccent";
 
 interface TutorialScreenProps {
@@ -16,13 +12,10 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
   const { team } = useTeam();
   const { accent, accentFg } = useTeamAccent();
   
-  const tutorialBefore = team?.tutorial_assets?.before || ASSET_URLS.tutorial.before;
-  const tutorialAfter = team?.tutorial_assets?.after || ASSET_URLS.tutorial.after;
+  const beforeSrc = team?.tutorial_assets?.before || "";
+  const afterSrc = team?.tutorial_assets?.after || "";
   const teamName = team?.name || "Time";
   const t = team?.text_overrides || {};
-  
-  const [beforeSrc, setBeforeSrc] = useState<string>(tutorialBefore);
-  const [afterSrc, setAfterSrc] = useState<string>(tutorialAfter);
 
   const steps = [
     {
@@ -64,13 +57,14 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
             {/* Before */}
             <div className="relative">
               <div className="aspect-[3/4] bg-secondary rounded-xl overflow-hidden">
-                <img 
-                  src={beforeSrc} 
-                  alt="Exemplo antes" 
-                  loading="lazy"
-                  className="w-full h-full object-cover object-[center_20%]"
-                  onError={() => setBeforeSrc(beforeExampleLocal)}
-                />
+                {beforeSrc && (
+                  <img
+                    src={beforeSrc}
+                    alt="Exemplo antes"
+                    loading="lazy"
+                    className="w-full h-full object-cover object-[center_20%]"
+                  />
+                )}
               </div>
               <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase bg-black/50 backdrop-blur px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                 Antes
@@ -87,13 +81,14 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
             {/* After */}
             <div className="relative">
               <div className="aspect-[3/4] bg-secondary rounded-xl overflow-hidden border-2 border-white/20">
-                <img 
-                  src={afterSrc} 
-                  alt="Exemplo depois com manto" 
-                  loading="lazy"
-                  className="w-full h-full object-cover object-top"
-                  onError={() => setAfterSrc(afterExampleLocal)}
-                />
+                {afterSrc && (
+                  <img
+                    src={afterSrc}
+                    alt="Exemplo depois com manto"
+                    loading="lazy"
+                    className="w-full h-full object-cover object-top"
+                  />
+                )}
               </div>
               <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-bold uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 rounded"
                 style={{ backgroundColor: accent, color: accentFg }}
