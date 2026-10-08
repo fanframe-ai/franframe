@@ -1,129 +1,38 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authenticate, getTeam, hash, serviceClient, wordpress } from '../_shared/auth.ts';
+import { body, endpoint, HttpError, json, requiredString } from '../_shared/http.ts';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-// Default fallback
-const DEFAULT_API_BASE = "https://timaotourvirtual.com.br/wp-json/vf-fanframe/v1";
-
-async function resolveApiBase(teamSlug?: string): Promise<string> {
-  if (!teamSlug) return DEFAULT_API_BASE;
-  
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    const { data } = await supabase
-      .from("teams")
-      .select("wordpress_api_base")
-      .eq("slug", teamSlug)
-      .eq("is_active", true)
-      .single();
-    
-    if (data?.wordpress_api_base) {
-      console.log(`[fanframe-proxy] Resolved API base for team ${teamSlug}: ${data.wordpress_api_base}`);
-      return data.wordpress_api_base;
-    }
-  } catch (err) {
-    console.error(`[fanframe-proxy] Error resolving team ${teamSlug}:`, err);
+export const handler = endpoint(async req => {
+  const input = await body(req);
+  const db = serviceClient();
+  if (input.action === 'exchange') {
+    const team = await getTeam(db, input.team_slug);
+    const code = requiredString((input.body as Record<string, unknown>)?.code, 'code', 1024);
+    const exchange = await wordpress(team, '/handoff/exchange', undefined, { code });
+    const token = requiredString(exchange.app_token, 'app_token');
+    if (typeof exchange.user_id !== 'number' || !Number.isSafeInteger(exchange.user_id)) throw new HttpError(502, 'invalid_user_id');
+    const externalId = String(exchange.user_id);
+    const expires = exchange.expires_at ? new Date(exchange.expires_at) : new Date(Date.now() + 60 * 60 * 1000);
+    if (!Number.isFinite(expires.getTime()) || expires.getTime() <= Date.now()) throw new HttpError(502, 'invalid_expiration');
+    const { error } = await db.from('fanframe_sessions').upsert({ team_id: team.id, external_user_id: externalId, token_hash: await hash(token), expires_at: expires.toISOString() }, { onConflict: 'team_id,token_hash' });
+    if (error) throw error;
+    return json(exchange);
   }
-  
-  return DEFAULT_API_BASE;
-}
-
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  const actor = await authenticate(db, input);
+  if (input.action === 'balance') {
+    if (actor.testLinkId) return json({ ok: true, balance: actor.balance });
+    return json(await wordpress(actor.team, '/credits/balance', actor.token));
   }
-
-  try {
-    const { action, token, body, team_slug } = await req.json();
-
-    console.log(`[fanframe-proxy] action=${action}, token=${token ? token.substring(0, 10) + "..." : "MISSING"}, team=${team_slug || "default"}`);
-
-    if (!token) {
-      return new Response(
-        JSON.stringify({ ok: false, error: "Token não fornecido" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Resolve the API base URL for this team
-    const FANFRAME_API_BASE = await resolveApiBase(team_slug);
-
-    let endpoint: string;
-    let method: string;
-    let fetchBody: string | undefined;
-
-    switch (action) {
-      case "balance":
-        endpoint = `${FANFRAME_API_BASE}/credits/balance?_t=${Date.now()}`;
-        method = "GET";
-        break;
-      case "debit":
-        endpoint = `${FANFRAME_API_BASE}/credits/debit`;
-        method = "POST";
-        fetchBody = JSON.stringify(body || {});
-        break;
-      case "exchange":
-        endpoint = `${FANFRAME_API_BASE}/handoff/exchange`;
-        method = "POST";
-        fetchBody = JSON.stringify(body || {});
-        break;
-      default:
-        return new Response(
-          JSON.stringify({ ok: false, error: "Ação inválida" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-    }
-
-    console.log(`[fanframe-proxy] ${action} -> ${method} ${endpoint}`);
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      "Pragma": "no-cache",
-    };
-
-    if (action !== "exchange") {
-      headers["X-Fanframe-Token"] = token;
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    console.log(`[fanframe-proxy] Outgoing headers:`, JSON.stringify(headers));
-    if (fetchBody) {
-      console.log(`[fanframe-proxy] Outgoing body:`, fetchBody);
-    }
-
-    const response = await fetch(endpoint, {
-      method,
-      headers,
-      body: fetchBody,
+  if (input.action === 'test') return json({ ok: true, balance: actor.balance });
+  if (input.action === 'consent') {
+    const { error } = await db.from('consent_logs').insert({
+      team_id: actor.team.id,
+      user_id: actor.owner,
+      consent_text: 'image_upload:v1 — Titularidade/autorização da imagem e termos aceitos.',
+      user_agent: req.headers.get('user-agent')?.slice(0, 500) || null,
     });
-
-    const responseText = await response.text();
-    console.log(`[fanframe-proxy] Upstream response ${response.status}:`, responseText);
-
-    if (response.status === 401) {
-      return new Response(
-        JSON.stringify({ status: 401, error: "Token inválido", upstream: responseText }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    return new Response(responseText, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("[fanframe-proxy] Error:", error);
-    return new Response(
-      JSON.stringify({ ok: false, error: error.message }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    if (error) throw error;
+    return json({ ok: true });
   }
+  throw new HttpError(403, 'action_not_allowed');
 });
+if (import.meta.main) Deno.serve(handler);

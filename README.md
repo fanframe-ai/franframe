@@ -1,73 +1,40 @@
-# Welcome to your Lovable project
+# FanFrame
 
-## Project info
+Provador virtual multi-time. O visitante escolhe camisa e cenário, envia uma foto e recebe uma imagem gerada com IA. O painel administrativo gerencia times, assets, links de teste e operação.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Stack:** React 18, TypeScript, Vite 6, React Router 7, Tailwind CSS 3, Supabase (PostgreSQL, Auth, Storage e Edge Functions em Deno), WordPress para sessões e créditos, Replicate com `bytedance/seedream-5-pro` para imagens. A hospedagem web usa Vercel com rewrite de SPA.
 
-## How can I edit this code?
+## Começar
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requer Node 24, npm 11 e Supabase CLI. Docker é necessário para iniciar a stack Supabase completa localmente.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+nvm use
+npm ci
+cp .env.example .env.local
+supabase start
+supabase db reset --local
 ```
 
-**Edit a file directly in GitHub**
+Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` em `.env.local` com os valores públicos mostrados por `supabase status`. Configure os secrets das funções em `supabase/functions/.env.local` conforme [desenvolvimento](docs/development.md). Depois execute `npm run dev` e acesse `http://localhost:8080`. O modo de teste usa um link criado em `/admin/teams/:slug`, sem saldo WordPress.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm run verify       # lint, tipos, testes, Edge Functions, build, navegador e inspeção do repositório
+npm run test:db      # replay de migrações e transações em PostgreSQL descartável
+npm run db:types     # regenera tipos após alterar o schema local
+```
 
-**Use GitHub Codespaces**
+`npm run test:db` aceita `TEST_DATABASE_URL` apontando para um PostgreSQL descartável com permissão para criar bancos; o padrão é `postgres://localhost:55432/postgres`. O CI inicia esse serviço automaticamente. A aplicação precisa das tabelas e funções da última migração antes que o frontend e as Edge Functions desta versão sejam publicados.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Mapa
 
-## What technologies are used for this project?
+- [Arquitetura e limites de segurança](docs/architecture.md)
+- [Desenvolvimento, testes e fixtures](docs/development.md)
+- [Deploy, secrets e reversão](docs/deployment.md)
+- [Contrato WordPress](docs/wordpress-integration.md)
+- [Plugin WordPress corrigido e teste de login](wordpress/README.md)
+- [Geração e webhook Replicate](docs/replicate-integration.md)
+- [Design system](docs/design-system.md)
+- [Instruções para Codex](AGENTS.md)
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+O projeto Supabase versionado em `supabase/config.toml` é `qmjvsftlounkitclmzzw`. A URL de produção documentada é [franframe.vercel.app](https://franframe.vercel.app); confirme o ambiente selecionado antes de publicar. `.env` e `.env.local` são arquivos locais e nunca devem conter service role ou tokens Replicate com prefixo `VITE_`.

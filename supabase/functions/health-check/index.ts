@@ -1,10 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { requireAdmin, serviceClient, type Client } from '../_shared/auth.ts';
+import { endpoint, json } from '../_shared/http.ts';
+type HealthClient = Client;
 
 interface HealthCheckResult {
   service_id: string;
@@ -14,7 +10,7 @@ interface HealthCheckResult {
   error_message?: string;
 }
 
-async function checkDatabase(supabase: any): Promise<HealthCheckResult> {
+async function checkDatabase(supabase: HealthClient): Promise<HealthCheckResult> {
   const start = Date.now();
   try {
     const { error } = await supabase.from("generations").select("id").limit(1);
@@ -39,10 +35,10 @@ async function checkDatabase(supabase: any): Promise<HealthCheckResult> {
   }
 }
 
-async function checkAuth(supabase: any): Promise<HealthCheckResult> {
+async function checkAuth(supabase: HealthClient): Promise<HealthCheckResult> {
   const start = Date.now();
   try {
-    const { error } = await supabase.auth.getSession();
+    const { error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1 });
     const responseTime = Date.now() - start;
     
     if (error) throw error;
@@ -191,63 +187,23 @@ async function checkRealtime(): Promise<HealthCheckResult> {
   const start = Date.now();
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  
-  if (!supabaseUrl) {
-    return {
-      service_id: "realtime",
-      service_name: "Tempo Real",
-      status: "major_outage",
-      response_time_ms: 0,
-      error_message: "SUPABASE_URL not configured",
-    };
-  }
-  
+  if (!supabaseUrl || !anonKey) return { service_id: "realtime", service_name: "Tempo Real", status: "major_outage", response_time_ms: 0, error_message: "Realtime configuration unavailable" };
   try {
-    const realtimeUrl = supabaseUrl.replace("https://", "https://").replace(".supabase.co", ".supabase.co");
-    const response = await fetch(`${realtimeUrl}/rest/v1/health_checks?select=id&limit=1`, {
-      method: "GET",
-      headers: {
-        "apikey": anonKey || "",
-        "Authorization": `Bearer ${anonKey || ""}`,
-        "Content-Type": "application/json",
-      },
-    });
-    
+    const url = new URL(`${supabaseUrl.replace(/^http/, 'ws')}/realtime/v1/websocket`);
+    url.searchParams.set('apikey', anonKey);
+    url.searchParams.set('vsn', '1.0.0');
+    const socket = new WebSocket(url);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Realtime timeout')), 5000);
+        socket.onopen = () => { clearTimeout(timeout); resolve(); };
+        socket.onerror = () => { clearTimeout(timeout); reject(new Error('Realtime unavailable')); };
+      });
+    } finally { socket.close(); }
     const responseTime = Date.now() - start;
-    
-    if (response.ok) {
-      return {
-        service_id: "realtime",
-        service_name: "Tempo Real",
-        status: responseTime < 800 ? "operational" : "degraded",
-        response_time_ms: responseTime,
-      };
-    }
-    
-    if (response.status >= 400 && response.status < 500 && response.status !== 401 && response.status !== 403) {
-      return {
-        service_id: "realtime",
-        service_name: "Tempo Real",
-        status: responseTime < 800 ? "operational" : "degraded",
-        response_time_ms: responseTime,
-      };
-    }
-    
-    return {
-      service_id: "realtime",
-      service_name: "Tempo Real",
-      status: "degraded",
-      response_time_ms: responseTime,
-      error_message: `HTTP ${response.status}`,
-    };
-  } catch (err) {
-    return {
-      service_id: "realtime",
-      service_name: "Tempo Real",
-      status: "major_outage",
-      response_time_ms: Date.now() - start,
-      error_message: err instanceof Error ? err.message : "Connection error",
-    };
+    return { service_id: 'realtime', service_name: 'Tempo Real', status: responseTime < 1500 ? 'operational' : 'degraded', response_time_ms: responseTime };
+  } catch {
+    return { service_id: 'realtime', service_name: 'Tempo Real', status: 'major_outage', response_time_ms: Date.now() - start, error_message: 'Realtime unavailable' };
   }
 }
 
@@ -288,22 +244,12 @@ async function checkCDN(): Promise<HealthCheckResult> {
   }
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+export const handler = endpoint(async (req) => {
+  const supabase = serviceClient();
+  await requireAdmin(req, supabase);
   const startTime = Date.now();
-  console.log("Starting health checks...");
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-
     // Run all health checks in parallel
     const [dbResult, authResult, replicateResult, edgeResult, realtimeResult, cdnResult] = await Promise.all([
       checkDatabase(supabase),
@@ -316,7 +262,6 @@ serve(async (req) => {
 
     const results = [dbResult, authResult, replicateResult, edgeResult, realtimeResult, cdnResult];
 
-    console.log("Health check results:", JSON.stringify(results, null, 2));
 
     // Save results to database
     const { error: insertError } = await supabase
@@ -350,25 +295,17 @@ serve(async (req) => {
     const totalTime = Date.now() - startTime;
     console.log(`Health checks completed in ${totalTime}ms. Overall status: ${overallStatus}`);
 
-    return new Response(
-      JSON.stringify({
+    return json({
         success: true,
         overall_status: overallStatus,
         results,
         check_duration_ms: totalTime,
         checked_at: new Date().toISOString(),
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      });
 
   } catch (error) {
-    console.error("Error in health-check:", error);
-    return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error",
-        success: false
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("Error in health-check:", error instanceof Error ? error.name : "unknown");
+    return json({ error: "health_check_failed", success: false }, 500);
   }
 });
+if (import.meta.main) Deno.serve(handler);

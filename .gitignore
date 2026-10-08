@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local configuration and verification outputs
+.env*
+!.env.example
+.proof-of-done/
+.supabase/
+supabase/.temp/
+supabase/.branches/
+test-results/
+playwright-report/
+coverage/

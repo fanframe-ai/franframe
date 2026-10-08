@@ -101,6 +101,13 @@ export type Database = {
       }
       generation_queue: {
         Row: {
+          owner_id: string | null
+          test_link_id: string | null
+          result_storage_path: string | null
+          webhook_signing_key: string | null
+          request_hash: string | null
+          credit_reserved: boolean
+          billing_completed: boolean
           background_asset_url: string
           completed_at: string | null
           created_at: string | null
@@ -117,6 +124,13 @@ export type Database = {
           user_image_url: string
         }
         Insert: {
+          owner_id?: string | null
+          test_link_id?: string | null
+          result_storage_path?: string | null
+          webhook_signing_key?: string | null
+          request_hash?: string | null
+          credit_reserved?: boolean
+          billing_completed?: boolean
           background_asset_url: string
           completed_at?: string | null
           created_at?: string | null
@@ -133,6 +147,13 @@ export type Database = {
           user_image_url: string
         }
         Update: {
+          owner_id?: string | null
+          test_link_id?: string | null
+          result_storage_path?: string | null
+          webhook_signing_key?: string | null
+          request_hash?: string | null
+          credit_reserved?: boolean
+          billing_completed?: boolean
           background_asset_url?: string
           completed_at?: string | null
           created_at?: string | null
@@ -340,7 +361,7 @@ export type Database = {
           logo_url: string | null
           name: string
           primary_color: string | null
-          replicate_api_token: string | null
+          purchase_urls: Json
           secondary_color: string | null
           shirts: Json
           slug: string
@@ -349,6 +370,7 @@ export type Database = {
           tutorial_assets: Json | null
           updated_at: string | null
           watermark_url: string | null
+          wordpress_api_base: string | null
         }
         Insert: {
           backgrounds?: Json
@@ -359,7 +381,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           primary_color?: string | null
-          replicate_api_token?: string | null
+          purchase_urls?: Json
           secondary_color?: string | null
           shirts?: Json
           slug: string
@@ -368,6 +390,7 @@ export type Database = {
           tutorial_assets?: Json | null
           updated_at?: string | null
           watermark_url?: string | null
+          wordpress_api_base?: string | null
         }
         Update: {
           backgrounds?: Json
@@ -378,7 +401,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           primary_color?: string | null
-          replicate_api_token?: string | null
+          purchase_urls?: Json
           secondary_color?: string | null
           shirts?: Json
           slug?: string
@@ -387,8 +410,21 @@ export type Database = {
           tutorial_assets?: Json | null
           updated_at?: string | null
           watermark_url?: string | null
+          wordpress_api_base?: string | null
         }
         Relationships: []
+      }
+      team_secrets: {
+        Row: { team_id: string; replicate_api_token: string | null }
+        Insert: { team_id: string; replicate_api_token?: string | null }
+        Update: { team_id?: string; replicate_api_token?: string | null }
+        Relationships: [{ foreignKeyName: "team_secrets_team_id_fkey"; columns: ["team_id"]; isOneToOne: true; referencedRelation: "teams"; referencedColumns: ["id"] }]
+      }
+      fanframe_sessions: {
+        Row: { id: string; team_id: string; token_hash: string; external_user_id: string; expires_at: string }
+        Insert: { id?: string; team_id: string; token_hash: string; external_user_id: string; expires_at: string }
+        Update: { id?: string; team_id?: string; token_hash?: string; external_user_id?: string; expires_at?: string }
+        Relationships: [{ foreignKeyName: "fanframe_sessions_team_id_fkey"; columns: ["team_id"]; isOneToOne: false; referencedRelation: "teams"; referencedColumns: ["id"] }]
       }
       test_links: {
         Row: {

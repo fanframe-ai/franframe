@@ -1,0 +1,6 @@
+{
+  "compilerOptions": { "strict": true, "lib": ["deno.ns", "dom", "esnext"] },
+  "imports": { "@supabase/supabase-js": "npm:@supabase/supabase-js@2.98.0" },
+  "nodeModulesDir": "manual",
+  "fmt": { "lineWidth": 100 }
+}

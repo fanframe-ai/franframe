@@ -1,0 +1,25 @@
+# Deploy
+
+O frontend é uma SPA Vite. `vercel.json` reescreve rotas para `index.html`; a Vercel deve usar `npm ci`, `npm run build` e `dist`. Defina `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` no projeto Vercel para cada ambiente. `VITE_SUPABASE_PROJECT_ID` não é necessário: o ID é derivado da URL.
+
+O deploy automático da `main` está temporariamente desabilitado em `vercel.json` (`git.deploymentEnabled.main: false`). Isso permite versionar a refatoração sem publicar a SPA antes do schema e das funções compatíveis. Depois de concluir os passos 1–4 abaixo e validar o ambiente, remova essa configuração em um commit próprio para liberar a publicação. Não faça deploy manual da nova SPA antes desses pré-requisitos. A opção é documentada na [configuração Git da Vercel](https://vercel.com/docs/project-configuration/git-configuration#gitdeploymentenabled).
+
+As funções e migrações pertencem ao projeto indicado em `supabase/config.toml`. Antes de publicar:
+
+1. Rode `npm run verify` e `supabase db reset --local` em ambiente com Docker. Faça backup do banco de destino e inspecione `supabase db push --dry-run --linked`. No projeto atualmente vinculado, a simulação está bloqueada pela divergência histórica descrita abaixo; reconcilie-a antes de qualquer push.
+2. Configure secrets privados com `supabase secrets set REPLICATE_API_TOKEN=... ADMIN_SETUP_KEY=... --project-ref <ref>` ou pela interface do Supabase. Tokens próprios de time são armazenados em `team_secrets` pelo painel admin. Não inclua secrets no `.env` do Vite.
+3. Após uma simulação sem divergências e um backup conferido, aplique as migrações pendentes com `supabase db push --linked`. A migração `20261008210000_secure_generation_workflow.sql` torna `tryon-temp` privado, move tokens de times e muda políticas/RPCs; ela deve entrar antes da nova versão do frontend.
+4. Defina `SUPABASE_PROJECT_REF=<ref>` e execute `npm run functions:deploy`. O script implanta apenas as seis funções versionadas, a partir dos arquivos reais. Não usa `--prune`.
+5. Publique o frontend na Vercel, teste login admin, time ativo/inativo, link de teste, geração, webhook e compra por time. Confira logs sem dados sensíveis.
+
+`create-first-admin` exige `ADMIN_SETUP_KEY` e só funciona sem papel admin existente. Após o primeiro admin, remova ou rotacione esse secret. O health check exige JWT de administrador; o webhook Replicate usa assinatura do provedor e não aceita JWT de usuário.
+
+Reversão: restaure primeiro a versão anterior do frontend/Edge Functions. Para migrações, use uma migração corretiva após avaliar dados existentes; não execute rollback automático de tabelas de sessão, créditos ou imagens. Antes de aposentar funções remotas não versionadas, confirme chamadas, webhooks e dependências externos. O inventário em 8/10/2026 encontrou `create-delivery-link`, `create-kiosk-payment`, `manage-admin-users`, `pagbank-webhook` e `deploy-functions` implantadas além das funções deste repositório. Excluí-las requer investigação separada; o script de deploy não as toca.
+
+A URL [franframe.vercel.app](https://franframe.vercel.app) respondeu durante esta revisão. Confirme no painel Vercel qual branch, projeto e domínio recebe cada deploy antes de divulgar como produção.
+
+## Divergência de migrações no projeto vinculado
+
+Em 8/10/2026, `supabase db push --dry-run --linked` parou antes de aplicar SQL. As quinze migrações locais de janeiro/fevereiro não constam na tabela remota de histórico. Dez migrações de março constam remotamente com timestamps 2–3 segundos anteriores aos arquivos locais; `supabase migration fetch --linked` mostrou SQL equivalente, descontando um `;` extra no fim. Os pares são `20260311194604/07`, `20260312161415/17`, `20260321172234/36`, `20260321172312/14`, `20260321175712/14`, `20260324170904/06`, `20260330220220/23`, `20260330220559/20260330220601`, `20260330220912/15` e `20260330235224/27` (remoto/local). A migração remota `20260509013953`, que removeu colunas WordPress, foi recuperada em `supabase/migrations`; a migração de 8/10 às 19:50 consta nos dois históricos. Uma consulta read-only confirmou que `purchase_urls` está ausente no schema remoto; a nova migração de segurança recria a coluna. Ela ainda não está remota.
+
+Antes de reparar o histórico, obtenha um backup de schema e dados, compare o schema remoto com o resultado do replay local e confira a tabela `supabase_migrations.schema_migrations`. Depois, registre explicitamente as versões antigas já refletidas no schema remoto e alinhe os nomes de março com o histórico remoto em uma revisão própria. Só então repita o `--dry-run`: ele deve listar apenas a nova migração de segurança. Não use `migration repair` às cegas, nem faça push das migrações antigas duplicadas; ambos podem deixar o histórico afirmando mudanças que não existem. `supabase backups list` retornou lista vazia e PITR desativado para este projeto. O dump remoto pelo CLI exige Docker nesta máquina e não pôde ser feito aqui; portanto, não há backup verificado para autorizar a correção do histórico ou o deploy.
