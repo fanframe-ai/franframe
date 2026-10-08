@@ -9,6 +9,11 @@ for (const path of ['.env', '.env.local', 'bun.lock', 'bun.lockb', 'src/App.css'
 }
 assert(existing.includes('package-lock.json'));
 assert(existing.includes('AGENTS.md') && existing.includes('supabase/AGENTS.md'));
+const localDeno = JSON.parse(readFileSync('deno.json', 'utf8'));
+const edgeDeno = JSON.parse(readFileSync('supabase/functions/deno.json', 'utf8'));
+assert.deepEqual(edgeDeno.imports, localDeno.imports, 'Local and deployed Edge imports must match');
+assert.equal(localDeno.nodeModulesDir, 'manual', 'Edge checks must not replace frontend npm dependencies');
+assert.equal(edgeDeno.nodeModulesDir, 'auto', 'Edge bundling must resolve dependencies on the server');
 const forbidden = /lo[v]able/i;
 for (const path of existing) {
   if (/\.(png|jpg|jpeg|webp|ico|woff|woff2|svg)$/i.test(path)) continue;

@@ -1,3 +1,6 @@
+-- Hosted pgcrypto lives in extensions; plain PostgreSQL may use public.
+SET LOCAL search_path = public, extensions;
+
 -- Private credentials are never part of public team configuration.
 CREATE TABLE public.team_secrets (
   team_id uuid PRIMARY KEY REFERENCES public.teams(id) ON DELETE CASCADE,

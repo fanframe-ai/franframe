@@ -6,6 +6,6 @@ if (!projectRef || !/^[a-z0-9]{20}$/.test(projectRef)) {
   process.exit(2);
 }
 const names = ['fanframe-proxy', 'generate-tryon', 'replicate-webhook', 'generation-status', 'health-check', 'create-first-admin'];
-const result = spawnSync('supabase', ['functions', 'deploy', ...names, '--project-ref', projectRef, '--use-api'], { stdio: 'inherit' });
+const result = spawnSync('supabase', ['functions', 'deploy', ...names, '--project-ref', projectRef, '--import-map', 'supabase/functions/deno.json', '--use-api'], { stdio: 'inherit' });
 if (result.error) throw result.error;
 process.exit(result.status ?? 1);
