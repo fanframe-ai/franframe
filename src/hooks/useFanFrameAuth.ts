@@ -25,7 +25,7 @@ export function useFanFrameAuth() {
     balance: 0,
   });
   const justExchangedRef = useRef(false);
-  const { team } = useTeam();
+  const { team, isLoading: teamLoading, error: teamError } = useTeam();
 
   // Obter token do localStorage
   const getStoredToken = useCallback((): string | null => {
@@ -53,7 +53,6 @@ export function useFanFrameAuth() {
   const exchangeCodeForToken = useCallback(async (code: string): Promise<boolean> => {
     console.log("[FanFrame][Exchange] ========== INÍCIO EXCHANGE ==========");
     console.log("[FanFrame][Exchange] Timestamp:", new Date().toISOString());
-    console.log("[FanFrame][Exchange] Code recebido:", code ? `${code.substring(0, 5)}...` : "VAZIO");
     console.log("[FanFrame][Exchange] Usando proxy edge function");
     
     try {
@@ -74,7 +73,6 @@ export function useFanFrameAuth() {
         throw new Error(invokeError.message || "Erro na comunicação com o servidor");
       }
 
-      console.log("[FanFrame][Exchange] Response:", JSON.stringify(data));
 
       const exchangeData = data as ExchangeResponse;
 
@@ -88,7 +86,6 @@ export function useFanFrameAuth() {
       const responseData = exchangeData;
 
       // Salvar token conforme documentação: localStorage com chave "vf_app_token"
-      console.log("[FanFrame][Exchange] Token recebido:", responseData.app_token!.substring(0, 10) + "...");
       storeToken(responseData.app_token!);
       console.log("[FanFrame][Exchange] ✅ Token salvo no localStorage");
 
@@ -134,7 +131,7 @@ export function useFanFrameAuth() {
       });
       return false;
     }
-  }, [storeToken]);
+  }, [storeToken, team?.slug]);
 
   /**
    * Logout - limpar token
@@ -160,18 +157,16 @@ export function useFanFrameAuth() {
    * Inicialização conforme documentação seção 7.1 e 7.2
    */
   useEffect(() => {
+    if (teamLoading || teamError || (!team && window.location.pathname !== "/")) return;
     const init = async () => {
       console.log("[FanFrame][Init] ========== INÍCIO INICIALIZAÇÃO ==========");
       console.log("[FanFrame][Init] Timestamp:", new Date().toISOString());
-      console.log("[FanFrame][Init] URL completa:", window.location.href);
       console.log("[FanFrame][Init] Origin:", window.location.origin);
       console.log("[FanFrame][Init] Pathname:", window.location.pathname);
-      console.log("[FanFrame][Init] Search:", window.location.search);
       
       // 7.1 - Ler parâmetro "code" da URL
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get("code");
-      console.log("[FanFrame][Init] Parâmetro 'code' na URL:", code ? `${code.substring(0, 5)}...` : "NÃO ENCONTRADO");
 
       if (code) {
         // Se existir code: chamar Exchange
@@ -184,7 +179,6 @@ export function useFanFrameAuth() {
       // 7.2 - Se não existir code, buscar token salvo
       const storedToken = getStoredToken();
       console.log("[FanFrame][Init] Token no localStorage:", storedToken ? "EXISTE" : "NÃO EXISTE");
-      console.log("[FanFrame][Init] Token (primeiros 10 chars):", storedToken ? storedToken.substring(0, 10) + "..." : "N/A");
 
       if (storedToken) {
         // Token existe - marcar como autenticado
@@ -211,7 +205,7 @@ export function useFanFrameAuth() {
     };
 
     init();
-  }, [exchangeCodeForToken, getStoredToken]);
+  }, [exchangeCodeForToken, getStoredToken, teamLoading, teamError, team]);
 
   return {
     ...authState,

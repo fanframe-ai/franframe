@@ -80,7 +80,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
       setState({ isLoading: false, error: message });
       return null;
     }
-  }, [handleAuthError]);
+  }, [handleAuthError, team?.slug]);
 
   /**
    * Debitar 1 crédito via proxy
@@ -149,7 +149,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
       setState({ isLoading: false, error: message });
       return { success: false, errorCode: "network_error" };
     }
-  }, [handleAuthError]);
+  }, [handleAuthError, team?.slug]);
 
   const generateGenerationId = useCallback((): string => {
     const stored = localStorage.getItem(FANFRAME_STORAGE_KEYS.generationId);
