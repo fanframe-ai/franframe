@@ -21,19 +21,58 @@ export function useAdminAuth() {
   });
 
   useEffect(() => {
-    // Set up auth state listener first
+    let disposed = false;
+    let revision = 0;
+    let roleRequest: AbortController | undefined;
+    let deferredCheck: ReturnType<typeof setTimeout> | undefined;
+    let deadline: ReturnType<typeof setTimeout>;
+    const startDeadline = () => setTimeout(() => {
+      revision++;
+      roleRequest?.abort();
+      reportError('admin_access_timeout', null);
+      setState(prev => ({ ...prev, isAdmin: false, isLoading: false, error: "Erro ao verificar permissões" }));
+    }, 15_000);
+    deadline = startDeadline();
+
+    const checkAdminRole = async (userId: string, checkRevision: number) => {
+      const controller = new AbortController();
+      roleRequest = controller;
+      try {
+        const { data, error } = await supabase.from("user_roles").select("role")
+          .eq("user_id", userId).in("role", ["admin", "super_admin"]).abortSignal(controller.signal).maybeSingle();
+        if (disposed || revision !== checkRevision) return;
+        clearTimeout(deadline);
+        if (error) throw error;
+        setState(prev => ({ ...prev, isAdmin: !!data, isLoading: false,
+          error: data ? null : "Acesso negado. Você não é administrador." }));
+      } catch (error) {
+        if (disposed || revision !== checkRevision) return;
+        clearTimeout(deadline);
+        reportError('admin_role_read_failed', error);
+        setState(prev => ({ ...prev, isAdmin: false, isLoading: false, error: "Erro ao verificar permissões" }));
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        if (disposed) return;
+        const checkRevision = ++revision;
+        clearTimeout(deadline);
+        clearTimeout(deferredCheck);
+        roleRequest?.abort();
         if (session?.user) {
           setState(prev => ({
             ...prev,
             isAuthenticated: true,
+            isAdmin: false,
+            isLoading: true,
+            error: null,
             user: session.user,
           }));
-          
-          // Defer admin check with setTimeout to avoid deadlock
-          setTimeout(() => {
-            checkAdminRole(session.user.id);
+          deadline = startDeadline();
+          // Supabase auth callbacks run under a session lock; query after release.
+          deferredCheck = setTimeout(() => {
+            void checkAdminRole(session.user.id, checkRevision);
           }, 0);
         } else {
           setState({
@@ -47,59 +86,15 @@ export function useAdminAuth() {
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setState(prev => ({
-          ...prev,
-          isAuthenticated: true,
-          user: session.user,
-        }));
-        checkAdminRole(session.user.id);
-      } else {
-        setState(prev => ({ ...prev, isLoading: false }));
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      disposed = true;
+      revision++;
+      clearTimeout(deadline);
+      clearTimeout(deferredCheck);
+      roleRequest?.abort();
+      subscription.unsubscribe();
+    };
   }, []);
-
-  const checkAdminRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .in("role", ["admin", "super_admin"])
-        .maybeSingle();
-
-      if (error) {
-        reportError('admin_role_read_failed', error);
-        setState(prev => ({
-          ...prev,
-          isAdmin: false,
-          isLoading: false,
-          error: "Erro ao verificar permissões",
-        }));
-        return;
-      }
-
-      setState(prev => ({
-        ...prev,
-        isAdmin: !!data,
-        isLoading: false,
-        error: data ? null : "Acesso negado. Você não é administrador.",
-      }));
-    } catch (err) {
-      reportError('admin_role_failed', err);
-      setState(prev => ({
-        ...prev,
-        isAdmin: false,
-        isLoading: false,
-        error: "Erro ao verificar permissões",
-      }));
-    }
-  };
 
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
