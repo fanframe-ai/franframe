@@ -64,6 +64,7 @@ for (const [withWatermark, expired] of [[false, false], [true, false], [false, t
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'VESTIR O MANTO' }).click();
   await expect(page.getByRole('button', { name: 'Baixar Foto' })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Preparação da foto' })).toHaveCount(0);
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Baixar Foto' }).click();
   const saved = await download;

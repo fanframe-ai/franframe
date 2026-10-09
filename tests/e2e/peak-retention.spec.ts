@@ -27,13 +27,24 @@ for (const width of [390,1440]) test(`peak preparation is immediate, honest and 
   await upload(page);await page.getByRole('button',{name:'VESTIR O MANTO'}).click();
   await expect(page.getByRole('heading',{name:'Preparando seu manto'})).toBeVisible();
   await expect(page.getByAltText('Sua foto original')).toBeVisible();expect(posts).toBe(0);
+  const bar = page.getByRole('progressbar', { name: 'Preparação da foto' });
+  await expect(bar).toBeVisible();
+  await expect(bar).not.toHaveAttribute('aria-valuenow');
+  await expect(bar).toHaveAttribute('aria-valuetext', 'Preparando');
+  await expect(bar.locator('.generation-loading-bar')).toHaveCSS('animation-name', 'generation-loading');
+  await expect(page.getByRole('list', { name: 'Etapas da foto' }).locator('[aria-current="step"]')).toHaveText('Preparando');
   await expect(page.getByText(/fila|posição|[0-9]+%/i)).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.screenshot({path:info.outputPath(`preparation-${width}.png`),animations:'disabled'});
   await page.clock.runFor(35000);await expect.poll(()=>posts).toBe(1);
   await expect(page.getByText('Pedido salvo. Sua foto aparecerá aqui quando estiver pronta.')).toBeVisible();
   phase='generating';await page.clock.runFor(20000);await expect(page.getByRole('heading',{name:'Criando sua foto'})).toBeVisible();
+  await expect(bar).toHaveAttribute('aria-valuetext', 'Criando');
   phase='finishing';await page.clock.runFor(20000);await expect(page.getByRole('heading',{name:'Finalizando sua foto'})).toBeVisible();
+  await expect(bar).toHaveAttribute('aria-valuetext', 'Finalizando');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(bar.locator('.generation-loading-bar')).toHaveCSS('animation-name', 'none');
+  await page.screenshot({path:info.outputPath(`loading-bar-${width}.png`)});
   await page.reload();await expect(page.getByRole('heading',{name:'Finalizando sua foto'})).toBeVisible();expect(posts).toBe(1);
 });
 for(const alreadyAccepted of [false,true]) test(`lost submission response ${alreadyAccepted?'recovers acceptance':'repeats only the same UUID'} without losing the photo`,async({page})=>{
@@ -71,6 +82,7 @@ test('paused admissions and expired authorization never automatically submit a p
   await page.route('**/functions/v1/generation-status',route=>route.fulfill({status:200,contentType:'application/json',body:'{"available":false,"reason":"admissions_paused"}'}));
   await upload(page);await page.getByRole('button',{name:'VESTIR O MANTO'}).click();
   await expect(page.getByText('Novas fotos estão temporariamente indisponíveis. Seu crédito foi preservado.')).toBeVisible();expect(posts).toBe(0);
+  await expect(page.getByRole('progressbar', { name: 'Preparação da foto' })).toHaveCount(0);
   await page.route('**/functions/v1/generation-status',route=>route.fulfill({status:401,contentType:'application/json',body:'{"error":"session_expired"}'}));
   await page.getByRole('button',{name:'Tentar Novamente'}).click();
   await expect(page.getByText('Acesse novamente pelo tour para recuperar sua foto.')).toBeVisible();expect(posts).toBe(0);

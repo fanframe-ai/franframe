@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
+import { Download, RefreshCw, Loader2, AlertCircle, Check } from 'lucide-react';
 import type { TeamShirt, TeamBackground } from '@/features/teams/TeamContext';
 import { useTeam } from '@/features/teams/TeamContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -122,7 +122,8 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
   };
   // Loading state
   if (isGenerating) {
-
+    const stages = ['Preparando', 'Criando', 'Finalizando'];
+    const stageIndex = phase === 'preparing' ? 0 : phase === 'generating' ? 1 : 2;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 safe-bottom">
         <div className="text-center animate-fade-in w-full max-w-md">
@@ -139,6 +140,18 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
               <figcaption className="text-xs text-muted-foreground mt-2 break-words">{item.label}</figcaption>
             </figure>)}
           </div>}
+          <div className="mb-6">
+            <div role="progressbar" aria-label="Preparação da foto" aria-valuetext={reconnecting ? 'Reconectando' : stages[stageIndex]}
+              className="relative h-3 w-full overflow-hidden rounded-full bg-white/15">
+              <div aria-hidden="true" className="generation-loading-bar h-full w-[35%] rounded-full" style={{ backgroundColor: accent }} />
+            </div>
+            <ol aria-label="Etapas da foto" className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              {stages.map((label, index) => <li key={label} aria-current={index === stageIndex ? 'step' : undefined}
+                className={`flex min-w-0 items-center justify-center gap-1.5 ${index <= stageIndex ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
+                {index < stageIndex && <Check aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />}{label}
+              </li>)}
+            </ol>
+          </div>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-3"><Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin" /><span>{saved ? 'Pedido salvo. Sua foto aparecerá aqui quando estiver pronta.' : 'Preparando sua experiência...'}</span></div>
           {saved && <p className="text-xs text-muted-foreground">Você pode voltar pelo tour para recuperar sua foto.</p>}
         </div>
