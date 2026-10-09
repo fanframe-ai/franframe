@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, RefreshCw, Loader2, AlertCircle, Check } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Download, RefreshCw, AlertCircle } from 'lucide-react';
 import type { TeamShirt, TeamBackground } from '@/features/teams/TeamContext';
 import { useTeam } from '@/features/teams/TeamContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -134,35 +135,30 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
   };
   // Loading state
   if (isGenerating) {
-    const stages = ['Preparando', 'Criando', 'Finalizando'];
-    const stageIndex = phase === 'preparing' ? 0 : phase === 'generating' ? 1 : 2;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 safe-bottom">
         <div className="text-center animate-fade-in w-full max-w-md">
-          {userImage ? <img src={userImage} alt="Sua foto original" className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-lg mx-auto mb-6 border border-border" /> : <Loader2 aria-hidden="true" className="w-12 h-12 mx-auto mb-6 animate-spin text-foreground" />}
-          <h2 aria-live="polite" className="text-xl sm:text-2xl font-black mb-2 uppercase">
-            {reconnecting ? 'Reconectando...' : phase === 'preparing' ? 'Preparando seu manto' : phase === 'finishing' ? 'Finalizando sua foto' : 'Criando sua foto'}
-          </h2>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-sm mx-auto mb-6">
-            {takingLonger ? 'Esta etapa está levando mais tempo. Continuamos acompanhando sua foto.' : phase === 'preparing' ? `Sua experiência com o ${team?.name || 'time'} começa aqui.` : 'Sua imagem está sendo preparada com o manto e o cenário escolhidos.'}
-          </p>
-          <div className="mb-6">
-            <div role="progressbar" aria-label="Preparação da foto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}
-              aria-valuetext={`${progress}% estimado · ${reconnecting ? 'Reconectando' : stages[stageIndex]}`}
-              className="relative h-3 w-full overflow-hidden rounded-full bg-white/15">
-              <div aria-hidden="true" className="h-full rounded-full transition-[width] duration-1000 motion-safe:animate-pulse"
-                style={{ backgroundColor: accent, width: `${progress}%` }} />
-            </div>
-            <p className="mt-3 text-lg font-bold tabular-nums">{progress}%</p>
-            <ol aria-label="Etapas da foto" className="mt-3 grid grid-cols-3 gap-2 text-xs">
-              {stages.map((label, index) => <li key={label} aria-current={index === stageIndex ? 'step' : undefined}
-                className={`flex min-w-0 items-center justify-center gap-1.5 ${index <= stageIndex ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
-                {index < stageIndex && <Check aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />}{label}
-              </li>)}
-            </ol>
+          <div aria-hidden="true" data-testid="generation-spinner" className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 sm:mb-8">
+            <div className="absolute inset-0 rounded-full border-4 border-white/20" />
+            <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" />
           </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-3"><Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin" /><span>{saved ? 'Pedido salvo. Sua foto aparecerá aqui quando estiver pronta.' : 'Preparando sua experiência...'}</span></div>
-          {saved && <p className="text-xs text-muted-foreground">Você pode voltar pelo tour para recuperar sua foto.</p>}
+          <h2 aria-live="polite" className="text-xl sm:text-2xl md:text-3xl font-black mb-1 sm:mb-2 uppercase transition-all duration-300">
+            {reconnecting ? 'Reconectando...' : phase === 'finishing' ? 'Finalizando...' : 'Preparando sua foto...'}
+          </h2>
+          <p className="text-muted-foreground text-sm sm:text-base max-w-xs mx-auto mb-6 sm:mb-8 transition-all duration-300">
+            Vestindo o manto do {team?.name || 'Time'}
+          </p>
+          <div className="px-2 sm:px-4 mb-6 sm:mb-8">
+            <Progress value={progress} aria-label="Preparação da foto"
+              aria-valuetext={`${progress}% estimado · ${reconnecting ? 'Reconectando' : phase === 'preparing' ? 'Preparando' : phase === 'generating' ? 'Criando' : 'Finalizando'}`}
+              className="h-2 sm:h-3 mb-2" />
+            <p className="text-base sm:text-lg font-bold text-white tabular-nums">{progress}%</p>
+          </div>
+          <div className="glass-card p-3 sm:p-4 rounded-xl border-2 border-border">
+            <p aria-live="polite" className="text-xs sm:text-sm font-semibold">
+              {takingLonger ? 'Esta etapa está levando mais tempo. Continuamos acompanhando sua foto.' : saved ? 'Sua foto estará disponível quando ficar pronta.' : 'Preparando sua experiência...'}
+            </p>
+          </div>
         </div>
       </div>
     );
