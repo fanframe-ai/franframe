@@ -37,7 +37,8 @@ for (const width of [390,1440]) test(`peak preparation is immediate, honest and 
   await expect(page.getByRole('img', { name: 'Estádio', exact: true })).toHaveCount(0);
   await expect(page.getByRole('list', { name: 'Etapas da foto' }).locator('[aria-current="step"]')).toHaveText('Preparando');
   await expect(page.getByText(/fila|posição/i)).toHaveCount(0);
-  await expect(page.getByText('5% estimado', { exact: true })).toBeVisible();
+  await expect(page.getByText('5%', { exact: true })).toBeVisible();
+  await expect(page.getByText('estimado', { exact: true })).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.screenshot({path:info.outputPath(`preparation-${width}.png`),animations:'disabled'});
   await page.clock.runFor(35000);await expect.poll(()=>posts).toBe(1);

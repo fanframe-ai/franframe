@@ -153,7 +153,7 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
               <div aria-hidden="true" className="h-full rounded-full transition-[width] duration-1000 motion-safe:animate-pulse"
                 style={{ backgroundColor: accent, width: `${progress}%` }} />
             </div>
-            <p className="mt-3 text-lg font-bold tabular-nums">{progress}% <span className="text-xs font-normal text-muted-foreground">estimado</span></p>
+            <p className="mt-3 text-lg font-bold tabular-nums">{progress}%</p>
             <ol aria-label="Etapas da foto" className="mt-3 grid grid-cols-3 gap-2 text-xs">
               {stages.map((label, index) => <li key={label} aria-current={index === stageIndex ? 'step' : undefined}
                 className={`flex min-w-0 items-center justify-center gap-1.5 ${index <= stageIndex ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
