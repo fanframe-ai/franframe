@@ -16,6 +16,7 @@ import { Loader2, Save, ArrowLeft, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
+import { wordpressConfiguration } from "@/features/admin/wordpress-configuration";
 
 
 const generateHash = () => Math.random().toString(36).substring(2, 8);
@@ -139,7 +140,14 @@ export default function TeamEdit() {
     const name = form.name || "Novo Provador";
     const subdomain = form.subdomain || slug;
 
-    const formToSave = { ...form, slug, name, subdomain };
+    let wordpress;
+    try {
+      wordpress = wordpressConfiguration(form);
+    } catch (error) {
+      toast({ title: "Revise os links WordPress", description: error instanceof Error ? error.message : "URL inválida", variant: "destructive" });
+      return;
+    }
+    const formToSave = { ...form, ...wordpress, slug, name, subdomain };
 
     setSaving(true);
 
@@ -148,6 +156,7 @@ export default function TeamEdit() {
       name: formToSave.name,
       subdomain: formToSave.subdomain,
       wordpress_api_base: formToSave.wordpress_api_base?.trim().replace(/\/+$/, "") || null,
+      wordpress_sites: formToSave.wordpress_sites as unknown as Json,
       generation_prompt: formToSave.generation_prompt || null,
       shirts: formToSave.shirts as unknown as Json,
       backgrounds: formToSave.backgrounds as unknown as Json,
@@ -179,6 +188,7 @@ export default function TeamEdit() {
         if (error) throw error;
         const { error: secretError } = await supabase.from('team_secrets').upsert({ team_id: form.id!, replicate_api_token: formToSave.replicate_api_token || null });
         if (secretError) throw secretError;
+        setForm(formToSave);
         toast({ title: "Time atualizado!" });
       }
     } catch (err: unknown) {

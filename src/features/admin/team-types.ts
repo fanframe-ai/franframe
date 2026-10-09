@@ -43,6 +43,7 @@ export const emptyTeam: TeamData = {
   name: "",
   subdomain: "",
   wordpress_api_base: null,
+  wordpress_sites: [],
   replicate_api_token: null,
   generation_prompt: null,
   shirts: [],
