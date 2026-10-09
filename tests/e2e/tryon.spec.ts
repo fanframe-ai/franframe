@@ -130,7 +130,7 @@ test('consent failure keeps generation disabled', async ({ page }) => {
   const generate = page.getByRole('button', { name: 'VESTIR O MANTO' });
   await expect(generate).toBeDisabled();
   await page.getByRole('checkbox').click();
-  await expect(page.getByText('Erro ao registrar consentimento')).toBeVisible();
+  await expect(page.getByText('Erro ao registrar consentimento', { exact: true })).toBeVisible();
   await expect(generate).toBeDisabled();
 });
 
