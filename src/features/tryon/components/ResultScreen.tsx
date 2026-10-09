@@ -28,6 +28,16 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [progress, setProgress] = useState(5);
+  // Display estimate only: the provider reports phases, not fractional completion.
+  useEffect(() => {
+    if (!isGenerating) return;
+    const [floor, ceiling] = phase === 'preparing' ? [5, 25] : phase === 'generating' ? [30, 85] : [90, 99];
+    setProgress(value => Math.max(value, floor));
+    if (reconnecting) return;
+    const timer = setInterval(() => setProgress(value => Math.max(value, Math.min(ceiling, value + 1))), 1500);
+    return () => clearInterval(timer);
+  }, [phase, reconnecting, isGenerating]);
   useEffect(() => {
     if (!teamSlug) return;
     let active = true; let polling = false; let failures = 0; let admissionWaits = 0; let timer: ReturnType<typeof setTimeout>;
@@ -73,6 +83,7 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
         failures = 0; admissionWaits = 0; setReconnecting(false); setSaved(true);
         setPhase(status.phase || (status.status === 'pending' ? 'preparing' : status.status === 'awaiting_payment' ? 'finishing' : 'generating'));
         if (status.status === 'completed' && status.result_image_url) {
+          setProgress(100);
           localStorage.removeItem(key); setGeneratedImage(status.result_image_url); setIsGenerating(false);
           void invoke<{ balance: number }>('fanframe-proxy', { ...credentials(teamSlug!), action: 'balance' }).then(latest => { if (active) initial.current.onBalanceUpdate(latest.balance); }).catch(() => {});
           return;
@@ -119,6 +130,7 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
       setRequestId(crypto.randomUUID()); generationId.current = null;
     } else setRun(value => value + 1);
     setTerminalFailure(false); setGeneratedImage(null); setError(null); setSaved(false); setTakingLonger(false); setPhase('preparing'); setIsGenerating(true);
+    setProgress(5);
   };
   // Loading state
   if (isGenerating) {
@@ -134,17 +146,14 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
           <p className="text-muted-foreground text-sm sm:text-base max-w-sm mx-auto mb-6">
             {takingLonger ? 'Esta etapa está levando mais tempo. Continuamos acompanhando sua foto.' : phase === 'preparing' ? `Sua experiência com o ${team?.name || 'time'} começa aqui.` : 'Sua imagem está sendo preparada com o manto e o cenário escolhidos.'}
           </p>
-          {selectedShirt && selectedBackground && <div className="flex justify-center gap-6 mb-6">
-            {[{ image: selectedShirt.imageUrl, label: selectedShirt.name }, { image: selectedBackground.imageUrl, label: selectedBackground.name }].map((item, index) => <figure key={index} className="w-28 min-w-0">
-              <img src={item.image} alt={item.label} className="w-20 h-20 object-contain mx-auto rounded-lg bg-secondary" />
-              <figcaption className="text-xs text-muted-foreground mt-2 break-words">{item.label}</figcaption>
-            </figure>)}
-          </div>}
           <div className="mb-6">
-            <div role="progressbar" aria-label="Preparação da foto" aria-valuetext={reconnecting ? 'Reconectando' : stages[stageIndex]}
+            <div role="progressbar" aria-label="Preparação da foto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}
+              aria-valuetext={`${progress}% estimado · ${reconnecting ? 'Reconectando' : stages[stageIndex]}`}
               className="relative h-3 w-full overflow-hidden rounded-full bg-white/15">
-              <div aria-hidden="true" className="generation-loading-bar h-full w-[35%] rounded-full" style={{ backgroundColor: accent }} />
+              <div aria-hidden="true" className="h-full rounded-full transition-[width] duration-1000 motion-safe:animate-pulse"
+                style={{ backgroundColor: accent, width: `${progress}%` }} />
             </div>
+            <p className="mt-3 text-lg font-bold tabular-nums">{progress}% <span className="text-xs font-normal text-muted-foreground">estimado</span></p>
             <ol aria-label="Etapas da foto" className="mt-3 grid grid-cols-3 gap-2 text-xs">
               {stages.map((label, index) => <li key={label} aria-current={index === stageIndex ? 'step' : undefined}
                 className={`flex min-w-0 items-center justify-center gap-1.5 ${index <= stageIndex ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>

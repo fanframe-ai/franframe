@@ -17,11 +17,12 @@ async function upload(page:Page) {
 }
 for (const width of [390,1440]) test(`peak preparation is immediate, honest and bounded at ${width}px`,async({page},info)=>{
   await page.setViewportSize({width,height:900});await page.clock.install();
-  let probes=0;let posts=0;let accepted=false;let phase='preparing';
+  let probes=0;let posts=0;let accepted=false;let phase='preparing';let unavailable=false;
   await page.route('**/functions/v1/generate-tryon',route=>{posts++;accepted=true;return route.fulfill({status:202,contentType:'application/json',body:JSON.stringify({queueId:route.request().postDataJSON().request_id})});});
   await page.route('**/functions/v1/generation-status',route=>{
     const request=route.request().postDataJSON();
     if(request.action==='admission') {probes++;expect(request.userImageBase64).toBeUndefined();return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({available:probes>1,reason:'queue_full',next_poll_after:30})});}
+    if (unavailable) return route.fulfill({status:503,contentType:'application/json',body:'{"error":"temporary"}'});
     expect(accepted).toBe(true);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:request.queue_id,status:phase==='preparing'?'pending':'processing',phase,next_poll_after:15})});
   });
   await upload(page);await page.getByRole('button',{name:'VESTIR O MANTO'}).click();
@@ -29,21 +30,39 @@ for (const width of [390,1440]) test(`peak preparation is immediate, honest and 
   await expect(page.getByAltText('Sua foto original')).toBeVisible();expect(posts).toBe(0);
   const bar = page.getByRole('progressbar', { name: 'Preparação da foto' });
   await expect(bar).toBeVisible();
-  await expect(bar).not.toHaveAttribute('aria-valuenow');
-  await expect(bar).toHaveAttribute('aria-valuetext', 'Preparando');
-  await expect(bar.locator('.generation-loading-bar')).toHaveCSS('animation-name', 'generation-loading');
+  await expect(bar).toHaveAttribute('aria-valuenow', '5');
+  await expect(bar).toHaveAttribute('aria-valuetext', '5% estimado · Preparando');
+  await expect(bar.locator('[aria-hidden]')).toHaveCSS('animation-name', 'pulse');
+  await expect(page.getByRole('img', { name: 'Camisa principal', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('img', { name: 'Estádio', exact: true })).toHaveCount(0);
   await expect(page.getByRole('list', { name: 'Etapas da foto' }).locator('[aria-current="step"]')).toHaveText('Preparando');
-  await expect(page.getByText(/fila|posição|[0-9]+%/i)).toHaveCount(0);
+  await expect(page.getByText(/fila|posição/i)).toHaveCount(0);
+  await expect(page.getByText('5% estimado', { exact: true })).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.screenshot({path:info.outputPath(`preparation-${width}.png`),animations:'disabled'});
   await page.clock.runFor(35000);await expect.poll(()=>posts).toBe(1);
   await expect(page.getByText('Pedido salvo. Sua foto aparecerá aqui quando estiver pronta.')).toBeVisible();
+  await expect(bar).toHaveAttribute('aria-valuenow', '25');
   phase='generating';await page.clock.runFor(20000);await expect(page.getByRole('heading',{name:'Criando sua foto'})).toBeVisible();
-  await expect(bar).toHaveAttribute('aria-valuetext', 'Criando');
+  await expect(bar).toHaveAttribute('aria-valuetext', /estimado · Criando/);
+  unavailable=true;await page.clock.runFor(20000);
+  await expect(page.getByRole('heading',{name:'Reconectando...'})).toBeVisible();
+  const paused = await bar.getAttribute('aria-valuenow');
+  await page.clock.runFor(60000);
+  await expect(bar).toHaveAttribute('aria-valuenow', paused!);
+  unavailable=false;await page.clock.runFor(40000);
+  await expect(page.getByRole('heading',{name:'Criando sua foto'})).toBeVisible();
+  await page.clock.runFor(180000);
+  await expect(bar).toHaveAttribute('aria-valuenow', '85');
+  phase='preparing';await page.clock.runFor(20000);
+  await expect(page.getByRole('heading',{name:'Preparando seu manto'})).toBeVisible();
+  await expect(bar).toHaveAttribute('aria-valuenow', '85');
   phase='finishing';await page.clock.runFor(20000);await expect(page.getByRole('heading',{name:'Finalizando sua foto'})).toBeVisible();
-  await expect(bar).toHaveAttribute('aria-valuetext', 'Finalizando');
+  await expect(bar).toHaveAttribute('aria-valuetext', /estimado · Finalizando/);
+  await page.clock.runFor(30000);
+  await expect(bar).toHaveAttribute('aria-valuenow', '99');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(bar.locator('.generation-loading-bar')).toHaveCSS('animation-name', 'none');
+  await expect(bar.locator('[aria-hidden]')).toHaveCSS('animation-name', 'none');
   await page.screenshot({path:info.outputPath(`loading-bar-${width}.png`)});
   await page.reload();await expect(page.getByRole('heading',{name:'Finalizando sua foto'})).toBeVisible();expect(posts).toBe(1);
 });

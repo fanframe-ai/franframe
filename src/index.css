@@ -244,22 +244,6 @@
   }
 }
 
-@keyframes generation-loading {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(286%); }
-}
-
-.generation-loading-bar {
-  animation: generation-loading 1.8s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .generation-loading-bar {
-    animation: none;
-    transform: translateX(93%);
-  }
-}
-
 /* Fade in animation */
 @keyframes fade-in {
   from {

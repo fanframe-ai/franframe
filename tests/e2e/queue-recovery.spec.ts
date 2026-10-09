@@ -15,6 +15,7 @@ test('reload resumes the same job and transient status failure never submits ano
   await page.goto('/testteam?test_token=fixture');
   await expect(page.getByText('Reconectando...')).toBeVisible();
   await expect(page.getByRole('progressbar', { name: 'Preparação da foto' })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Preparação da foto' })).toHaveAttribute('aria-valuetext', /estimado · Reconectando/);
   await page.reload();
   await expect(page.getByRole('heading',{name:'Preparando seu manto'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Baixar Foto'})).toBeVisible();
