@@ -147,7 +147,7 @@ test('WordPress handoff stays scoped to the team and an expired session signs ou
   await expect(page.getByRole('button', { name: 'EXPERIMENTAR AGORA' })).toBeVisible();
   await expect(page).not.toHaveURL(/code=/);
   expect(await page.evaluate(() => localStorage.getItem('vf_app_token:testteam'))).toBe('wp-fixture');
-  await page.getByRole('button', { name: 'EXPERIMENTAR AGORA' }).click();
+  await page.getByRole('button', { name: 'Atualizar saldo', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Acesso Restrito' })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('vf_app_token:testteam'))).toBeNull();
 });

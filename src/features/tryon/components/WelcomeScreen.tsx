@@ -1,16 +1,18 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useTeam } from "@/features/teams/TeamContext";
 import { useTeamAccent } from "@/features/teams/hooks/useTeamAccent";
 
 interface WelcomeScreenProps {
-  onStart: () => void;
+  onStart: () => void | Promise<void>;
   onHistory?: () => void;
 }
 
 export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
   const { team } = useTeam();
   const { accent, accentFg } = useTeamAccent();
+  const [isStarting, setIsStarting] = useState(false);
   
   const tutorialBefore = team?.tutorial_assets?.before || "";
   const tutorialAfter = team?.tutorial_assets?.after || "";
@@ -86,15 +88,21 @@ export const WelcomeScreen = ({ onStart, onHistory }: WelcomeScreenProps) => {
 
         {/* CTA Button */}
         <Button
-          onClick={onStart}
+          onClick={async () => {
+            if (isStarting) return;
+            setIsStarting(true);
+            try { await onStart(); } finally { setIsStarting(false); }
+          }}
+          disabled={isStarting}
           size="lg"
-          className="btn-mobile-cta w-full max-w-xs sm:w-auto transition-all duration-300 hover:scale-105 hover:opacity-90"
+          className="btn-mobile-cta font-bold w-full max-w-xs sm:w-auto transition-all duration-300 hover:scale-105 hover:opacity-90"
           style={{ 
             backgroundColor: accent, 
             color: accentFg 
           }}
         >
-          {t.welcome_cta || "EXPERIMENTAR AGORA"}
+          {isStarting && <Loader2 className="animate-spin" />}
+          {isStarting ? "Verificando saldo..." : t.welcome_cta || "EXPERIMENTAR AGORA"}
         </Button>
 
         {/* Trust Elements */}

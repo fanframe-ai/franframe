@@ -127,7 +127,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
         <Button
           onClick={onContinue}
           size="lg"
-          className="btn-mobile-cta transition-all duration-300 hover:scale-105 hover:opacity-90 order-1"
+          className="btn-mobile-cta font-bold transition-all duration-300 hover:scale-105 hover:opacity-90 order-1"
           style={{ 
             backgroundColor: accent, 
             color: accentFg 
@@ -139,7 +139,7 @@ export const TutorialScreen = ({ onContinue, onBack }: TutorialScreenProps) => {
           onClick={onBack}
           size="lg"
           variant="outline"
-          className="btn-mobile border-white/30 hover:bg-white/10 transition-all order-2"
+          className="btn-mobile font-bold border-white/30 hover:bg-white/10 transition-all order-2"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           VOLTAR

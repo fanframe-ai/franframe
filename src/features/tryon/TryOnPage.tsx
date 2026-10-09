@@ -200,6 +200,11 @@ const Index = () => {
       {currentStep === "welcome" && (
         <WelcomeScreen 
           onStart={async () => {
+            // Selection can start with confirmed credits; the server still validates before generation.
+            if (isAdminPreview || effectiveBalance > 0 || !FANFRAME_ENABLED) {
+              goToStep("tutorial");
+              return;
+            }
             if (isTestMode) {
               await refreshTestBalance();
               goToStep(testBalance <= 0 ? "buy-credits" : "tutorial");

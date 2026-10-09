@@ -13,6 +13,8 @@ export const CreditsDisplay = ({ balance, isLoading, onRefresh }: CreditsDisplay
       <span className="font-medium">{balance}</span>
       {onRefresh && (
         <button
+          aria-label="Atualizar saldo"
+          title="Atualizar saldo"
           className="p-0.5 rounded-full hover:bg-muted/50 disabled:opacity-50"
           onClick={onRefresh}
           disabled={isLoading}
