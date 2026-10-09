@@ -7,7 +7,7 @@ import { useTeam } from '@/features/teams/TeamContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useTeamAccent } from '@/features/teams/hooks/useTeamAccent';
 import { credentials, generationStatus, invoke } from '@/integrations/supabase/functions';
-import { downloadImage } from '@/features/tryon/download';
+import { downloadGeneration } from '@/features/tryon/download';
 interface ResultScreenProps {
   userImage: string; selectedShirt: TeamShirt; selectedBackground: TeamBackground;
   balance: number; onTryAgain: () => void; onBalanceUpdate: (balance: number) => void;
@@ -20,6 +20,7 @@ const getProgressMessage = (progress: number, _position: number, name: string) =
 export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, balance, onTryAgain, onBalanceUpdate, onNoCredits, onHistory }: ResultScreenProps) => {
   const { team } = useTeam(); const { toast } = useToast(); const { accent, accentFg } = useTeamAccent();
   const initial = useRef({ userImage, selectedShirt, selectedBackground, balance, onBalanceUpdate, onNoCredits });
+  const generationId = useRef<string | null>(null);
   const teamSlug = team?.slug;
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [isGenerating, setIsGenerating] = useState(true);
@@ -38,6 +39,7 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, bal
           ...credentials(teamSlug!), request_id: requestId, consent: true,
           userImageBase64: initial.current.userImage, shirtId: initial.current.selectedShirt.id, backgroundId: initial.current.selectedBackground.id,
         });
+        generationId.current = result.queueId;
         async function poll() {
           if (!active) return;
           try {
@@ -65,9 +67,9 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, bal
     return () => { active = false; clearTimeout(timer); };
   }, [requestId, teamSlug]);
   const handleDownload = async () => {
-    if (!generatedImage || isDownloading) return;
+    if (!generatedImage || !teamSlug || !generationId.current || isDownloading) return;
     setIsDownloading(true);
-    try { await downloadImage(generatedImage, `${team?.slug || 'fanframe'}-${Date.now()}.png`, team?.watermark_url); toast({ title: 'Download iniciado!' }); }
+    try { await downloadGeneration(teamSlug, generationId.current, `${teamSlug}-${Date.now()}.png`, team?.watermark_url); toast({ title: 'Download iniciado!' }); }
     catch { toast({ title: 'Erro no download', variant: 'destructive' }); }
     finally { setIsDownloading(false); }
   };

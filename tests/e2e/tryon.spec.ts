@@ -45,13 +45,19 @@ for (const [extension, mimeType] of [['png', 'image/png'], ['jpg', 'image/jpeg']
   });
 }
 
-for (const withWatermark of [false, true]) test(`completed test generation can be downloaded ${withWatermark ? 'with' : 'without'} watermark`, async ({ page }) => {
+for (const [withWatermark, expired] of [[false, false], [true, false], [false, true]]) test(`completed test generation can be downloaded ${withWatermark ? 'with' : 'without'} watermark${expired ? ' after its image link expires' : ''}`, async ({ page }) => {
   const watermarkUrl = withWatermark ? `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="red"/></svg>')}` : null;
   await mockTeam(page, watermarkUrl);
   const output = readFileSync('tests/fixtures/photo.png').toString('base64');
   const imageUrl = `data:image/png;base64,${output}`;
   await page.route('**/functions/v1/generate-tryon', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"queueId":"11111111-1111-4111-8111-111111111111","status":"processing"}' }));
-  await page.route('**/functions/v1/generation-status', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: '11111111-1111-4111-8111-111111111111', status: 'completed', result_image_url: imageUrl }) }));
+  let statusCalls = 0;
+  await page.route('**/expired-result.png', route => route.fulfill({ status: 403, body: 'Expired token' }));
+  await page.route('**/functions/v1/generation-status', route => {
+    statusCalls++;
+    expect(route.request().postDataJSON().queue_id).toBe('11111111-1111-4111-8111-111111111111');
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: '11111111-1111-4111-8111-111111111111', status: 'completed', result_image_url: expired && statusCalls === 1 ? 'http://127.0.0.1:8080/expired-result.png' : imageUrl }) });
+  });
   await reachUpload(page);
   await page.locator('input[type=file]').setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: readFileSync('tests/fixtures/photo.png') });
   await page.getByRole('checkbox').click();

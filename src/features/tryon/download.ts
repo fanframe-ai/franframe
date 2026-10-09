@@ -1,3 +1,11 @@
+import { generationStatus } from '@/integrations/supabase/functions';
+
+export async function downloadGeneration(teamSlug: string, generationId: string, name: string, watermark?: string | null) {
+  const result = await generationStatus(teamSlug, generationId);
+  if (result.status !== 'completed' || !result.result_image_url) throw new Error('Foto indisponivel para download');
+  await downloadImage(result.result_image_url, name, watermark);
+}
+
 export async function imageBlob(url: string): Promise<Blob> {
   const response = await fetch(url, { mode: 'cors', cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);

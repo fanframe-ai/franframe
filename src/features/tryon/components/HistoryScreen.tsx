@@ -5,7 +5,7 @@ import { useGenerationHistory, type HistoryEntry } from "@/features/tryon/hooks/
 import { useToast } from "@/components/ui/use-toast";
 import { useTeam } from "@/features/teams/TeamContext";
 import { useTeamAccent } from "@/features/teams/hooks/useTeamAccent";
-import { downloadImage } from "@/features/tryon/download";
+import { downloadGeneration } from "@/features/tryon/download";
 
 interface HistoryScreenProps {
   onBack: () => void;
@@ -19,7 +19,8 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
   const { accent, accentFg } = useTeamAccent();
 
   const handleDownload = async (entry: HistoryEntry) => {
-    try { await downloadImage(entry.result_image_url, `${team?.slug || 'fanframe'}-${entry.id.slice(0, 8)}.png`, team?.watermark_url); toast({ title: 'Download iniciado!' }); }
+    if (!team) return;
+    try { await downloadGeneration(team.slug, entry.id, `${team.slug}-${entry.id.slice(0, 8)}.png`, team.watermark_url); toast({ title: 'Download iniciado!' }); }
     catch { toast({ title: 'Erro no download', variant: 'destructive' }); }
   };
 
