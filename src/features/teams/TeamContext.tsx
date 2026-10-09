@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { reportError } from '@/lib/diagnostics';
 
 export interface TeamShirt {
   id: string;
@@ -106,14 +107,14 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         }
 
         if (fetchError) {
-          console.error("[TeamContext] Error fetching team:", fetchError);
+          reportError('public_team_read_failed', fetchError);
           setError("Erro ao carregar configuração do time");
           setIsLoading(false);
           return;
         }
 
         if (!data) {
-          console.error("[TeamContext] Team not found for slug:", slug);
+          reportError('public_team_not_found', null, { code: 'team_not_found' }, true);
           setError("Time não encontrado");
           setIsLoading(false);
           return;
@@ -140,7 +141,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         console.log("[TeamContext] Team loaded:", teamConfig.name);
         setTeam(teamConfig);
       } catch (err) {
-        console.error("[TeamContext] Unexpected error:", err);
+        reportError('public_team_failed', err);
         setError("Erro inesperado ao carregar time");
       } finally {
         setIsLoading(false);

@@ -1,10 +1,12 @@
 import { type Actor, type Client } from './auth.ts';
 import { HttpError } from './http.ts';
+import { diagnostic } from './diagnostics.ts';
 export async function rpc<T>(db: Client, name: string, args: Record<string, unknown> = {}): Promise<T> {
   const { data, error } = await db.rpc(name, args);
   if (error) {
     const code = ['no_credits','generation_active','queue_full','budget_exhausted','admissions_paused','rate_limit_exceeded','idempotency_conflict'].find(value => error.message.includes(value));
     if (code) throw new HttpError(code === 'no_credits' ? 402 : code === 'idempotency_conflict' ? 409 : 429, code);
+    diagnostic('error', 'database_rpc_failed', { rpc: name, code: error.code, generation_id: args.p_id, team_id: args.p_team });
     throw new HttpError(503, 'queue_unavailable');
   }
   return data as T;

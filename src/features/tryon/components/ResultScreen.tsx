@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import type { TeamShirt, TeamBackground } from '@/features/teams/TeamContext';
 import { useTeam } from '@/features/teams/TeamContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -20,7 +20,9 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
   const [requestId, setRequestId] = useState(() => resumeId || crypto.randomUUID());
   const [run, setRun] = useState(0);
   const [terminalFailure, setTerminalFailure] = useState(false);
-  const [waiting, setWaiting] = useState(false);
+  const [phase, setPhase] = useState<'preparing' | 'generating' | 'finishing'>('preparing');
+  const [saved, setSaved] = useState(false);
+  const [takingLonger, setTakingLonger] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(true);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -28,16 +30,48 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
   const [isDownloading, setIsDownloading] = useState(false);
   useEffect(() => {
     if (!teamSlug) return;
-    let active = true; let polling = false; let failures = 0; let timer: ReturnType<typeof setTimeout>;
+    let active = true; let polling = false; let failures = 0; let admissionWaits = 0; let timer: ReturnType<typeof setTimeout>;
     const key = `vf_generation:${teamSlug}`;
-    const schedule = (seconds: number) => { clearTimeout(timer); timer = setTimeout(() => void poll(), Math.max(1, seconds) * 1000 + Math.random() * 1000); };
+    const stored = localStorage.getItem(key);
+    const pendingId = resumeId || stored || requestId;
+    const canSubmit = !resumeId && !!initial.current.userImage && !!initial.current.selectedShirt && !!initial.current.selectedBackground;
+    generationId.current = resumeId || stored;
+    const schedule = (seconds: number) => { clearTimeout(timer); timer = setTimeout(() => void poll(), Math.max(1, Math.min(60, seconds)) * 1000 + Math.random() * 3000); };
+    function stop(message: string, terminal = true) {
+      if (terminal) localStorage.removeItem(key);
+      setTerminalFailure(terminal); setError(message); setIsGenerating(false);
+    }
     async function poll() {
       if (!active || polling || document.hidden) return;
       polling = true;
       try {
-        const status = await generationStatus(teamSlug!, generationId.current || requestId);
+        if (!generationId.current) {
+          if (!canSubmit) { stop('Envie sua foto novamente.'); return; }
+          if (initial.current.balance <= 0) { initial.current.onNoCredits(); return; }
+          // Probe backpressure without retransmitting a personal image on every retry.
+          const admission = await invoke<{ available: boolean; reason?: string; next_poll_after?: number }>('generation-status', { ...credentials(teamSlug!), action: 'admission' });
+          if (!active) return;
+          if (!admission.available) {
+            if (admission.reason === 'queue_full') {
+              setPhase('preparing'); setReconnecting(false);
+              schedule(Math.min(60, (admission.next_poll_after || 30) * 2 ** Math.min(admissionWaits++, 1))); return;
+            }
+            stop('Novas fotos estão temporariamente indisponíveis. Seu crédito foi preservado.'); return;
+          }
+          localStorage.setItem(key, pendingId);
+          // A lost POST response is recovered by UUID before any repeat of this request.
+          generationId.current = pendingId;
+          const result = await invoke<{ queueId: string }>('generate-tryon', {
+            ...credentials(teamSlug!), request_id: pendingId, consent: true,
+            userImageBase64: initial.current.userImage, shirtId: initial.current.selectedShirt!.id, backgroundId: initial.current.selectedBackground!.id,
+          });
+          if (!active) return;
+          generationId.current = result.queueId; localStorage.setItem(key, result.queueId); setSaved(true);
+        }
+        const status = await generationStatus(teamSlug!, generationId.current);
         if (!active) return;
-        failures = 0; setReconnecting(false); setWaiting(status.status === 'pending');
+        failures = 0; admissionWaits = 0; setReconnecting(false); setSaved(true);
+        setPhase(status.phase || (status.status === 'pending' ? 'preparing' : status.status === 'awaiting_payment' ? 'finishing' : 'generating'));
         if (status.status === 'completed' && status.result_image_url) {
           localStorage.removeItem(key); setGeneratedImage(status.result_image_url); setIsGenerating(false);
           void invoke<{ balance: number }>('fanframe-proxy', { ...credentials(teamSlug!), action: 'balance' }).then(latest => { if (active) initial.current.onBalanceUpdate(latest.balance); }).catch(() => {});
@@ -49,45 +83,28 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
         schedule(status.next_poll_after || (status.status === 'pending' ? 10 : 5));
       } catch (failure) {
         if (!active) return;
-        if (failure instanceof FunctionError && (failure.status === 401 || failure.status === 404)) {
-          setError(failure.status === 401 ? 'Acesse novamente pelo tour para recuperar sua foto.' : 'Pedido não encontrado. Envie sua foto novamente.'); setIsGenerating(false);
-          if (failure.status === 404) { localStorage.removeItem(key); setTerminalFailure(true); }
+        if (failure instanceof FunctionError && failure.code === 'queue_full') {
+          generationId.current = null; localStorage.removeItem(key); setPhase('preparing'); setReconnecting(false); schedule(30);
+        } else if (failure instanceof FunctionError && failure.status === 404) {
+          if (canSubmit && generationId.current === pendingId) {
+            generationId.current = null; schedule(5);
+          } else stop('Pedido não encontrado. Envie sua foto novamente.');
+        } else if (failure instanceof FunctionError && (failure.status === 401 || failure.status === 403)) {
+          stop('Acesse novamente pelo tour para recuperar sua foto.', false);
+        } else if (failure instanceof FunctionError && failure.status > 0 && failure.status < 500 && failure.code !== 'account_busy') {
+          const message = ['budget_exhausted','admissions_paused','rate_limit_exceeded'].includes(failure.code)
+            ? 'Novas fotos estão temporariamente indisponíveis. Seu crédito foi preservado.'
+            : failure.message;
+          stop(message);
         } else { failures++; setReconnecting(true); schedule(Math.min(30, 5 * 2 ** Math.min(failures, 3))); }
       } finally { polling = false; }
     }
-    async function start() {
-      try {
-        const stored = localStorage.getItem(key);
-        if (resumeId || (stored && stored !== requestId) || (!initial.current.userImage && stored)) {
-          generationId.current = resumeId || stored; await poll(); return;
-        }
-        if (initial.current.balance <= 0) { initial.current.onNoCredits(); return; }
-        if (!initial.current.userImage || !initial.current.selectedShirt || !initial.current.selectedBackground) throw new Error('Envie sua foto novamente.');
-        localStorage.setItem(key, requestId);
-        const result = await invoke<{ queueId: string }>('generate-tryon', {
-          ...credentials(teamSlug!), request_id: requestId, consent: true,
-          userImageBase64: initial.current.userImage, shirtId: initial.current.selectedShirt.id, backgroundId: initial.current.selectedBackground.id,
-        });
-        generationId.current = result.queueId;
-        localStorage.setItem(key, result.queueId);
-        await poll();
-      } catch (failure) {
-        if (!active) return;
-        if (failure instanceof FunctionError && (failure.status === 0 || failure.status >= 500 || failure.code === 'account_busy')) {
-          generationId.current = requestId; setReconnecting(true); schedule(5);
-        } else {
-          localStorage.removeItem(key);
-          const message = failure instanceof FunctionError && ['queue_full','budget_exhausted','admissions_paused','rate_limit_exceeded'].includes(failure.code)
-            ? 'Alta demanda no momento. Seu crédito foi preservado. Tente novamente em instantes.'
-            : failure instanceof Error ? failure.message : 'Erro ao iniciar geração';
-          setTerminalFailure(true); setError(message); setIsGenerating(false);
-        }
-      }
-    }
     const visible = () => { if (!document.hidden && active) { clearTimeout(timer); void poll(); } };
     document.addEventListener('visibilitychange', visible);
-    void start();
-    return () => { active = false; clearTimeout(timer); document.removeEventListener('visibilitychange', visible); };
+    window.addEventListener('online', visible);
+    const longWait = setTimeout(() => { if (active) setTakingLonger(true); }, 120000);
+    void poll();
+    return () => { active = false; clearTimeout(timer); clearTimeout(longWait); document.removeEventListener('visibilitychange', visible); window.removeEventListener('online', visible); };
   }, [requestId, teamSlug, resumeId, run]);
   const handleDownload = async () => {
     if (!generatedImage || !teamSlug || !generationId.current || isDownloading) return;
@@ -101,7 +118,7 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
       if (!userImage) { onTryAgain(); return; }
       setRequestId(crypto.randomUUID()); generationId.current = null;
     } else setRun(value => value + 1);
-    setTerminalFailure(false); setGeneratedImage(null); setError(null); setIsGenerating(true);
+    setTerminalFailure(false); setGeneratedImage(null); setError(null); setSaved(false); setTakingLonger(false); setPhase('preparing'); setIsGenerating(true);
   };
   // Loading state
   if (isGenerating) {
@@ -109,25 +126,21 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 safe-bottom">
         <div className="text-center animate-fade-in w-full max-w-md">
-          {/* Spinner */}
-          <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 sm:mb-8">
-            <div className="absolute inset-0 rounded-full border-4 border-white/20" />
-            <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" />
-          </div>
-
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-1 sm:mb-2 uppercase transition-all duration-300">
-            {reconnecting ? 'Reconectando...' : waiting ? 'Sua foto está na fila' : 'Preparando sua foto...'}
+          {userImage ? <img src={userImage} alt="Sua foto original" className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-lg mx-auto mb-6 border border-border" /> : <Loader2 aria-hidden="true" className="w-12 h-12 mx-auto mb-6 animate-spin text-foreground" />}
+          <h2 aria-live="polite" className="text-xl sm:text-2xl font-black mb-2 uppercase">
+            {reconnecting ? 'Reconectando...' : phase === 'preparing' ? 'Preparando seu manto' : phase === 'finishing' ? 'Finalizando sua foto' : 'Criando sua foto'}
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xs mx-auto mb-6 sm:mb-8 transition-all duration-300">
-            {`Vestindo o manto do ${team?.name || 'Time'}`}
+          <p className="text-muted-foreground text-sm sm:text-base max-w-sm mx-auto mb-6">
+            {takingLonger ? 'Esta etapa está levando mais tempo. Continuamos acompanhando sua foto.' : phase === 'preparing' ? `Sua experiência com o ${team?.name || 'time'} começa aqui.` : 'Sua imagem está sendo preparada com o manto e o cenário escolhidos.'}
           </p>
-
-          {/* Warning */}
-          <div className="glass-card p-3 sm:p-4 rounded-xl border-2 border-warning/50 bg-warning/20">
-            <p className="text-xs sm:text-sm text-warning font-semibold">
-              Sua foto estará disponível quando ficar pronta.
-            </p>
-          </div>
+          {selectedShirt && selectedBackground && <div className="flex justify-center gap-6 mb-6">
+            {[{ image: selectedShirt.imageUrl, label: selectedShirt.name }, { image: selectedBackground.imageUrl, label: selectedBackground.name }].map((item, index) => <figure key={index} className="w-28 min-w-0">
+              <img src={item.image} alt={item.label} className="w-20 h-20 object-contain mx-auto rounded-lg bg-secondary" />
+              <figcaption className="text-xs text-muted-foreground mt-2 break-words">{item.label}</figcaption>
+            </figure>)}
+          </div>}
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-3"><Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin" /><span>{saved ? 'Pedido salvo. Sua foto aparecerá aqui quando estiver pronta.' : 'Preparando sua experiência...'}</span></div>
+          {saved && <p className="text-xs text-muted-foreground">Você pode voltar pelo tour para recuperar sua foto.</p>}
         </div>
       </div>
     );
@@ -139,10 +152,10 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, res
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 safe-bottom">
         <div className="text-center animate-fade-in">
           <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-6 sm:mb-8 rounded-2xl bg-destructive/20 flex items-center justify-center">
-            <span className="text-3xl sm:text-4xl">😢</span>
+            <AlertCircle className="w-8 h-8 text-destructive" />
           </div>
           <h2 className="text-xl sm:text-2xl font-black mb-3 sm:mb-4 uppercase">
-            Ops, deu ruim!
+            Não foi possível concluir
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base mb-6 sm:mb-8 max-w-xs mx-auto">
             {error}

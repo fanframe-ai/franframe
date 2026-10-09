@@ -3,10 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toIncident } from '@/features/admin/status-model';
 
 interface SystemAlert {
   id: string;
   type: "error_spike" | "slow_processing" | "high_usage" | "api_error";
+  operation_key?: string | null;
   message: string;
   severity: "info" | "warning" | "critical";
   resolved: boolean;
@@ -22,13 +24,6 @@ const severityConfig = {
   info: { icon: Info, color: "text-blue-500", bg: "bg-blue-500/10" },
   warning: { icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10" },
   critical: { icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/10" },
-};
-
-const typeLabels = {
-  error_spike: "Pico de Erros",
-  slow_processing: "Lentidão",
-  high_usage: "Alto Uso",
-  api_error: "Erro de API",
 };
 
 export function AlertsList({ alerts, onResolve }: AlertsListProps) {
@@ -58,9 +53,9 @@ export function AlertsList({ alerts, onResolve }: AlertsListProps) {
                 <Icon className={`h-5 w-5 ${config.color}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
                   <Badge variant="outline" className="text-xs">
-                    {typeLabels[alert.type]}
+                    {toIncident(alert).title}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(alert.created_at), {

@@ -55,6 +55,7 @@ try {
   const args = [jobId, team, `test:${link.id}`, 'hash', link.id, 1, 'manto-1', 'https://example.com/shirt', 'https://example.com/background', 'consent'];
   const reserve = 'SELECT public.reserve_generation($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS result';
   assert.equal((await db.query(reserve, args)).rows[0].result.created, true);
+  assert.equal((await db.query('SELECT cost_cents FROM generation_queue WHERE id=$1',[jobId])).rows[0].cost_cents,9,'2K reserves USD 0.09');
   assert.equal((await db.query(reserve, args)).rows[0].result.created, false);
   assert.equal((await db.query('SELECT credits_used FROM public.test_links WHERE id=$1', [link.id])).rows[0].credits_used, 1);
   await assert.rejects(db.query(reserve, ['22222222-2222-4222-8222-222222222222', ...args.slice(1)]), /generation_active/);
@@ -68,6 +69,28 @@ try {
   assert.equal((await db.query('SELECT credits_used FROM public.test_links WHERE id=$1', [link.id])).rows[0].credits_used, 1);
   assert.equal((await db.query("SELECT status,result_storage_path FROM public.generation_queue WHERE id='33333333-3333-4333-8333-333333333333'")).rows[0].result_storage_path, 'path/result.png');
   const otherTeam = (await db.query("INSERT INTO public.teams(slug,name,subdomain) VALUES('other','Other','other') RETURNING id")).rows[0].id;
+  const primaryBase='https://homolog.example/wp-json/vf-fanframe/v1';
+  const productionBase='https://production.example/wp-json/vf-fanframe/v1';
+  await db.query('UPDATE teams SET wordpress_api_base=$2,wordpress_sites=$3 WHERE id=$1',[team,primaryBase,JSON.stringify([{api_base:productionBase,purchase_urls:{credits1:'https://production.example/checkout/'}}])]);
+  const bind='SELECT bind_fanframe_session($1,$2,$3,now()+interval \'1 hour\',$4) AS saved';
+  const sessionHash='a'.repeat(64);
+  assert.equal((await db.query(bind,[team,'42',sessionHash,primaryBase])).rows[0].saved,true);
+  assert.equal((await db.query(bind,[team,'42',sessionHash,productionBase])).rows[0].saved,false,'same token cannot switch billing origins');
+  assert.equal((await db.query(bind,[team,'43',sessionHash,primaryBase])).rows[0].saved,false,'same token cannot switch users');
+  assert.equal((await db.query('SELECT wordpress_api_base,external_user_id FROM fanframe_sessions WHERE token_hash=$1',[sessionHash])).rows[0].wordpress_api_base,primaryBase);
+  assert.equal((await db.query(bind,[team,'42','b'.repeat(64),productionBase])).rows[0].saved,true);
+  await assert.rejects(db.query('UPDATE teams SET wordpress_api_base=$2 WHERE id=$1',[team,productionBase]),/wordpress_primary_identity_immutable/,'retargeting legacy primary identities could expose old results');
+  assert.equal((await db.query('SELECT wordpress_api_base FROM teams WHERE id=$1',[team])).rows[0].wordpress_api_base,primaryBase);
+  await assert.rejects(db.query(bind,[team,'42','c'.repeat(64),'https://unconfigured.example/api']),/invalid_wordpress_origin/);
+  assert.equal((await db.query("SELECT has_function_privilege('authenticated','bind_fanframe_session(uuid,text,text,timestamptz,text)','EXECUTE') AS allowed")).rows[0].allowed,false);
+  const sessions=[new pg.Client({connectionString:url.href}),new pg.Client({connectionString:url.href})];
+  try {
+    await Promise.all(sessions.map(client=>client.connect()));
+    const outcomes=await Promise.all(sessions.map((client,index)=>client.query(bind,[team,'42','d'.repeat(64),index ? productionBase : primaryBase])));
+    assert.equal(outcomes.filter(result=>result.rows[0].saved).length,1,'atomic provenance binding allows only one concurrent origin');
+    const saved=(await db.query("SELECT wordpress_api_base FROM fanframe_sessions WHERE token_hash=$1",['d'.repeat(64)])).rows[0].wordpress_api_base;
+    assert.equal(saved,[primaryBase,productionBase][outcomes[0].rows[0].saved ? 0 : 1]);
+  } finally { await Promise.all(sessions.map(client=>client.end())); }
   const wordpressA = ['44444444-4444-4444-8444-444444444444', team, 'wp:42', 'hash-a', null, 1, 'manto-1', 'https://example.com/shirt', 'https://example.com/background', 'consent'];
   const wordpressB = ['55555555-5555-4555-8555-555555555555', otherTeam, 'wp:42', 'hash-b', null, 1, 'shirt', 'https://example.com/shirt', 'https://example.com/background', 'consent'];
   assert.equal((await db.query(reserve, wordpressA)).rows[0].result.created, true);
@@ -150,6 +173,54 @@ try {
     await assert.rejects(db.query(reserve,[randomUUID(),team,'wp:paused-2','hash',null,1,'shirt','url','url','consent']),/admissions_paused/);
     console.log(`Launch contention passed: 1000 submissions, ${accepted.length} budget-admitted, 3 provider slots, ${Date.now()-start}ms (local Postgres).`);
   } finally { await pool.end(); }
+  // Bounded peak retention in the disposable database, without provider calls.
+  const burstPool = new pg.Pool({ connectionString:url.href, max:20 });
+  try {
+    await db.query("UPDATE generation_queue SET work_stage='failed',status='failed',cost_state='released',submitted_at=null");
+    await db.query("UPDATE generation_controls SET admissions_paused=false,dispatch_paused=false,max_active=6,max_waiting=60,starts_per_minute=120,event_budget_cents=30000,daily_budget_cents=30000,cooldown_until=null");
+    const burst = [];
+    const contenders=Array.from({length:100},(_,index)=>({id:randomUUID(),owner:`wp:peak-${index}`}));
+    const burstOutcomes=await Promise.allSettled(contenders.map(item=>burstPool.query(reserve,[item.id,team,item.owner,'peak-hash',null,1,'shirt','url','url','consent']).then(()=>{burst.push(item);} )));
+    assert.equal(burst.length,60);
+    assert.equal(burstOutcomes.filter(outcome=>outcome.status==='rejected').length,40);
+    assert(burstOutcomes.filter(outcome=>outcome.status==='rejected').every(outcome=>/queue_full/.test(outcome.reason.message)));
+    assert.equal((await db.query("SELECT count(*)::int count FROM generation_queue WHERE work_stage='uploading'")).rows[0].count,60);
+    assert.equal((await db.query("SELECT sum(cost_cents)::int cents FROM generation_queue WHERE cost_state='reserved'")).rows[0].cents,540);
+    assert.deepEqual((await db.query('SELECT generation_admission($1) AS value',[team])).rows[0].value,{available:false,reason:'queue_full'});
+    const rejectedLink=(await db.query('INSERT INTO test_links(team_id,credits_total) VALUES($1,1) RETURNING id',[team])).rows[0].id;
+    await assert.rejects(db.query(reserve,[randomUUID(),team,`test:${rejectedLink}`,'hash',rejectedLink,1,'shirt','url','url','consent']),/queue_full/);
+    assert.equal((await db.query('SELECT credits_used FROM test_links WHERE id=$1',[rejectedLink])).rows[0].credits_used,0);
+    assert.equal((await db.query(reserve,[burst[0].id,team,burst[0].owner,'peak-hash',null,1,'shirt','url','url','consent'])).rows[0].result.created,false);
+    for (const item of burst) await db.query('SELECT mark_generation_ready($1,$2,$3)',[item.id,`${team}/${item.id}/input.png`,{size:'2K'}]);
+    const peakClaims=(await Promise.all(Array.from({length:20},()=>burstPool.query('SELECT claim_generation_work() AS work')))).map(result=>result.rows[0].work).filter(Boolean);
+    assert.equal(peakClaims.length,5,'short burst throttle remains enforced with overlapping workers');
+    assert(peakClaims.every(work=>work.kind==='dispatch'));
+    await db.query("UPDATE generation_queue SET submitted_at=now()-interval '11 seconds' WHERE work_stage='submitting'");
+    peakClaims.push((await db.query('SELECT claim_generation_work() AS work')).rows[0].work);
+    assert.equal(peakClaims[5].kind,'dispatch');
+    assert.equal(new Set(peakClaims.map(work=>work.job.id)).size,6);
+    assert.equal((await db.query('SELECT claim_generation_work() AS work')).rows[0].work,null,'no seventh provider slot');
+    const waitingId=burst.find(item=>!peakClaims.some(work=>work.job.id===item.id)).id;
+    await db.query("UPDATE generation_queue SET created_at=now()-interval '15 minutes' WHERE id=$1",[waitingId]);
+    await db.query('SELECT claim_generation_work()');
+    assert.equal((await db.query('SELECT work_stage FROM generation_queue WHERE id=$1',[waitingId])).rows[0].work_stage,'ready','uploaded input survives a peak longer than 10 minutes');
+    await db.query("UPDATE generation_queue SET work_stage='uncertain',created_at=now()-interval '45 minutes',lease_id=null,lease_until=null,next_attempt_at=now()+interval '1 hour' WHERE id=$1",[peakClaims[0].job.id]);
+    await db.query("UPDATE generation_queue SET created_at=now()-interval '31 minutes' WHERE id=$1",[waitingId]);
+    await db.query('SELECT claim_generation_work()');
+    assert.deepEqual((await db.query('SELECT status,cost_state FROM generation_queue WHERE id=$1',[waitingId])).rows[0],{status:'failed',cost_state:'released'});
+    assert.deepEqual((await db.query('SELECT work_stage,cost_state,attempts FROM generation_queue WHERE id=$1',[peakClaims[0].job.id])).rows[0],{work_stage:'uncertain',cost_state:'reserved',attempts:1});
+    const uploadId=randomUUID();
+    await db.query(reserve,[uploadId,team,`test:${rejectedLink}`,'hash',rejectedLink,1,'shirt','url','url','consent']);
+    await db.query("UPDATE generation_queue SET created_at=now()-interval '11 minutes' WHERE id=$1",[uploadId]);
+    await db.query('SELECT claim_generation_work()');
+    assert.equal((await db.query('SELECT credits_used FROM test_links WHERE id=$1',[rejectedLink])).rows[0].credits_used,0,'stuck upload refunds exactly once');
+    assert.equal((await db.query('SELECT cost_state FROM generation_queue WHERE id=$1',[uploadId])).rows[0].cost_state,'released');
+    assert.deepEqual((await db.query('SELECT generation_admission($1) AS value',[team])).rows[0].value,{available:true});
+    await db.query("UPDATE generation_controls SET admissions_paused=true WHERE scope='global'");
+    assert.deepEqual((await db.query('SELECT generation_admission($1) AS value',[team])).rows[0].value,{available:false,reason:'admissions_paused'});
+    assert.equal((await db.query("SELECT has_function_privilege('authenticated','generation_admission(uuid)','EXECUTE') AS allowed")).rows[0].allowed,false);
+    console.log('Peak retention passed: 60 waiting, 6 slots, 15-minute recovery, safe 30-minute expiry and no extra credit.');
+  } finally { await burstPool.end(); }
   const policies = await db.query("SELECT tablename,policyname FROM pg_policies WHERE schemaname='public' AND tablename IN ('generation_queue','test_links','team_secrets','fanframe_sessions')");
   assert(!policies.rows.some(row => /Anyone|Anon|Service role can manage queue/.test(row.policyname)));
   assert.equal((await db.query("SELECT public FROM storage.buckets WHERE id='tryon-temp'")).rows[0].public, false);
@@ -158,6 +229,7 @@ try {
   await db.query('GRANT USAGE ON SCHEMA public TO anon');
   await db.query('GRANT SELECT,INSERT,UPDATE ON public.generation_queue,public.test_links,public.team_secrets,public.fanframe_sessions TO anon');
   await db.query('GRANT SELECT ON public.generation_queue TO authenticated');
+  await db.query('GRANT SELECT,UPDATE ON public.teams TO authenticated');
   await db.query('GRANT USAGE ON SCHEMA storage TO anon,authenticated');
   await db.query('GRANT INSERT,SELECT ON storage.objects TO anon,authenticated');
   await db.query('GRANT USAGE ON SEQUENCE storage.objects_id_seq TO anon,authenticated');
@@ -178,13 +250,25 @@ try {
   try {
     await assert.rejects(db.query("SELECT configure_generation_controls('global','{\"admissions_paused\":false}')"),/admin_required/);
     await assert.rejects(db.query("SELECT generation_operations()"),/admin_required/);
+    await assert.rejects(db.query("SELECT system_status_snapshot()"),/admin_required/);
     assert.equal((await db.query('SELECT count(*)::int count FROM generation_queue')).rows[0].count,0);
   } finally { await db.query('RESET ROLE'); }
   await db.query("SELECT set_config('request.jwt.claim.sub','53ee3e7f-21bb-4fc6-9294-a6a116f6d819',false)");
+  await db.query("INSERT INTO health_checks(service_id,service_name,status,probe_version) SELECT 'auth','Auth','degraded',2 FROM generate_series(1,1500)");
+  await db.query("INSERT INTO health_checks(service_id,service_name,status,probe_version) VALUES('auth','Auth','unknown',2),('auth','Auth','major_outage',1),('replicate','Replicate','major_outage',2),('database','DB','unknown',2)");
   await db.query('SET ROLE authenticated');
   try {
     await db.query("SELECT configure_generation_controls('global','{\"max_active\":5}')");
+    assert.equal((await db.query('UPDATE teams SET wordpress_api_base=wordpress_api_base WHERE id=$1',[team])).rowCount,1,'normal authenticated admin save still works with private sessions');
+    await assert.rejects(db.query('UPDATE teams SET wordpress_api_base=$2 WHERE id=$1',[team,productionBase]),/wordpress_primary_identity_immutable/);
     const operation=(await db.query('SELECT generation_operations() AS value')).rows[0].value;
+    const snapshot=(await db.query('SELECT system_status_snapshot() AS value')).rows[0].value;
+    const authStats=snapshot.stats.find(item=>item.service_id==='auth');
+    assert.equal(authStats.checked,1500); assert.equal(authStats.available,1500); assert.equal(authStats.availability,100);
+    assert.equal(authStats.unknown_checks,1); assert.equal(snapshot.stats.find(item=>item.service_id==='replicate').availability,0);
+    assert.equal(snapshot.stats.find(item=>item.service_id==='database').availability,null);
+    assert.equal(snapshot.days.find(item=>item.service_id==='auth').checks,1501);
+    assert.equal((await db.query("SELECT has_function_privilege('anon','public.system_status_snapshot()','EXECUTE') AS allowed")).rows[0].allowed,false);
     assert.equal(operation.controls.max_active,5);
     assert.equal((await db.query('SELECT count(*)::int count FROM generation_control_audit')).rows[0].count,1);
     await db.query("INSERT INTO storage.objects(bucket_id) VALUES('tryon-assets')");

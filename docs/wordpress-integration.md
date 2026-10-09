@@ -2,6 +2,19 @@
 
 Cada time tem `wordpress_api_base` e `purchase_urls` em `teams`. O backend lê a URL daquele time; nenhuma rota usa um site padrão de outro clube. O navegador envia `team_slug` para `fanframe-proxy`, que troca o código de handoff pelo `app_token` no WordPress e guarda somente o hash do token em `fanframe_sessions`. A chave de armazenamento local é `vf_app_token:<slug>` para evitar troca de identidade entre times.
 
+## Mais de um WordPress no mesmo provador
+
+`wordpress_sites` adiciona até três bases HTTPS e seus próprios `purchase_urls`, sem substituir a base principal. O exchange recebe `wordpress_origin` como pista e valida a origem contra essa lista no servidor; não tenta trocar o código em vários sites. A sessão fica vinculada atomicamente à base validada. Saldo, débito idempotente e checkout usam essa mesma base. IDs de usuário iguais em sites diferentes têm donos diferentes; os usuários antigos da base principal mantêm seu histórico. Alterar a pista no cliente não muda a base de uma sessão existente.
+
+A base principal não pode ser redirecionada para outro site depois de existirem sessões ou gerações WordPress: o banco rejeita a mudança para preservar a identidade histórica `wp:<id>`. Adicione a nova origem a `wordpress_sites`; uma troca definitiva de identidade requer migração de dados explícita ou outro provador, não somente editar a URL.
+
+Configure o destino do plugin com a origem explícita, para funcionar também quando o navegador não fornece `Referer`:
+
+- Produção: `https://franframe.vercel.app/saopaulo-sp7k2x?wordpress_origin=https%3A%2F%2Ftricolorvirtualexperience.net`
+- Homologação: `https://franframe.vercel.app/saopaulo-sp7k2x?wordpress_origin=https%3A%2F%2Fspfc.virtualfans.com.br`
+
+O plugin acrescenta `code` mantendo o parâmetro de origem. O frontend também aceita a origem HTTPS do site que embute o iframe, quando existe. Links antigos sem indicação continuam usando a base principal; não reutilize um código de homologação em produção. Se um código já consumido falhar, a sessão salva só é recuperada quando pertence à mesma origem solicitada. Uma troca de origem limpa apenas a referência de recuperação local; o histórico continua privado no servidor.
+
 ## Endpoints esperados na base WordPress do time
 
 | Método e rota | Corpo/autorização | Resposta mínima |

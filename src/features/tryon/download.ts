@@ -1,9 +1,12 @@
 import { generationStatus } from '@/integrations/supabase/functions';
+import { reportError } from '@/lib/diagnostics';
 
 export async function downloadGeneration(teamSlug: string, generationId: string, name: string, watermark?: string | null) {
-  const result = await generationStatus(teamSlug, generationId);
-  if (result.status !== 'completed' || !result.result_image_url) throw new Error('Foto indisponivel para download');
-  await downloadImage(result.result_image_url, name, watermark);
+  try {
+    const result = await generationStatus(teamSlug, generationId);
+    if (result.status !== 'completed' || !result.result_image_url) throw new Error('Foto indisponivel para download');
+    await downloadImage(result.result_image_url, name, watermark);
+  } catch (error) { reportError('download_failed', error, { generation_id: generationId }); throw error; }
 }
 
 export async function imageBlob(url: string): Promise<Blob> {
@@ -47,7 +50,7 @@ export async function downloadImage(url: string, name: string, watermark?: strin
   const original = await imageBlob(url);
   let output = original;
   if (watermark) {
-    try { output = await watermarkBlob(original, watermark); } catch { /* original image remains downloadable */ }
+    try { output = await watermarkBlob(original, watermark); } catch (error) { reportError('watermark_failed', error, {}, true); }
   }
   await saveBlob(output, name);
 }

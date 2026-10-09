@@ -1,6 +1,8 @@
+import { diagnostic } from './diagnostics.ts';
 export const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Expose-Headers': 'x-fanframe-request-id',
 };
 export class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -11,12 +13,22 @@ export function json(value: unknown, status = 200) {
 export function endpoint(handle: (req: Request) => Promise<Response>) {
   return async (req: Request) => {
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
-    if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
-    try { return await handle(req); }
+    const requestId = crypto.randomUUID(); const start = Date.now();
+    const functionName = new URL(req.url).pathname.split('/').at(-1) || 'unknown';
+    const fields = { function: functionName, request_id: requestId };
+    const respond = (response: Response) => { response.headers.set('x-fanframe-request-id', requestId); return response; };
+    if (req.method !== 'POST') { diagnostic('info', 'request_rejected', { ...fields, http_status: 405, code: 'method_not_allowed' }); return respond(json({ error: 'method_not_allowed', request_id: requestId }, 405)); }
+    try {
+      const response = await handle(req);
+      if (response.status >= 500) diagnostic('error', 'request_failed', { ...fields, http_status: response.status, duration_ms: Date.now()-start });
+      else if (!['generation-status','generation-worker'].includes(functionName)) diagnostic('info', 'request_completed', { ...fields, http_status: response.status, duration_ms: Date.now()-start });
+      return respond(response);
+    }
     catch (error) {
-      if (error instanceof HttpError) return json({ error: error.message }, error.status);
-      console.error('Request failed:', error instanceof Error ? error.name : 'unknown');
-      return json({ error: 'Não foi possível concluir a operação.' }, 500);
+      const status = error instanceof HttpError ? error.status : 500;
+      diagnostic(status >= 500 ? 'error' : 'info', status >= 500 ? 'request_failed' : 'request_rejected', { ...fields, http_status: status, duration_ms: Date.now()-start,
+        code: error instanceof HttpError ? error.message : 'unexpected_error', error_name: error instanceof Error ? error.name : 'unknown' });
+      return respond(json({ error: error instanceof HttpError ? error.message : 'Não foi possível concluir a operação.', request_id: requestId }, status));
     }
   };
 }

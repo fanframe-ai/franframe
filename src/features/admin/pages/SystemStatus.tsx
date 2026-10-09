@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AdminLayout } from "@/features/admin/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -20,8 +20,10 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow, format, subDays } from "date-fns";
-import { overallStatus as calculateOverallStatus, buildUptimeHistory, toIncident, type ServiceStatus, type DayStatus, type Incident } from "@/features/admin/status-model";
+import { formatDistanceToNow, format } from "date-fns";
+import { overallStatus as calculateOverallStatus, currentStatus, buildAggregatedHistory, toIncident, type StatusSnapshot, type ServiceStatus, type DayStatus, type Incident } from "@/features/admin/status-model";
+import { reportError } from '@/lib/diagnostics';
+import { invoke } from '@/integrations/supabase/functions';
 import { ptBR } from "date-fns/locale";
 
 interface ServiceHealth {
@@ -32,18 +34,9 @@ interface ServiceHealth {
   responseTime?: number;
   lastChecked: Date | null;
   icon: React.ReactNode;
-  uptime: number;
+  uptime: number | null;
+  samples: number;
   error?: string;
-}
-
-interface HealthCheck {
-  id: string;
-  service_id: string;
-  service_name: string;
-  status: string;
-  response_time_ms: number | null;
-  error_message: string | null;
-  created_at: string;
 }
 
 const statusConfig: Record<ServiceStatus, { label: string; color: string; bgColor: string; icon: React.ReactNode }> = {
@@ -54,7 +47,7 @@ const statusConfig: Record<ServiceStatus, { label: string; color: string; bgColo
     icon: <CheckCircle2 className="h-5 w-5" />
   },
   degraded: { 
-    label: "Degradado", 
+    label: "Disponível com restrições",
     color: "text-warning", 
     bgColor: "bg-warning/10",
     icon: <AlertTriangle className="h-5 w-5" />
@@ -78,7 +71,7 @@ const statusConfig: Record<ServiceStatus, { label: string; color: string; bgColo
     icon: <Loader2 className="h-5 w-5 animate-spin" />
   },
   unknown: { 
-    label: "Sem dados", 
+    label: "Sem confirmação recente",
     color: "text-muted-foreground", 
     bgColor: "bg-muted/10",
     icon: <Clock className="h-5 w-5" />
@@ -103,58 +96,39 @@ const serviceIcons: Record<string, React.ReactNode> = {
 
 export default function AdminSystemStatus() {
   const { toast } = useToast();
-  const [services, setServices] = useState<ServiceHealth[]>([]);
+  const [observations, setServices] = useState<ServiceHealth[]>([]);
   const [uptimeHistory, setUptimeHistory] = useState<Record<string, DayStatus[]>>({});
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRunningCheck, setIsRunningCheck] = useState(false);
   const [lastFullCheck, setLastFullCheck] = useState<Date | null>(null);
-  const [overallStatus, setOverallStatus] = useState<ServiceStatus>("checking");
+  const [now, setNow] = useState(Date.now());
+  const [readError, setReadError] = useState(false);
+  const [incidentReadError, setIncidentReadError] = useState(false);
+  const refreshing = useRef<Promise<void> | null>(null);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
 
-  const fetchHealthData = useCallback(async () => {
-    setIsLoading(true);
-    
-    try {
-      // Fetch latest health check per service
-      const { data: latestChecks, error: latestError } = await supabase
-        .from("health_checks")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (latestError) throw latestError;
-
-      // Group by service to get latest status
-      const serviceMap = new Map<string, HealthCheck>();
-      (latestChecks as HealthCheck[] || []).forEach(check => {
-        if (!serviceMap.has(check.service_id)) {
-          serviceMap.set(check.service_id, check);
-        }
-      });
-
-      // Fetch uptime stats
-      const { data: uptimeStats, error: statsError } = await supabase
-        .from("health_check_stats")
-        .select("*");
-
-      if (statsError) {
-        console.error("Error fetching stats:", statsError);
-      }
-
-      const statsMap = new Map<string, (typeof uptimeStats)[number]>();
-      (uptimeStats || []).forEach(stat => {
-        statsMap.set(stat.service_id, stat);
-      });
+  const fetchHealthData = useCallback(async (force = false) => {
+    if (refreshing.current) { await refreshing.current; if (!force) return; }
+    const work = async () => {
+      const cancellation = new AbortController();
+      const deadline = setTimeout(() => cancellation.abort(), 15000);
+      try {
+      const { data, error } = await supabase.rpc('system_status_snapshot').abortSignal(cancellation.signal);
+      if (error) throw error;
+      const snapshot = data as unknown as StatusSnapshot;
+      if (!snapshot || !Array.isArray(snapshot.latest) || !Array.isArray(snapshot.stats) || !Array.isArray(snapshot.days)) throw new Error('invalid_status_snapshot');
+      const serviceMap = new Map(snapshot.latest.map(check => [check.service_id,check]));
+      const statsMap = new Map(snapshot.stats.map(stat => [stat.service_id,stat]));
 
       // Build services list
       const serviceDefinitions = [
-        { id: "database", name: "Banco de Dados", description: "Armazenamento principal de dados" },
-        { id: "auth", name: "Autenticação", description: "Sistema de login e autenticação" },
-        { id: "edge-functions", name: "Funções de Backend", description: "Processamento de imagens e lógica" },
-        { id: "realtime", name: "Tempo Real", description: "Atualizações em tempo real" },
-        { id: "replicate", name: "API IA", description: "Geração de imagens via IA" },
-        { id: "cdn", name: "CDN / Assets", description: "Entrega de arquivos estáticos" },
+        { id: "database", name: "Banco de Dados", description: "Consulta autenticada de leitura" },
+        { id: "auth", name: "Autenticação", description: "Resposta da API administrativa de Auth" },
+        { id: "edge-functions", name: "Funções de Backend", description: "Resposta validada da rota de status" },
+        { id: "realtime", name: "Tempo Real", description: "Abertura de conexão WebSocket" },
+        { id: "replicate", name: "API IA", description: "API da conta configurada; sem geração paga" },
+        { id: "cdn", name: "CDN / Assets", description: "Leitura de uma referência pública ativa" },
       ];
 
       const builtServices: ServiceHealth[] = serviceDefinitions.map(def => {
@@ -165,36 +139,20 @@ export default function AdminSystemStatus() {
           id: def.id,
           name: def.name,
           description: def.description,
-          status: latest && Date.now() - Date.parse(latest.created_at) <= 5 * 60000 ? (latest.status as ServiceStatus) : "unknown",
-          responseTime: latest?.response_time_ms || undefined,
-          lastChecked: latest ? new Date(latest.created_at) : null,
+          status: latest?.status as ServiceStatus || 'unknown',
+          responseTime: latest?.response_time_ms ?? undefined,
+          lastChecked: latest && Number.isFinite(Date.parse(latest.created_at)) ? new Date(latest.created_at) : null,
           icon: serviceIcons[def.id] || <Server className="h-5 w-5" />,
-          uptime: stats?.uptime_percentage || 0,
+          uptime: stats?.availability ?? null,
+          samples: stats?.checked ?? 0,
           error: latest?.error_message || undefined,
         };
       });
 
       setServices(builtServices);
-      
-      if (builtServices.length > 0 && builtServices[0].lastChecked) {
-        setLastFullCheck(builtServices[0].lastChecked);
-      }
-
-      setOverallStatus(calculateOverallStatus(builtServices.map(service => service.status)));
-
-      // Fetch 90-day history for uptime bars
-      const ninetyDaysAgo = subDays(new Date(), 90);
-      const { data: historyData, error: historyError } = await supabase
-        .from("health_checks")
-        .select("service_id, status, created_at")
-        .gte("created_at", ninetyDaysAgo.toISOString())
-        .order("created_at", { ascending: true });
-
-      if (historyError) {
-        console.error("Error fetching history:", historyError);
-      }
-
-      setUptimeHistory(buildUptimeHistory(serviceDefinitions.map(def => def.id), historyData || []));
+      setNow(Date.now()); setReadError(false);
+      setLastFullCheck(builtServices.every(service => service.lastChecked && Number.isFinite(service.lastChecked.getTime())) ? new Date(Math.min(...builtServices.map(service => service.lastChecked!.getTime()))) : null);
+      setUptimeHistory(buildAggregatedHistory(serviceDefinitions.map(def => def.id), snapshot.days));
 
       // Fetch active incidents from system_alerts
       const { data: alerts, error: alertsError } = await supabase
@@ -202,34 +160,40 @@ export default function AdminSystemStatus() {
         .select("*")
         .eq("resolved", false)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(10).abortSignal(cancellation.signal);
 
       if (alertsError) {
-        console.error("Error fetching alerts:", alertsError);
+        reportError('status_incidents_read_failed', alertsError);
       }
-
+      setIncidentReadError(Boolean(alertsError));
       setIncidents((alerts || []).map(toIncident));
 
     } catch (err) {
-      console.error("Error fetching health data:", err);
+      reportError('status_snapshot_failed', err); setReadError(true);
     } finally {
+      clearTimeout(deadline);
       setIsLoading(false);
-    }
+    } };
+    refreshing.current = work();
+    try { await refreshing.current; } finally { refreshing.current = null; }
   }, []);
+
+  const services = observations.map(service => {
+    const status = readError ? 'unknown' : currentStatus(service.status, service.lastChecked?.toISOString(), now);
+    return { ...service, status, error: status === 'unknown' && service.status !== 'unknown' ? undefined : service.error };
+  });
+  const overallStatus = isLoading ? 'checking' : readError ? 'unknown' : calculateOverallStatus(services.map(service => service.status));
 
   const runHealthCheck = async () => {
     setIsRunningCheck(true);
     
     try {
-      const { error } = await supabase.functions.invoke('health-check');
-      if (error) {
-        throw new Error("Health check failed");
-      }
-
-      // Refresh data after health check
-      await fetchHealthData();
+      const result = await invoke<{ success: boolean; persisted: boolean }>('health-check', {});
+      if (!result.success || !result.persisted) throw new Error('health_check_not_saved');
+      await fetchHealthData(true);
     } catch (err) {
-      console.error("Error running health check:", err);
+      reportError('manual_health_check_failed', err);
+      toast({ title: 'Não foi possível concluir a verificação', description: 'O status anterior não confirma a saúde atual.', variant: 'destructive' });
     } finally {
       setIsRunningCheck(false);
     }
@@ -237,9 +201,10 @@ export default function AdminSystemStatus() {
 
   useEffect(() => {
     fetchHealthData();
-    // Auto-refresh every 60 seconds
-    const interval = setInterval(fetchHealthData, 60000);
-    return () => clearInterval(interval);
+    const refresh = () => { setNow(Date.now()); if (!document.hidden) void fetchHealthData(); };
+    const interval = setInterval(refresh, 15000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', refresh); };
   }, [fetchHealthData]);
 
   const clearHistoricalData = async () => {
@@ -260,7 +225,7 @@ export default function AdminSystemStatus() {
       toast({ title: "Histórico limpo com sucesso! Execute uma verificação para reiniciar o monitoramento." });
       await fetchHealthData();
     } catch (err) {
-      console.error("Error clearing history:", err);
+      reportError('health_history_clear_failed', err);
       toast({ title: "Erro ao limpar histórico. Verifique suas permissões.", variant: "destructive" });
     } finally {
       setIsClearingHistory(false);
@@ -270,15 +235,15 @@ export default function AdminSystemStatus() {
   const getOverallStatusMessage = () => {
     switch (overallStatus) {
       case "operational":
-        return "Todos os sistemas operacionais";
+        return "Todos os serviços verificados estão acessíveis";
       case "degraded":
-        return "Alguns sistemas com lentidão";
+        return "Há serviços disponíveis com restrições";
       case "partial_outage":
         return "Interrupção parcial detectada";
       case "major_outage":
         return "Sistemas fora do ar";
       case "unknown":
-        return "Aguardando primeiro health check";
+        return "Status sem confirmação recente";
       default:
         return "Verificando status...";
     }
@@ -291,7 +256,7 @@ export default function AdminSystemStatus() {
       case "degraded":
         return "bg-warning";
       case "partial_outage":
-        return "bg-orange-500";
+        return "bg-destructive/70";
       case "major_outage":
         return "bg-destructive";
       default:
@@ -303,14 +268,14 @@ export default function AdminSystemStatus() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="admin-page-header">
           <div>
             <h1 className="text-2xl font-bold">Status do Sistema</h1>
             <p className="text-muted-foreground">
-              Monitoramento em tempo real de todos os serviços
+              Últimas verificações dos serviços
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {lastFullCheck && (
               <span className="text-sm text-muted-foreground">
                 Último check: {formatDistanceToNow(lastFullCheck, { addSuffix: true, locale: ptBR })}
@@ -346,29 +311,32 @@ export default function AdminSystemStatus() {
           </div>
         </div>
 
+        {readError && <p role="alert" className="text-warning">Não foi possível atualizar os dados de monitoramento. Isso não confirma uma indisponibilidade dos serviços.</p>}
+        {incidentReadError && <p role="alert" className="text-warning">A consulta de incidentes não está disponível.</p>}
+
         {/* Overall Status Banner */}
         <div className={cn(
-          "rounded-xl p-6 border flex items-center justify-between",
+          "rounded-lg p-5 border flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center",
           statusConfig[overallStatus].bgColor,
           "border-border"
         )}>
-          <div className="flex items-center gap-4">
-            <div className={cn("p-3 rounded-full", statusConfig[overallStatus].bgColor)}>
-              <Activity className={cn("h-8 w-8", statusConfig[overallStatus].color)} />
+          <div className="flex w-full min-w-0 flex-1 items-center gap-3">
+            <div className={cn("shrink-0 p-3 rounded-full", statusConfig[overallStatus].bgColor)}>
+              <Activity className={cn("h-6 w-6", statusConfig[overallStatus].color)} />
             </div>
             <div>
-              <h2 className={cn("text-xl font-bold", statusConfig[overallStatus].color)}>
+              <h2 className={cn("text-base font-bold", statusConfig[overallStatus].color)}>
                 {getOverallStatusMessage()}
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {incidents.length > 0 
                   ? `${incidents.length} incidente(s) ativo(s)` 
-                  : "Nenhum incidente ativo"}
+                  : incidentReadError ? "Incidentes sem confirmação" : "Nenhum incidente registrado"}
               </p>
             </div>
           </div>
           <div className={cn(
-            "px-4 py-2 rounded-full font-medium",
+            "px-3 py-1 rounded-md text-xs font-semibold",
             statusConfig[overallStatus].bgColor,
             statusConfig[overallStatus].color
           )}>
@@ -377,14 +345,14 @@ export default function AdminSystemStatus() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {services.map((service) => (
             <div 
               key={service.id}
-              className="bg-card border border-border rounded-xl p-5 hover:shadow-lg transition-shadow"
+              className="bg-card border border-border rounded-lg p-5"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className={cn(
                     "p-2 rounded-lg",
                     statusConfig[service.status].bgColor
@@ -406,7 +374,7 @@ export default function AdminSystemStatus() {
                 </div>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-3 border-t border-border pt-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
                   <span className={cn(
@@ -421,29 +389,26 @@ export default function AdminSystemStatus() {
                 {service.responseTime !== undefined && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Latência</span>
-                    <span className={cn(
-                      "font-mono",
-                      service.responseTime < 300 ? "text-success" :
-                      service.responseTime < 1000 ? "text-warning" : "text-destructive"
-                    )}>
+                    <span className="font-mono text-muted-foreground">
                       {service.responseTime}ms
                     </span>
                   </div>
                 )}
+                <p className="text-xs text-muted-foreground">Verificado: {service.lastChecked ? formatDistanceToNow(service.lastChecked, { addSuffix: true, locale: ptBR }) : 'sem amostra'}</p>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Uptime (30d)</span>
+                  <span className="text-muted-foreground" title={`${service.samples} verificações confirmadas nos últimos 30 dias`}>Disponibilidade medida</span>
                   <span className={cn(
                     "font-medium",
-                    service.uptime >= 99 ? "text-success" :
+                    service.uptime === null ? "text-muted-foreground" : service.uptime >= 99 ? "text-success" :
                     service.uptime >= 95 ? "text-warning" : "text-destructive"
                   )}>
-                    {service.uptime > 0 ? `${service.uptime}%` : "—"}
+                    {service.uptime !== null ? `${service.uptime}%` : "—"}
                   </span>
                 </div>
 
                 {service.error && (
-                  <div className="mt-2 p-2 bg-destructive/10 rounded text-xs text-destructive">
+                  <div className={cn("mt-2 p-2 rounded text-xs", service.status === 'major_outage' || service.status === 'partial_outage' ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground')}>
                     {service.error}
                   </div>
                 )}
@@ -513,8 +478,8 @@ export default function AdminSystemStatus() {
         )}
 
         {/* Uptime History */}
-        <div className="bg-card border border-border rounded-xl p-6">
-          <h2 className="font-semibold mb-4">Histórico de Uptime (90 dias)</h2>
+        <section className="border-t border-border pt-6">
+          <h2 className="font-semibold mb-4">Histórico de verificações (90 dias)</h2>
           {Object.keys(uptimeHistory).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -522,12 +487,12 @@ export default function AdminSystemStatus() {
               <p className="text-sm">Execute um health check para começar a coletar dados.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="overflow-x-auto pb-2"><div className="min-w-[680px] space-y-4">
               {services.map((service) => {
                 const history = uptimeHistory[service.id] || [];
                 return (
                   <div key={service.id} className="flex items-center gap-4">
-                    <div className="w-40 flex items-center gap-2">
+                    <div className="w-40 shrink-0 flex items-center gap-2">
                       {service.icon}
                       <span className="text-sm font-medium truncate">{service.name}</span>
                     </div>
@@ -546,21 +511,21 @@ export default function AdminSystemStatus() {
                     <div className="w-16 text-right">
                       <span className={cn(
                         "text-sm font-medium",
-                        service.uptime >= 99 ? "text-success" :
+                        service.uptime === null ? "text-muted-foreground" : service.uptime >= 99 ? "text-success" :
                         service.uptime >= 95 ? "text-warning" : "text-destructive"
                       )}>
-                        {service.uptime > 0 ? `${service.uptime}%` : "—"}
+                        {service.uptime !== null ? `${service.uptime}%` : "—"}
                       </span>
                     </div>
                   </div>
                 );
               })}
-            </div>
+            </div></div>
           )}
           <p className="text-xs text-muted-foreground mt-4">
-            Cada barra representa um dia. Verde = operacional, Amarelo = degradado, Vermelho = interrupção, Cinza = sem dados
+            Amostras com os critérios atuais, a cada 5 minutos. Percentual de respostas disponíveis em 30 dias, não uptime contínuo. Histórico anterior preservado fora deste cálculo. Horário de Brasília.
           </p>
-        </div>
+        </section>
       </div>
     </AdminLayout>
   );

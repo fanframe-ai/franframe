@@ -15,7 +15,7 @@ test('reload resumes the same job and transient status failure never submits ano
   await page.goto('/testteam?test_token=fixture');
   await expect(page.getByText('Reconectando...')).toBeVisible();
   await page.reload();
-  await expect(page.getByText('Sua foto está na fila')).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Preparando seu manto'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Baixar Foto'})).toBeVisible();
   expect(starts).toBe(0);
   expect(await page.evaluate(()=>localStorage.getItem('vf_generation:testteam'))).toBeNull();

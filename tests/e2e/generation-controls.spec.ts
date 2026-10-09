@@ -13,6 +13,8 @@ test('administrator can pause admission and dispatch independently and save budg
   await page.getByRole('button',{name:'Pausar pedidos',exact:true}).click();await expect(page.getByRole('button',{name:'Retomar pedidos'})).toBeVisible();
   expect(changes[0]).toEqual({admissions_paused:true});expect(controls.dispatch_paused).toBe(false);
   await page.getByRole('button',{name:'Pausar processamento',exact:true}).click();await expect(page.getByRole('button',{name:'Retomar processamento'})).toBeVisible();expect(changes[1]).toEqual({dispatch_paused:true});
-  await page.getByLabel('Fotos simultâneas').fill('10');await page.getByRole('button',{name:'Salvar limites'}).click();
-  await expect.poll(()=>changes.length).toBe(3);expect(changes[2]).toEqual({max_active:10,event_budget_cents:30000,daily_budget_cents:30000,starts_per_minute:15});
+  await page.getByLabel('Fotos simultâneas').fill('6');await page.getByLabel('Pedidos aguardando').fill('60');await page.getByRole('button',{name:'Salvar limites'}).click();
+  await expect.poll(()=>changes.length).toBe(3);expect(changes[2]).toEqual({max_active:6,max_waiting:60,event_budget_cents:30000,daily_budget_cents:30000});
+  expect(controls.starts_per_minute).toBe(8);
+  await page.getByRole('button',{name:'Atualizar operação'}).click();await expect(page.getByLabel('Pedidos aguardando')).toHaveValue('60');
 });

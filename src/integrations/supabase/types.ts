@@ -103,6 +103,7 @@ export type Database = {
           id: string
           team_id: string
           token_hash: string
+          wordpress_api_base: string | null
         }
         ComputedFields: never
         Insert: {
@@ -111,6 +112,7 @@ export type Database = {
           id?: string
           team_id: string
           token_hash: string
+          wordpress_api_base?: string | null
         }
         Update: {
           expires_at?: string
@@ -118,6 +120,7 @@ export type Database = {
           id?: string
           team_id?: string
           token_hash?: string
+          wordpress_api_base?: string | null
         }
         Relationships: [
           {
@@ -401,7 +404,9 @@ export type Database = {
           created_at: string
           error_message: string | null
           id: string
+          probe_version: number
           response_time_ms: number | null
+          run_id: string | null
           service_id: string
           service_name: string
           status: string
@@ -411,7 +416,9 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          probe_version?: number
           response_time_ms?: number | null
+          run_id?: string | null
           service_id: string
           service_name: string
           status: string
@@ -420,7 +427,9 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          probe_version?: number
           response_time_ms?: number | null
+          run_id?: string | null
           service_id?: string
           service_name?: string
           status?: string
@@ -581,6 +590,7 @@ export type Database = {
           updated_at: string | null
           watermark_url: string | null
           wordpress_api_base: string | null
+          wordpress_sites: NonNullable<Json>
         }
         ComputedFields: never
         Insert: {
@@ -602,6 +612,7 @@ export type Database = {
           updated_at?: string | null
           watermark_url?: string | null
           wordpress_api_base?: string | null
+          wordpress_sites?: NonNullable<Json>
         }
         Update: {
           backgrounds?: NonNullable<Json>
@@ -622,6 +633,7 @@ export type Database = {
           updated_at?: string | null
           watermark_url?: string | null
           wordpress_api_base?: string | null
+          wordpress_sites?: NonNullable<Json>
         }
         Relationships: []
       }
@@ -720,6 +732,16 @@ export type Database = {
         Args: { p_start: string; p_team?: string }
         Returns: Json
       }
+      bind_fanframe_session: {
+        Args: {
+          p_base: string
+          p_expires: string
+          p_external: string
+          p_hash: string
+          p_team: string
+        }
+        Returns: boolean
+      }
       claim_generation_alert: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -749,6 +771,7 @@ export type Database = {
       }
       gen_random_uuid: { Args: Record<PropertyKey, never>; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
+      generation_admission: { Args: { p_team: string }; Returns: Json }
       generation_operations: { Args: { p_team?: string }; Returns: Json }
       has_role: {
         Args: {
@@ -800,6 +823,10 @@ export type Database = {
           p_team: string
           p_test_link: string
         }
+        Returns: Json
+      }
+      system_status_snapshot: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       update_generation_work: {

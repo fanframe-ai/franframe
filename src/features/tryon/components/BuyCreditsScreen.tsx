@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Coins, RefreshCw, CreditCard } from "lucide-react";
 import { useTeam } from "@/features/teams/TeamContext";
 import { useTeamAccent } from "@/features/teams/hooks/useTeamAccent";
+import { sessionPurchaseUrls } from '@/features/auth/wordpress-session';
 
 interface BuyCreditsScreenProps {
   balance: number;
@@ -27,11 +28,12 @@ export const BuyCreditsScreen = ({
 }: BuyCreditsScreenProps) => {
   const { team } = useTeam();
   const { accent, accentFg } = useTeamAccent();
+  const purchaseUrls = team ? sessionPurchaseUrls(team.slug, team.purchase_urls) : {};
 
   const packages: PackageInfo[] = [1, 3, 7].flatMap((credits) => {
-    const checkoutUrl = team?.purchase_urls[`credits${credits}`];
+    const checkoutUrl = purchaseUrls[`credits${credits}`];
     if (!checkoutUrl || !/^https:\/\//.test(checkoutUrl)) return [];
-    return [{ credits, checkoutUrl, price: team?.purchase_urls[`price${credits}`] || "Preço no checkout", highlight: credits === 3, badge: credits === 3 ? "Mais Popular" : undefined }];
+    return [{ credits, checkoutUrl, price: purchaseUrls[`price${credits}`] || "Preço no checkout", highlight: credits === 3, badge: credits === 3 ? "Mais Popular" : undefined }];
   });
 
   return (

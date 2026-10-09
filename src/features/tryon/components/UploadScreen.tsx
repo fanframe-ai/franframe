@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { reportError } from '@/lib/diagnostics';
 import { Button } from "@/components/ui/button";
 import { Upload, X, Image as ImageIcon, ArrowLeft, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,7 +51,7 @@ export const UploadScreen = ({
       // heic2any can return an array or a single blob
       return Array.isArray(result) ? result[0] : result;
     } catch (error) {
-      console.error("Error converting HEIC:", error);
+      reportError('heic_conversion_failed', error);
       throw new Error("Não foi possível converter a imagem HEIC");
     }
   };

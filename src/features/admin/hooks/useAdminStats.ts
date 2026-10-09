@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AggregateStats } from '@/features/admin/stats';
+import { reportError } from '@/lib/diagnostics';
 
 interface TodayStats {
   totalGenerations: number;
@@ -27,6 +28,7 @@ interface Generation {
 interface SystemAlert {
   id: string;
   type: "error_spike" | "slow_processing" | "high_usage" | "api_error";
+  operation_key?: string | null;
   message: string;
   severity: "info" | "warning" | "critical";
   resolved: boolean;
@@ -91,7 +93,7 @@ export function useAdminStats(teamId?: string | null) {
         }))
       );
     } catch (err) {
-      console.error("Error fetching today stats:", err);
+      reportError('admin_stats_failed', err);
       setError("Erro ao carregar estatísticas");
     }
   }, [teamId]);
@@ -111,7 +113,7 @@ export function useAdminStats(teamId?: string | null) {
 
       setRecentGenerations((data as Generation[]) || []);
     } catch (err) {
-      console.error("Error fetching generations:", err);
+      reportError('admin_generations_failed', err);
     }
   }, [teamId]);
 
@@ -131,7 +133,7 @@ export function useAdminStats(teamId?: string | null) {
 
       setActiveAlerts((data as SystemAlert[]) || []);
     } catch (err) {
-      console.error("Error fetching alerts:", err);
+      reportError('admin_incidents_failed', err);
     }
   }, [teamId]);
 
@@ -145,7 +147,7 @@ export function useAdminStats(teamId?: string | null) {
       if (error) throw error;
       setActiveAlerts(prev => prev.filter(a => a.id !== alertId));
     } catch (err) {
-      console.error("Error resolving alert:", err);
+      reportError('admin_incident_resolve_failed', err);
     }
   };
 

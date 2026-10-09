@@ -2,6 +2,7 @@ import { authenticate, hash, serviceClient, wordpress } from '../_shared/auth.ts
 import { body, endpoint, HttpError, json } from '../_shared/http.ts';
 import { validateGeneration } from '../_shared/generation.ts';
 import { rpc, withActorLease } from '../_shared/queue.ts';
+import { diagnostic } from '../_shared/diagnostics.ts';
 export const handler = endpoint(async req => {
   const input = await body(req, 16 * 1024 * 1024);
   const db = serviceClient(); const actor = await authenticate(db, input);
@@ -26,6 +27,7 @@ export const handler = endpoint(async req => {
       p_background_url: request.background.assetPath || request.background.imageUrl,
       p_consent: 'image_upload:v1 — Titularidade/autorização da imagem e termos aceitos.',
     });
+    diagnostic('info', 'generation_reserved', { generation_id: request.id, team_id: actor.team.id });
     try {
       const path = `${actor.team.id}/${request.id}/input.${request.extension}`;
       const { error } = await db.storage.from('tryon-temp').upload(path, request.bytes, { contentType: request.mime, upsert: false });
@@ -34,10 +36,12 @@ export const handler = endpoint(async req => {
         prompt: actor.team.generation_prompt || `Virtual try-on: preserve face, pose and proportions. Dress the person in the reference jersey of ${actor.team.name} and use the reference background. Photorealistic lighting and fabric.`,
         size: '2K', aspect_ratio: 'match_input_image', output_format: 'png',
       } })) throw new Error('Upload reservation expired');
-    } catch {
+    } catch (error) {
+      diagnostic('error', 'generation_upload_failed', { generation_id: request.id, team_id: actor.team.id, error_name: error instanceof Error ? error.name : 'unknown' });
       await rpc(db, 'fail_generation', { p_id: request.id, p_error: 'Nao foi possivel enviar a foto. Seu credito foi preservado.' });
       throw new HttpError(503, 'upload_failed');
     }
+    diagnostic('info', 'generation_ready', { generation_id: request.id, team_id: actor.team.id });
     return json({ queueId: request.id, status: 'pending', next_poll_after: 10 }, 202);
   });
 });

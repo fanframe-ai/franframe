@@ -300,6 +300,16 @@
   }
 }
 
+.admin-page-header {
+  @apply flex flex-col items-start justify-between gap-4 border-b border-border pb-5 xl:flex-row xl:items-center;
+}
+
+.admin-shell h1, .admin-shell h2, .admin-shell h3,
+.admin-shell button, .admin-shell [role="tab"] { letter-spacing: 0; }
+.admin-shell h1 { @apply text-xl; }
+.admin-shell h2 { @apply text-base; }
+.admin-shell input { @apply min-w-0; }
+
 /* Reduced motion - respect user preferences */
 @media (prefers-reduced-motion: reduce) {
   *,

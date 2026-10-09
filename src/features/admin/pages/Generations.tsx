@@ -34,7 +34,7 @@ export default function AdminGenerations() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="admin-page-header">
           <div>
             <h1 className="text-2xl font-bold">Gerações</h1>
             <p className="text-muted-foreground">Histórico de todas as gerações de imagem</p>

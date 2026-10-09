@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "@/features/admin/components/AdminLayout";
+import { reportError } from '@/lib/diagnostics';
 import { StatsCard } from "@/features/admin/components/StatsCard";
 import { TeamSelector } from "@/features/admin/components/TeamSelector";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +81,7 @@ export default function AdminStats() {
 
       setShirtData(stats.shirts);
     } catch (err) {
-      console.error("Error fetching stats:", err);
+      reportError('admin_period_stats_failed', err);
     } finally {
       setIsLoading(false);
     }
@@ -95,12 +96,12 @@ export default function AdminStats() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="admin-page-header">
           <div>
             <h1 className="text-2xl font-bold">Estatísticas</h1>
             <p className="text-muted-foreground">Análise de performance ao longo do tempo</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <TeamSelector value={selectedTeam} onChange={setSelectedTeam} />
             {([7, 30, 90] as const).map((p) => (
               <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)}>
@@ -113,7 +114,7 @@ export default function AdminStats() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
           <StatsCard title="Total de Gerações" value={totals.total} icon={<ImageIcon className="h-5 w-5" />} />
           <StatsCard title="Sucessos" value={totals.success} icon={<CheckCircle className="h-5 w-5" />} variant="success" />
           <StatsCard title="Falhas" value={totals.failed} icon={<XCircle className="h-5 w-5" />} variant={totals.failed > 0 ? "destructive" : "default"} />

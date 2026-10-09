@@ -2,6 +2,8 @@ import { useState, useCallback } from "react";
 import type { BalanceResponse } from "@/config/fanframe";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/features/teams/TeamContext";
+import { reportError } from '@/lib/diagnostics';
+import { rememberWordpressSource } from '@/features/auth/wordpress-session';
 
 interface CreditsState {
   isLoading: boolean;
@@ -36,7 +38,6 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
     try {
       const storedToken = localStorage.getItem(`vf_app_token:${team?.slug}`);
       if (!storedToken) {
-        console.error("[FanFrame][Balance] Token não encontrado");
         return null;
       }
 
@@ -52,7 +53,7 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
         return null;
       }
       if (error) {
-        console.error("[FanFrame][Balance] Erro invoke:", error);
+        reportError('balance_request_failed', error);
         setState({ isLoading: false, error: "Erro ao consultar saldo" });
         return null;
       }
@@ -68,14 +69,14 @@ export function useFanFrameCredits(onTokenExpired?: () => void) {
       if (!response.ok) {
         throw new Error("Erro ao consultar saldo");
       }
+      if (team?.slug) rememberWordpressSource(team.slug, response);
 
       const balance = response.balance ?? 0;
-      console.log("[FanFrame][Balance] Saldo atual:", balance);
       setState({ isLoading: false, error: null });
       return balance;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao consultar saldo";
-      console.error("[FanFrame][Balance] Erro:", message);
+      reportError('balance_failed', error);
       setState({ isLoading: false, error: message });
       return null;
     }

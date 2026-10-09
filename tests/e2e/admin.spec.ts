@@ -13,6 +13,10 @@ test('admin login authorizes the asset upload route', async ({ page }) => {
   await page.getByLabel('Senha').fill('fixture-password');
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole('link', { name: 'Alertas', exact: true })).toHaveCount(0);
+  await page.goto('/admin/alerts');
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
   await page.goto('/admin/upload-assets');
   await expect(page.getByRole('heading', { name: 'Upload de Assets' })).toBeVisible();
   let uploaded = false;

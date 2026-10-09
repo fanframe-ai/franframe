@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 
 type Integration = {
   wordpress_api_base: string | null;
+  wordpress_sites?: { api_base: string; purchase_urls?: Record<string, string> }[];
   replicate_api_token: string | null;
   generation_prompt: string | null;
   purchase_urls: Record<string, string>;
@@ -18,10 +19,14 @@ export function TeamIntegrationFields({ value, onChange }: { value: Integration;
   return <Card><CardContent className="pt-6 space-y-4">
     <div className="space-y-2">
       <Label htmlFor="wordpress-api-base">API WordPress / FanFrame</Label>
-      <Input id="wordpress-api-base" type="url" value={value.wordpress_api_base || ''}
+      <Input id="wordpress-api-base" type="url" readOnly={Boolean(value.wordpress_sites?.length)} value={value.wordpress_api_base || ''}
         onChange={event => onChange('wordpress_api_base', event.target.value || null)}
         placeholder="https://seu-site.com/wp-json/vf-fanframe/v1" />
     </div>
+    {value.wordpress_sites?.map((site,index) => <div key={site.api_base} className="space-y-2">
+      <Label htmlFor={`wordpress-site-${index}`}>WordPress adicional {index+1}</Label>
+      <Input id={`wordpress-site-${index}`} value={site.api_base} readOnly />
+    </div>)}
     <div className="space-y-2">
       <Label>Token Replicate API</Label>
       <div className="flex gap-2">

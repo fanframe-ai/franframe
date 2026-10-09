@@ -54,6 +54,7 @@ for (const [withWatermark, expired] of [[false, false], [true, false], [false, t
   let statusCalls = 0;
   await page.route('**/expired-result.png', route => route.fulfill({ status: 403, body: 'Expired token' }));
   await page.route('**/functions/v1/generation-status', route => {
+    if (route.request().postDataJSON().action === 'admission') return route.fulfill({status:200,contentType:'application/json',body:'{"available":true}'});
     statusCalls++;
     expect(route.request().postDataJSON().queue_id).toBe('11111111-1111-4111-8111-111111111111');
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: '11111111-1111-4111-8111-111111111111', status: 'completed', result_image_url: expired && statusCalls === 1 ? 'http://127.0.0.1:8080/expired-result.png' : imageUrl }) });
@@ -82,7 +83,7 @@ test('iPhone share flow receives the generated image', async ({ page }) => {
   await mockTeam(page);
   const imageUrl = `data:image/png;base64,${readFileSync('tests/fixtures/photo.png').toString('base64')}`;
   await page.route('**/functions/v1/generate-tryon', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"queueId":"11111111-1111-4111-8111-111111111111","status":"processing"}' }));
-  await page.route('**/functions/v1/generation-status', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'completed', result_image_url: imageUrl }) }));
+  await page.route('**/functions/v1/generation-status', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(route.request().postDataJSON().action === 'admission' ? {available:true} : { status: 'completed', result_image_url: imageUrl }) }));
   await reachUpload(page);
   await page.locator('input[type=file]').setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: readFileSync('tests/fixtures/photo.png') });
   await page.getByRole('checkbox').click();
@@ -99,7 +100,7 @@ test('failed generation can be retried without losing the wizard', async ({ page
     attempts++;
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ queueId: `attempt-${attempts}`, status: 'processing' }) });
   });
-  await page.route('**/functions/v1/generation-status', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(attempts === 1
+  await page.route('**/functions/v1/generation-status', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(route.request().postDataJSON().action === 'admission' ? {available:true} : attempts === 1
     ? { status: 'failed', error_message: 'Falha temporária' }
     : { status: 'completed', result_image_url: `data:image/png;base64,${output}` }) }));
   await reachUpload(page);

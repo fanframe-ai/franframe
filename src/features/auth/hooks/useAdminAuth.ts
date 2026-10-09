@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { reportError } from '@/lib/diagnostics';
 
 interface AdminAuthState {
   isAuthenticated: boolean;
@@ -73,7 +74,7 @@ export function useAdminAuth() {
         .maybeSingle();
 
       if (error) {
-        console.error("Error checking admin role:", error);
+        reportError('admin_role_read_failed', error);
         setState(prev => ({
           ...prev,
           isAdmin: false,
@@ -90,7 +91,7 @@ export function useAdminAuth() {
         error: data ? null : "Acesso negado. Você não é administrador.",
       }));
     } catch (err) {
-      console.error("Error in checkAdminRole:", err);
+      reportError('admin_role_failed', err);
       setState(prev => ({
         ...prev,
         isAdmin: false,

@@ -50,6 +50,7 @@ export default function TeamEdit() {
       name: data.name,
       subdomain: data.subdomain,
       wordpress_api_base: data.wordpress_api_base,
+      wordpress_sites: (data.wordpress_sites as unknown as TeamData['wordpress_sites']) || [],
       replicate_api_token: null,
       generation_prompt: data.generation_prompt,
       shirts: (data.shirts as unknown as ShirtItem[]) || [],
@@ -201,11 +202,11 @@ export default function TeamEdit() {
     <AdminLayout>
       <div className="max-w-5xl">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate("/admin/teams")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1 basis-48">
             <h1 className="text-2xl font-bold">
               {isNew ? "Criar Novo Provador" : `Editar: ${form.name}`}
             </h1>
@@ -235,7 +236,7 @@ export default function TeamEdit() {
 
         {/* Tabs */}
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full">
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="integration">Integração</TabsTrigger>
             <TabsTrigger value="shirts">Camisas</TabsTrigger>

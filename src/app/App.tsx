@@ -11,7 +11,6 @@ const AdminLogin = lazy(() => import("@/features/admin/pages/Login"));
 const AdminDashboard = lazy(() => import("@/features/admin/pages/Dashboard"));
 const AdminGenerations = lazy(() => import("@/features/admin/pages/Generations"));
 const AdminStats = lazy(() => import("@/features/admin/pages/Stats"));
-const AdminAlerts = lazy(() => import("@/features/admin/pages/Alerts"));
 const AdminSystemStatus = lazy(() => import("@/features/admin/pages/SystemStatus"));
 const AdminSettings = lazy(() => import("@/features/admin/pages/Settings"));
 const AdminTeams = lazy(() => import("@/features/admin/pages/Teams"));
@@ -44,7 +43,7 @@ const App = () => (
           <Route path="/admin/generations" element={<ProtectedAdminRoute><AdminGenerations /></ProtectedAdminRoute>} />
           <Route path="/admin/stats" element={<ProtectedAdminRoute><AdminStats /></ProtectedAdminRoute>} />
           <Route path="/admin/status" element={<ProtectedAdminRoute><AdminSystemStatus /></ProtectedAdminRoute>} />
-          <Route path="/admin/alerts" element={<ProtectedAdminRoute><AdminAlerts /></ProtectedAdminRoute>} />
+          <Route path="/admin/alerts" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettings /></ProtectedAdminRoute>} />
           <Route path="/admin/teams" element={<ProtectedAdminRoute><AdminTeams /></ProtectedAdminRoute>} />
           <Route path="/admin/teams/:slug" element={<ProtectedAdminRoute><AdminTeamEdit /></ProtectedAdminRoute>} />

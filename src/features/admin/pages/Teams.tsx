@@ -55,7 +55,7 @@ export default function AdminTeams() {
   return (
     <AdminLayout>
       <div className="max-w-5xl">
-        <div className="flex items-center justify-between mb-6">
+        <div className="admin-page-header mb-6">
           <div>
             <h1 className="text-2xl font-bold">Provadores</h1>
             <p className="text-sm text-muted-foreground">Gerencie os provadores virtuais de cada time</p>
@@ -80,8 +80,8 @@ export default function AdminTeams() {
           <div className="grid gap-4">
             {teams.map((team) => (
               <Card key={team.id} className={!team.is_active ? "opacity-50" : ""}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-4">
+                <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
+                  <div className="flex min-w-0 items-center gap-4">
                     <div
                       className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
                       style={{ backgroundColor: team.primary_color || "#000" }}

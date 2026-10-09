@@ -7,9 +7,13 @@ export interface ExchangeResponse {
   expires_at?: string;
   balance?: number;
   error?: string;
+  wordpress_origin?: string;
+  purchase_urls?: Record<string, string>;
 }
 
 export interface BalanceResponse {
   ok: boolean;
   balance?: number;
+  wordpress_origin?: string;
+  purchase_urls?: Record<string, string>;
 }

@@ -36,11 +36,11 @@ export function StatsCard({
   };
 
   return (
-    <div className={cn("p-6 rounded-xl border", variantStyles[variant])}>
-      <div className="flex items-start justify-between">
-        <div>
+    <div className={cn("min-w-0 p-4 rounded-lg border", variantStyles[variant])}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-sm text-muted-foreground font-medium">{title}</p>
-          <p className="text-3xl font-bold mt-2">{value}</p>
+          <p className="text-2xl font-bold tabular-nums break-words mt-2">{value}</p>
           {subtitle && (
             <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
           )}
@@ -55,7 +55,7 @@ export function StatsCard({
             </p>
           )}
         </div>
-        <div className={cn("p-3 rounded-lg", iconStyles[variant])}>
+        <div className={cn("p-2 rounded-md shrink-0", iconStyles[variant])}>
           {icon}
         </div>
       </div>

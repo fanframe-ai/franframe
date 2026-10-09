@@ -42,12 +42,12 @@ export default function AdminDashboard() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="admin-page-header">
           <div>
             <h1 className="text-2xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground">Visão geral do sistema FanFrame</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <TeamSelector value={selectedTeam} onChange={setSelectedTeam} />
             <Button variant="outline" size="sm" onClick={refetch} disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
           <StatsCard title="Total Gerações (Hoje)" value={todayStats.totalGenerations} icon={<ImageIcon className="h-5 w-5" />} />
           <StatsCard
             title="Taxa de Sucesso"
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
         <GenerationControls teamId={selectedTeam} />
         {/* Charts & Alerts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
+          <section className="min-w-0 lg:col-span-2 border-t border-border pt-5">
             <h2 className="font-semibold mb-4">Gerações por Hora (Hoje)</h2>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -99,22 +99,22 @@ export default function AdminDashboard() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </section>
 
-          <div className="bg-card border border-border rounded-xl p-6">
+          <section className="min-w-0 border-t border-border pt-5">
             <h2 className="font-semibold mb-4">Alertas Ativos ({activeAlerts.length})</h2>
             <AlertsList alerts={activeAlerts} onResolve={resolveAlert} />
-          </div>
+          </section>
         </div>
 
         {/* Recent Generations */}
-        <div className="bg-card border border-border rounded-xl p-6">
+        <section className="border-t border-border pt-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Gerações Recentes</h2>
             <a href="/admin/generations" className="text-sm text-primary hover:underline">Ver todas →</a>
           </div>
           <GenerationsTable generations={recentGenerations.slice(0, 10)} />
-        </div>
+        </section>
       </div>
     </AdminLayout>
   );

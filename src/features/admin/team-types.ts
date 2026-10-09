@@ -23,6 +23,7 @@ export interface TeamData {
   name: string;
   subdomain: string;
   wordpress_api_base: string | null;
+  wordpress_sites?: { api_base: string; purchase_urls?: Record<string, string> }[];
   replicate_api_token: string | null;
   generation_prompt: string | null;
   shirts: ShirtItem[];
