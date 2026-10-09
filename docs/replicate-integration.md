@@ -10,10 +10,10 @@ O token Replicate de cada time está em `team_secrets.replicate_api_token`, vis�
 
 Fluxo:
 
-1. `generate-tryon` grava a foto em `tryon-temp` privado e cria URL assinada temporária.
-2. O backend busca a chave de assinatura de webhook no Replicate e cria uma prediction com foto, camisa e cenário.
+1. `generate-tryon` reserva crédito, vaga e exposição financeira em transação, grava a foto em `tryon-temp` privado e libera o pedido para a fila.
+2. `generation-worker` reclama o pedido por lease, cria a URL assinada da entrada, obtém a chave privada de webhook e envia uma prediction com foto, camisa e cenário. Um POST de resultado incerto não é repetido: permanece reservado até reconciliação.
 3. `replicate-webhook` lê o corpo bruto e verifica `webhook-id`, `webhook-timestamp` e `webhook-signature` com HMAC-SHA256. O timestamp deve estar no intervalo de cinco minutos; o ID da prediction deve coincidir com o job.
-4. Na conclusão, a função baixa apenas saídas HTTPS do domínio de entrega do Replicate, grava o resultado no bucket privado e chama `finish_generation`. Chamadas repetidas não consomem crédito extra. Falhas chamam `fail_generation`, que devolve a reserva de teste.
+4. O webhook registra o evento durável e responde sem baixar a imagem. O worker baixa apenas saídas HTTPS do domínio de entrega do Replicate, grava o resultado no bucket privado e chama `finish_generation`. Chamadas repetidas não consomem crédito extra. Falhas explícitas chamam `fail_generation`, que devolve a reserva de teste; exposição já enviada ao provedor continua contabilizada conservadoramente.
 5. O frontend consulta `generation-status`, que autentica dono/time, reconcilia o débito WordPress e entrega URL assinada válida por cinco minutos.
 
 O bucket `tryon-assets` continua público para imagens de referência dos times, mas upload/atualização exige admin. O bucket `tryon-temp` é privado. O frontend não assina URLs nem lê diretamente a fila. O painel administrativo lê métricas via políticas admin.
