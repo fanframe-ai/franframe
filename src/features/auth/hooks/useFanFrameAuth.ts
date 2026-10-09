@@ -28,20 +28,37 @@ export function useFanFrameAuth() {
       return;
     }
     setState(previous => ({ ...previous, isLoading: true, error: null }));
+    const acceptSession = (token: string, balance: number) => {
+      if (!active) return;
+      localStorage.setItem(storageKey, token);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      window.history.replaceState({}, '', url.toString());
+      justExchangedRef.current = true;
+      setState({ isAuthenticated: true, isLoading: false, error: null, balance });
+    };
     supabase.functions.invoke('fanframe-proxy', { body: { action: 'exchange', team_slug: team.slug, body: { code } } })
       .then(({ data, error }) => {
         if (error) throw error;
         const exchange = data as ExchangeResponse;
         if (!exchange?.ok || !exchange.app_token) throw new Error(exchange?.error || 'Código inválido ou expirado');
-        if (!active) return;
-        localStorage.setItem(storageKey, exchange.app_token);
-        const url = new URL(window.location.href);
-        url.searchParams.delete('code');
-        window.history.replaceState({}, '', url.toString());
-        justExchangedRef.current = true;
-        setState({ isAuthenticated: true, isLoading: false, error: null, balance: exchange.balance ?? 0 });
+        acceptSession(exchange.app_token, exchange.balance ?? 0);
       })
-      .catch(error => {
+      .catch(async error => {
+        if (!active) return;
+        const token = getStoredToken();
+        if (token) {
+          // Reopening the tour can reuse a consumed handoff code; validate the saved session instead.
+          const validation = await supabase.functions.invoke('fanframe-proxy', { body: { action: 'balance', team_slug: team.slug, app_token: token } });
+          if (!active) return;
+          if (!validation.error && validation.data?.ok && typeof validation.data.balance === 'number') {
+            acceptSession(token, validation.data.balance);
+            return;
+          }
+          if (validation.error && 'context' in validation.error && validation.error.context instanceof Response && validation.error.context.status === 401) {
+            localStorage.removeItem(storageKey);
+          }
+        }
         if (active) setState({ isAuthenticated: false, isLoading: false, error: error instanceof Error ? error.message : 'Erro ao autenticar', balance: 0 });
       });
     return () => { active = false; };
