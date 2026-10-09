@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.generation-status]
 verify_jwt = false
+
+[functions.generation-worker]
+verify_jwt = false

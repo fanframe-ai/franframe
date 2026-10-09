@@ -28,6 +28,7 @@ const Index = () => {
   const [selectedShirt, setSelectedShirt] = useState<TeamShirt | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<TeamBackground | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [resumeId, setResumeId] = useState<string | undefined>();
   const { team, isLoading: teamLoading } = useTeam();
 
   const { 
@@ -51,6 +52,12 @@ const Index = () => {
     isLoading: testTokenLoading,
     refreshTestBalance,
   } = useTestToken();
+
+  useEffect(() => {
+    if (!team || (!isAuthenticated && !isTestMode)) return;
+    const stored = localStorage.getItem(`vf_generation:${team.slug}`);
+    if (stored) { setResumeId(stored); setCurrentStep('result'); }
+  }, [team, isAuthenticated, isTestMode]);
 
   // Detectar retorno do pagamento PagBank
   useEffect(() => {
@@ -126,6 +133,7 @@ const Index = () => {
   }, []);
 
   const handleTryAgain = useCallback(() => {
+    setResumeId(undefined);
     setSelectedShirt(null);
     setSelectedBackground(null);
     goToStep("shirt");
@@ -294,11 +302,12 @@ const Index = () => {
         />
       )}
 
-      {currentStep === "result" && selectedShirt && selectedBackground && uploadedImage && (
+      {currentStep === "result" && (resumeId || (selectedShirt && selectedBackground && uploadedImage)) && (
         <ResultScreen
-          userImage={uploadedImage}
-          selectedShirt={selectedShirt}
-          selectedBackground={selectedBackground}
+          resumeId={resumeId}
+          userImage={uploadedImage || undefined}
+          selectedShirt={selectedShirt || undefined}
+          selectedBackground={selectedBackground || undefined}
           balance={effectiveBalance}
           onTryAgain={handleTryAgain}
           onBalanceUpdate={handleBalanceUpdate}

@@ -3,6 +3,7 @@ import { AdminLayout } from "@/features/admin/components/AdminLayout";
 import { StatsCard } from "@/features/admin/components/StatsCard";
 import { TeamSelector } from "@/features/admin/components/TeamSelector";
 import { supabase } from "@/integrations/supabase/client";
+import { brazilDateKey, type AggregateStats } from '@/features/admin/stats';
 import { 
   ImageIcon, 
   CheckCircle, 
@@ -54,60 +55,30 @@ export default function AdminStats() {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - period);
 
-      let query = supabase
-        .from("generations")
-        .select("*")
-        .gte("created_at", startDate.toISOString());
-
-      if (selectedTeam) query = query.eq("team_id", selectedTeam);
-
-      const { data: generations, error } = await query;
+      const { data, error } = await supabase.rpc('admin_generation_stats', { p_start: startDate.toISOString(), p_team: selectedTeam || undefined });
       if (error) throw error;
-
-      const total = generations?.length || 0;
-      const success = generations?.filter(g => g.status === "completed").length || 0;
-      const failed = generations?.filter(g => g.status === "failed").length || 0;
-      const times = generations?.filter(g => g.processing_time_ms).map(g => g.processing_time_ms!) || [];
-      const avgTime = times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
-      const uniqueUsers = new Set(generations?.map(g => g.external_user_id).filter(Boolean)).size;
-
-      setTotals({ total, success, failed, avgTime, uniqueUsers });
+      const stats = data as unknown as AggregateStats;
+      setTotals({ total: stats.totals.total, success: stats.totals.success, failed: stats.totals.failed, avgTime: stats.totals.avg_time, uniqueUsers: stats.totals.unique_users });
 
       const dailyMap = new Map<string, { total: number; success: number; failed: number }>();
       for (let i = 0; i < period; i++) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        dailyMap.set(date.toISOString().split("T")[0], { total: 0, success: 0, failed: 0 });
+        dailyMap.set(brazilDateKey(date), { total: 0, success: 0, failed: 0 });
       }
 
-      generations?.forEach(g => {
-        const date = g.created_at.split("T")[0];
-        if (dailyMap.has(date)) {
-          const current = dailyMap.get(date)!;
-          current.total++;
-          if (g.status === "completed") current.success++;
-          if (g.status === "failed") current.failed++;
-        }
-      });
+      stats.daily.forEach(item => { if (dailyMap.has(item.date)) dailyMap.set(item.date, item); });
 
       setDailyData(
         Array.from(dailyMap.entries())
           .map(([date, data]) => ({
-            date: new Date(date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+            date: new Date(`${date}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: 'America/Sao_Paulo', day: "2-digit", month: "2-digit" }),
             ...data,
           }))
           .reverse()
       );
 
-      const shirtMap = new Map<string, number>();
-      generations?.forEach(g => {
-        shirtMap.set(g.shirt_id, (shirtMap.get(g.shirt_id) || 0) + 1);
-      });
-      setShirtData(
-        Array.from(shirtMap.entries())
-          .map(([name, value]) => ({ name, value }))
-          .sort((a, b) => b.value - a.value)
-      );
+      setShirtData(stats.shirts);
     } catch (err) {
       console.error("Error fetching stats:", err);
     } finally {

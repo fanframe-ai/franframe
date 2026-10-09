@@ -1,0 +1,18 @@
+import { test, expect } from '@playwright/test';
+test('administrator can pause admission and dispatch independently and save budgeted limits',async({page})=>{
+  const user={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',aud:'authenticated',role:'authenticated',email:'admin@example.com',app_metadata:{},user_metadata:{},created_at:new Date().toISOString()};
+  const controls={admissions_paused:false,dispatch_paused:false,event_budget_cents:30000,daily_budget_cents:30000,margin_percent:10,max_active:5,max_waiting:30,starts_per_minute:8,worker_seen_at:new Date().toISOString()};
+  const changes:Record<string,unknown>[]=[];
+  await page.route('**/rest/v1/**',route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
+  await page.route('**/rest/v1/user_roles?**',route=>route.fulfill({status:200,contentType:'application/json',body:'{"role":"admin"}'}));
+  await page.route('**/rest/v1/rpc/admin_generation_stats',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({totals:{total:0,success:0,failed:0,avg_time:0,unique_users:0},hourly:[],daily:[],shirts:[],cost_cents:0})}));
+  await page.route('**/rest/v1/rpc/generation_operations',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({controls,waiting:0,active:0,uncertain:0,saving:0,awaiting_payment:0,reserved_cents:0,spent_cents:0,recent_completed:0,recent_failed:0,p95_total_seconds:null,p95_save_seconds:null})}));
+  await page.route('**/rest/v1/rpc/configure_generation_controls',route=>{const request=route.request().postDataJSON();expect(request.p_scope).toBe('global');changes.push(request.p_settings);Object.assign(controls,request.p_settings);return route.fulfill({status:200,contentType:'application/json',body:'null'});});
+  await page.route('**/auth/v1/token?grant_type=password',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({access_token:'admin-fixture',token_type:'bearer',expires_in:3600,refresh_token:'refresh-fixture',user})}));
+  await page.goto('/admin/login');await page.getByLabel('Email').fill('admin@example.com');await page.getByLabel('Senha').fill('fixture-password');await page.getByRole('button',{name:'Entrar'}).click();
+  await page.getByRole('button',{name:'Pausar pedidos',exact:true}).click();await expect(page.getByRole('button',{name:'Retomar pedidos'})).toBeVisible();
+  expect(changes[0]).toEqual({admissions_paused:true});expect(controls.dispatch_paused).toBe(false);
+  await page.getByRole('button',{name:'Pausar processamento',exact:true}).click();await expect(page.getByRole('button',{name:'Retomar processamento'})).toBeVisible();expect(changes[1]).toEqual({dispatch_paused:true});
+  await page.getByLabel('Fotos simultâneas').fill('10');await page.getByRole('button',{name:'Salvar limites'}).click();
+  await expect.poll(()=>changes.length).toBe(3);expect(changes[2]).toEqual({max_active:10,event_budget_cents:30000,daily_budget_cents:30000,starts_per_minute:15});
+});

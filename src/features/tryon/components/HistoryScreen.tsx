@@ -12,7 +12,7 @@ interface HistoryScreenProps {
 }
 
 export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
-  const { entries, isLoading } = useGenerationHistory();
+  const { entries, isLoading, hasMore, loadMore } = useGenerationHistory();
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
   const { toast } = useToast();
   const { team } = useTeam();
@@ -35,7 +35,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading && entries.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -106,6 +106,7 @@ export const HistoryScreen = ({ onBack }: HistoryScreenProps) => {
         </div>
       )}
 
+      {hasMore && <Button variant="outline" disabled={isLoading} className="mt-4" onClick={() => void loadMore()}>{isLoading ? 'Carregando...' : 'Ver mais fotos'}</Button>}
       {/* Fullscreen modal */}
       {selectedEntry && (
         <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in">

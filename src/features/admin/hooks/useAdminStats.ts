@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { AggregateStats } from '@/features/admin/stats';
 
 interface TodayStats {
   totalGenerations: number;
@@ -8,6 +9,7 @@ interface TodayStats {
   avgProcessingTime: number;
   uniqueUsers: number;
   successRate: number;
+  costCents: number;
 }
 
 interface Generation {
@@ -46,6 +48,7 @@ export function useAdminStats(teamId?: string | null) {
     avgProcessingTime: 0,
     uniqueUsers: 0,
     successRate: 0,
+    costCents: 0,
   });
   const [recentGenerations, setRecentGenerations] = useState<Generation[]>([]);
   const [activeAlerts, setActiveAlerts] = useState<SystemAlert[]>([]);
@@ -58,30 +61,10 @@ export function useAdminStats(teamId?: string | null) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      let query = supabase
-        .from("generations")
-        .select("*")
-        .gte("created_at", today.toISOString());
-
-      if (teamId) query = query.eq("team_id", teamId);
-
-      const { data: generations, error: genError } = await query;
+      const { data, error: genError } = await supabase.rpc('admin_generation_stats', { p_start: today.toISOString(), p_team: teamId || undefined });
       if (genError) throw genError;
-
-      const total = generations?.length || 0;
-      const successful = generations?.filter(g => g.status === "completed").length || 0;
-      const failed = generations?.filter(g => g.status === "failed").length || 0;
-      
-      const processingTimes = generations
-        ?.filter(g => g.processing_time_ms)
-        .map(g => g.processing_time_ms!) || [];
-      
-      const avgTime = processingTimes.length > 0 
-        ? processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length 
-        : 0;
-
-      const uniqueUsers = new Set(generations?.map(g => g.external_user_id).filter(Boolean)).size;
-
+      const stats = data as unknown as AggregateStats;
+      const { total, success: successful, failed, avg_time: avgTime, unique_users: uniqueUsers } = stats.totals;
       setTodayStats({
         totalGenerations: total,
         successfulGenerations: successful,
@@ -89,6 +72,7 @@ export function useAdminStats(teamId?: string | null) {
         avgProcessingTime: Math.round(avgTime),
         uniqueUsers,
         successRate: total > 0 ? Math.round((successful / total) * 100) : 100,
+        costCents: stats.cost_cents,
       });
 
       // Calculate hourly data
@@ -98,14 +82,7 @@ export function useAdminStats(teamId?: string | null) {
         hourlyMap.set(hour, { count: 0, success: 0, failed: 0 });
       }
 
-      generations?.forEach(g => {
-        const hour = new Date(g.created_at).getHours().toString().padStart(2, "0");
-        const current = hourlyMap.get(hour) || { count: 0, success: 0, failed: 0 };
-        current.count++;
-        if (g.status === "completed") current.success++;
-        if (g.status === "failed") current.failed++;
-        hourlyMap.set(hour, current);
-      });
+      stats.hourly.forEach(item => hourlyMap.set(String(item.hour).padStart(2, '0'), item));
 
       setHourlyData(
         Array.from(hourlyMap.entries()).map(([hour, data]) => ({
@@ -144,9 +121,10 @@ export function useAdminStats(teamId?: string | null) {
         .from("system_alerts")
         .select("*")
         .eq("resolved", false)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
 
-      if (teamId) query = query.eq("team_id", teamId);
+      if (teamId) query = query.or(`team_id.eq.${teamId},team_id.is.null`);
 
       const { data, error: alertError } = await query;
       if (alertError) throw alertError;
@@ -184,26 +162,9 @@ export function useAdminStats(teamId?: string | null) {
   useEffect(() => {
     fetchAllData();
 
-    const generationsChannel = supabase
-      .channel("admin-generations")
-      .on("postgres_changes", { event: "*", schema: "public", table: "generations" }, () => {
-        fetchTodayStats();
-        fetchRecentGenerations();
-      })
-      .subscribe();
-
-    const alertsChannel = supabase
-      .channel("admin-alerts")
-      .on("postgres_changes", { event: "*", schema: "public", table: "system_alerts" }, () => {
-        fetchActiveAlerts();
-      })
-      .subscribe();
-
     const interval = setInterval(fetchAllData, 30000);
 
     return () => {
-      supabase.removeChannel(generationsChannel);
-      supabase.removeChannel(alertsChannel);
       clearInterval(interval);
     };
   }, [fetchAllData, fetchTodayStats, fetchRecentGenerations, fetchActiveAlerts]);

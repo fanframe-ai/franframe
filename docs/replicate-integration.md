@@ -1,6 +1,10 @@
 # Geração de imagens com Replicate
 
-O modelo usado é **ByteDance Seedream 5 Pro**, pela rota `bytedance/seedream-5-pro` da API do Replicate, definida em `supabase/functions/generate-tryon/index.ts`. A função aceita uma imagem JPG, PNG ou WEBP, um ID de camisa e um ID de cenário do time autenticado. A conversão HEIC ocorre no navegador antes do envio. O prompt vem do time ou de um padrão genérico.
+O modelo usado é **ByteDance Seedream 5 Pro**, pela rota `bytedance/seedream-5-pro` da API do Replicate, definida em `supabase/functions/_shared/prediction.ts` e consumida pelo worker. `generate-tryon` aceita uma imagem JPG, PNG ou WEBP, um ID de camisa e um ID de cenário do time autenticado e reserva trabalho na fila. A conversão HEIC ocorre no navegador antes do envio. O prompt vem do time ou de um padrão genérico e é congelado no pedido antes do despacho.
+
+O prompt revisado do São Paulo está versionado em [prompts/virtual-tryon.txt](prompts/virtual-tryon.txt) e foi configurado em `teams.generation_prompt` em 9/10/2026. A ordem das referências é foto do usuário, camisa e cenário. A configuração permanece `size: 2K`, `aspect_ratio: match_input_image`, `output_format: png`; o texto não aumenta a resolução. Alterar o arquivo não atualiza o banco automaticamente: o campo do time é a configuração efetiva, editável no painel admin. O prompt anterior foi preservado em backup privado antes da atualização.
+
+A [pesquisa de prompts](seedream-prompt-notes.md) registra fontes oficiais, decisões e limitações. As instruções pedem identidade preservada, detalhes da camisa copiados da referência e mínima alteração do cenário, sem prometer cópia pixel a pixel. A atualização foi conferida por leitura do banco e da configuração pública; a qualidade visual precisa de comparação real autorizada, pois uma geração consome recursos do provedor. Outros times e o prompt genérico não foram alterados.
 
 O token Replicate de cada time está em `team_secrets.replicate_api_token`, visível apenas ao painel admin e à Edge Function. `REPLICATE_API_TOKEN` é fallback privado para times sem token próprio. O navegador nunca recebe esses valores. O endpoint de geração valida identidade, consentimento, tamanho/tipo da foto e IDs de assets; usa o UUID de requisição para reservar crédito e impedir duplicação.
 

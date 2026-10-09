@@ -1,71 +1,94 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Download, RefreshCw } from 'lucide-react';
 import type { TeamShirt, TeamBackground } from '@/features/teams/TeamContext';
 import { useTeam } from '@/features/teams/TeamContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useTeamAccent } from '@/features/teams/hooks/useTeamAccent';
-import { credentials, generationStatus, invoke } from '@/integrations/supabase/functions';
+import { credentials, FunctionError, generationStatus, invoke } from '@/integrations/supabase/functions';
 import { downloadGeneration } from '@/features/tryon/download';
 interface ResultScreenProps {
-  userImage: string; selectedShirt: TeamShirt; selectedBackground: TeamBackground;
+  userImage?: string; selectedShirt?: TeamShirt; selectedBackground?: TeamBackground; resumeId?: string;
   balance: number; onTryAgain: () => void; onBalanceUpdate: (balance: number) => void;
   onNoCredits: () => void; onHistory?: () => void;
 }
-const getProgressMessage = (progress: number, _position: number, name: string) => ({
-  title: progress < 95 ? 'Preparando sua foto...' : 'Finalizando...',
-  subtitle: `Vestindo o manto do ${name}`,
-});
-export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, balance, onTryAgain, onBalanceUpdate, onNoCredits, onHistory }: ResultScreenProps) => {
+export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, resumeId, balance, onTryAgain, onBalanceUpdate, onNoCredits, onHistory }: ResultScreenProps) => {
   const { team } = useTeam(); const { toast } = useToast(); const { accent, accentFg } = useTeamAccent();
   const initial = useRef({ userImage, selectedShirt, selectedBackground, balance, onBalanceUpdate, onNoCredits });
   const generationId = useRef<string | null>(null);
   const teamSlug = team?.slug;
-  const [requestId, setRequestId] = useState(() => crypto.randomUUID());
+  const [requestId, setRequestId] = useState(() => resumeId || crypto.randomUUID());
+  const [run, setRun] = useState(0);
+  const [terminalFailure, setTerminalFailure] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(true);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [queuePosition] = useState(1);
   const [isDownloading, setIsDownloading] = useState(false);
   useEffect(() => {
     if (!teamSlug) return;
-    let active = true; let timer: ReturnType<typeof setTimeout>;
+    let active = true; let polling = false; let failures = 0; let timer: ReturnType<typeof setTimeout>;
+    const key = `vf_generation:${teamSlug}`;
+    const schedule = (seconds: number) => { clearTimeout(timer); timer = setTimeout(() => void poll(), Math.max(1, seconds) * 1000 + Math.random() * 1000); };
+    async function poll() {
+      if (!active || polling || document.hidden) return;
+      polling = true;
+      try {
+        const status = await generationStatus(teamSlug!, generationId.current || requestId);
+        if (!active) return;
+        failures = 0; setReconnecting(false); setWaiting(status.status === 'pending');
+        if (status.status === 'completed' && status.result_image_url) {
+          localStorage.removeItem(key); setGeneratedImage(status.result_image_url); setIsGenerating(false);
+          void invoke<{ balance: number }>('fanframe-proxy', { ...credentials(teamSlug!), action: 'balance' }).then(latest => { if (active) initial.current.onBalanceUpdate(latest.balance); }).catch(() => {});
+          return;
+        }
+        if (status.status === 'failed') {
+          localStorage.removeItem(key); setTerminalFailure(true); setError(status.error_message || 'Falha na geração'); setIsGenerating(false); return;
+        }
+        schedule(status.next_poll_after || (status.status === 'pending' ? 10 : 5));
+      } catch (failure) {
+        if (!active) return;
+        if (failure instanceof FunctionError && (failure.status === 401 || failure.status === 404)) {
+          setError(failure.status === 401 ? 'Acesse novamente pelo tour para recuperar sua foto.' : 'Pedido não encontrado. Envie sua foto novamente.'); setIsGenerating(false);
+          if (failure.status === 404) { localStorage.removeItem(key); setTerminalFailure(true); }
+        } else { failures++; setReconnecting(true); schedule(Math.min(30, 5 * 2 ** Math.min(failures, 3))); }
+      } finally { polling = false; }
+    }
     async function start() {
       try {
+        const stored = localStorage.getItem(key);
+        if (resumeId || (stored && stored !== requestId) || (!initial.current.userImage && stored)) {
+          generationId.current = resumeId || stored; await poll(); return;
+        }
         if (initial.current.balance <= 0) { initial.current.onNoCredits(); return; }
+        if (!initial.current.userImage || !initial.current.selectedShirt || !initial.current.selectedBackground) throw new Error('Envie sua foto novamente.');
+        localStorage.setItem(key, requestId);
         const result = await invoke<{ queueId: string }>('generate-tryon', {
           ...credentials(teamSlug!), request_id: requestId, consent: true,
           userImageBase64: initial.current.userImage, shirtId: initial.current.selectedShirt.id, backgroundId: initial.current.selectedBackground.id,
         });
         generationId.current = result.queueId;
-        async function poll() {
-          if (!active) return;
-          try {
-            const status = await generationStatus(teamSlug!, result.queueId);
-            if (!active) return;
-            if (status.status === 'completed' && status.result_image_url) {
-              setProgress(100); setGeneratedImage(status.result_image_url); setIsGenerating(false);
-              const latest = await invoke<{ balance: number }>('fanframe-proxy', { ...credentials(teamSlug!), action: 'balance' });
-              if (active) initial.current.onBalanceUpdate(latest.balance);
-              return;
-            }
-            if (status.status === 'failed') throw new Error(status.error_message || 'Falha na geração');
-            setProgress(value => Math.min(95, value + 2));
-            timer = setTimeout(poll, 3000);
-          } catch (failure) {
-            if (active) { setError(failure instanceof Error ? failure.message : 'Erro ao acompanhar geração'); setIsGenerating(false); }
-          }
-        }
+        localStorage.setItem(key, result.queueId);
         await poll();
       } catch (failure) {
-        if (active) { setError(failure instanceof Error ? failure.message : 'Erro ao iniciar geração'); setIsGenerating(false); }
+        if (!active) return;
+        if (failure instanceof FunctionError && (failure.status === 0 || failure.status >= 500 || failure.code === 'account_busy')) {
+          generationId.current = requestId; setReconnecting(true); schedule(5);
+        } else {
+          localStorage.removeItem(key);
+          const message = failure instanceof FunctionError && ['queue_full','budget_exhausted','admissions_paused','rate_limit_exceeded'].includes(failure.code)
+            ? 'Alta demanda no momento. Seu crédito foi preservado. Tente novamente em instantes.'
+            : failure instanceof Error ? failure.message : 'Erro ao iniciar geração';
+          setTerminalFailure(true); setError(message); setIsGenerating(false);
+        }
       }
     }
+    const visible = () => { if (!document.hidden && active) { clearTimeout(timer); void poll(); } };
+    document.addEventListener('visibilitychange', visible);
     void start();
-    return () => { active = false; clearTimeout(timer); };
-  }, [requestId, teamSlug]);
+    return () => { active = false; clearTimeout(timer); document.removeEventListener('visibilitychange', visible); };
+  }, [requestId, teamSlug, resumeId, run]);
   const handleDownload = async () => {
     if (!generatedImage || !teamSlug || !generationId.current || isDownloading) return;
     setIsDownloading(true);
@@ -73,10 +96,15 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, bal
     catch { toast({ title: 'Erro no download', variant: 'destructive' }); }
     finally { setIsDownloading(false); }
   };
-  const handleRetry = () => { setGeneratedImage(null); setRequestId(crypto.randomUUID()); setProgress(0); setError(null); setIsGenerating(true); };
+  const handleRetry = () => {
+    if (terminalFailure) {
+      if (!userImage) { onTryAgain(); return; }
+      setRequestId(crypto.randomUUID()); generationId.current = null;
+    } else setRun(value => value + 1);
+    setTerminalFailure(false); setGeneratedImage(null); setError(null); setIsGenerating(true);
+  };
   // Loading state
   if (isGenerating) {
-    const { title, subtitle } = getProgressMessage(progress, queuePosition, team?.name || "Time");
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 safe-bottom">
@@ -88,32 +116,16 @@ export const ResultScreen = ({ userImage, selectedShirt, selectedBackground, bal
           </div>
 
           <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-1 sm:mb-2 uppercase transition-all duration-300">
-            {title}
+            {reconnecting ? 'Reconectando...' : waiting ? 'Sua foto está na fila' : 'Preparando sua foto...'}
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base max-w-xs mx-auto mb-6 sm:mb-8 transition-all duration-300">
-            {subtitle}
+            {`Vestindo o manto do ${team?.name || 'Time'}`}
           </p>
-
-          {/* Progress Bar */}
-          <div className="px-2 sm:px-4 mb-6 sm:mb-8">
-            <Progress value={progress} className="h-2 sm:h-3 mb-2" />
-            <p className="text-base sm:text-lg font-bold text-white">{progress}%</p>
-          </div>
-
-          {/* Queue position indicator (only show if > 5) */}
-          {queuePosition > 5 && (
-            <div className="mb-4 animate-fade-in">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-sm">
-                <span className="text-muted-foreground">Posição na fila:</span>
-                <span className="font-bold text-white">{queuePosition}</span>
-              </div>
-            </div>
-          )}
 
           {/* Warning */}
           <div className="glass-card p-3 sm:p-4 rounded-xl border-2 border-warning/50 bg-warning/20">
             <p className="text-xs sm:text-sm text-warning font-semibold">
-              ⚠️ Não atualize ou feche a página
+              Sua foto estará disponível quando ficar pronta.
             </p>
           </div>
         </div>

@@ -1,0 +1,14 @@
+Create one realistic virtual try-on photograph using the three reference images. Edit the people from Image 1 to wear the jersey from Image 2, placing them in the background from Image 3. Faithfulness to these references matters more than stylization.
+
+Reference roles:
+Image 1: the only source of people, identity, expressions, pose, body proportions and their relative arrangement.
+Image 2: the sole reference for the jersey design, not for people, mannequins or the scene.
+Image 3: the sole reference for the final background, not for new foreground people or clothing.
+
+Preserve each person's identity from Image 1: facial features, apparent age, skin tone and natural skin texture, hair, expression, gaze, pose, body shape and proportions. Keep the same number of people, their relative positions and existing occlusion. Do not add, remove, duplicate or merge people. Do not beautify faces, smooth skin, reshape bodies or change hands. Keep lower-body clothing, footwear and personal accessories unchanged. Do not import a face or body from Images 2 or 3.
+
+Replace each person's upper-body clothing with the jersey in Image 2. Match its actual cut, collar, sleeve length, cuffs, fabric, colors, stripes, panels, seams and visible logos. Preserve the club crest, manufacturers' marks, sponsors, numbers and lettering, including their shapes, spelling, orientation, colors and relative positions. Do not redesign, translate, mirror or invent these details. Do not carry over collars, buttons, pockets, patterns or logos from the original upper-body clothing. Fit the reference jersey naturally to each person's existing body and pose, with realistic folds, perspective and shadows; allow natural occlusion by arms, hair or accessories rather than inventing hidden graphics.
+
+Use Image 3 as the background. Preserve its recognizable architecture, objects, layout, perspective, colors and visible signage; do not reimagine the location, add scenery or blur it artistically. Any people, statues or printed figures already in Image 3 remain background elements and must not receive the jersey. Retain the output aspect ratio of Image 1; if necessary, crop the background minimally to fit without stretching its geometry or cutting off the people. Do not reveal or invent body parts outside the framing of Image 1.
+
+Integrate the people and jerseys with the actual lighting of Image 3 using minimal exposure, color and shadow adjustments. Keep facial features and natural skin texture intact. Preserve natural contact and edge transitions, without cut-out halos. Produce a single photograph, not a collage or comparison grid, with no extra text, watermark, decorative effects or cinematic styling. Add no text beyond markings already present in the jersey or background references.

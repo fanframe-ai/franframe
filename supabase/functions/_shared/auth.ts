@@ -22,9 +22,13 @@ export function apiBase(team: Team) {
   return url.href.replace(/\/$/, '');
 }
 export async function wordpress(team: Team, path: string, token?: string, payload?: unknown) {
-  const response = await fetch(`${apiBase(team)}${path}`, {
+  const url = new URL(`${apiBase(team)}${path}`);
+  // Some WordPress caches reuse private REST GET responses regardless of auth headers.
+  if (payload === undefined) url.searchParams.set('_fanframe_nonce', crypto.randomUUID());
+  const response = await fetch(url.href, {
     method: payload === undefined ? 'GET' : 'POST', redirect: 'error', signal: AbortSignal.timeout(15000),
-    headers: { 'Content-Type': 'application/json', ...(token ? { 'X-Fanframe-Token': token, Authorization: `Bearer ${token}` } : {}) },
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store', Pragma: 'no-cache', ...(token ? { 'X-Fanframe-Token': token, Authorization: `Bearer ${token}` } : {}) },
     body: payload === undefined ? undefined : JSON.stringify(payload),
   });
   if (response.status === 401 || response.status === 403) throw new HttpError(401, 'session_expired');

@@ -6,7 +6,7 @@ export class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 export function json(value: unknown, status = 200) {
-  return new Response(JSON.stringify(value), { status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  return new Response(JSON.stringify(value), { status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...(status === 429 || status === 503 ? { 'Retry-After': '15' } : {}) } });
 }
 export function endpoint(handle: (req: Request) => Promise<Response>) {
   return async (req: Request) => {
@@ -24,9 +24,28 @@ export function requiredString(value: unknown, name: string, max = 4096): string
   if (typeof value !== 'string' || !value.trim() || value.length > max) throw new HttpError(400, `invalid_${name}`);
   return value;
 }
-export async function body(req: Request): Promise<Record<string, unknown>> {
-  const raw = await req.text();
-  if (raw.length > 16 * 1024 * 1024) throw new HttpError(413, 'image_too_large');
+export async function limitedBytes(stream: ReadableStream<Uint8Array> | null, max: number): Promise<Uint8Array> {
+  if (!stream) return new Uint8Array();
+  const reader = stream.getReader(); const chunks: Uint8Array[] = []; let length = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > max) { await reader.cancel(); throw new HttpError(413, 'body_too_large'); }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(length); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return bytes;
+}
+export async function boundedText(req: Request, max = 64 * 1024) {
+  if (Number(req.headers.get('content-length')) > max) throw new HttpError(413, 'body_too_large');
+  return new TextDecoder().decode(await limitedBytes(req.body, max));
+}
+export async function body(req: Request, max = 64 * 1024): Promise<Record<string, unknown>> {
+  const raw = await boundedText(req, max);
   try {
     const data = JSON.parse(raw);
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error();

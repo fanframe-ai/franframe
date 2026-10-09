@@ -5,6 +5,7 @@ import { GenerationsTable } from "@/features/admin/components/GenerationsTable";
 import { AlertsList } from "@/features/admin/components/AlertsList";
 import { TeamSelector } from "@/features/admin/components/TeamSelector";
 import { useAdminStats } from "@/features/admin/hooks/useAdminStats";
+import { GenerationControls } from '@/features/admin/components/GenerationControls';
 import { 
   ImageIcon, 
   Clock, 
@@ -73,13 +74,14 @@ export default function AdminDashboard() {
           />
           <StatsCard title="Usuários Únicos" value={todayStats.uniqueUsers} icon={<Users className="h-5 w-5" />} />
           <StatsCard
-            title="Custo API (Hoje)"
-            value={`$${(todayStats.successfulGenerations * 0.04).toFixed(2)}`}
-            subtitle={`${todayStats.successfulGenerations} × $0.04`}
+            title="Custo registrado (Hoje)"
+            value={`$${(todayStats.costCents / 100).toFixed(2)}`}
+            subtitle="Estimativa registrada por geração"
             icon={<DollarSign className="h-5 w-5" />}
           />
         </div>
 
+        <GenerationControls teamId={selectedTeam} />
         {/* Charts & Alerts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">

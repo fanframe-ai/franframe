@@ -1,5 +1,6 @@
 import { requireAdmin, serviceClient, type Client } from '../_shared/auth.ts';
 import { endpoint, json } from '../_shared/http.ts';
+import { requireWorker } from '../generation-worker/index.ts';
 type HealthClient = Client;
 
 interface HealthCheckResult {
@@ -60,9 +61,10 @@ async function checkAuth(supabase: HealthClient): Promise<HealthCheckResult> {
   }
 }
 
-async function checkReplicate(): Promise<HealthCheckResult> {
+async function checkReplicate(supabase: HealthClient): Promise<HealthCheckResult> {
   const start = Date.now();
-  const replicateToken = Deno.env.get("REPLICATE_API_TOKEN");
+  const { data } = await supabase.from('team_secrets').select('replicate_api_token').not('replicate_api_token', 'is', null).limit(1).maybeSingle();
+  const replicateToken = data?.replicate_api_token || Deno.env.get("REPLICATE_API_TOKEN");
   
   if (!replicateToken) {
     return {
@@ -77,6 +79,7 @@ async function checkReplicate(): Promise<HealthCheckResult> {
   try {
     const response = await fetch("https://api.replicate.com/v1/account", {
       method: "GET",
+      signal: AbortSignal.timeout(15000),
       headers: {
         "Authorization": `Bearer ${replicateToken}`,
       },
@@ -147,8 +150,9 @@ async function checkEdgeFunctions(): Promise<HealthCheckResult> {
   }
   
   try {
-    const response = await fetch(`${supabaseUrl}/functions/v1/`, {
-      method: "HEAD",
+    const response = await fetch(`${supabaseUrl}/functions/v1/generation-status`, {
+      method: "POST",
+      body: '{}', signal: AbortSignal.timeout(10000),
       headers: {
         "apikey": anonKey || "",
       },
@@ -156,7 +160,7 @@ async function checkEdgeFunctions(): Promise<HealthCheckResult> {
     
     const responseTime = Date.now() - start;
     
-    if (response.ok || response.status === 404 || response.status === 204) {
+    if (response.status === 400 || response.status === 401) {
       return {
         service_id: "edge-functions",
         service_name: "Funções de Backend",
@@ -207,23 +211,15 @@ async function checkRealtime(): Promise<HealthCheckResult> {
   }
 }
 
-async function checkCDN(): Promise<HealthCheckResult> {
+async function checkCDN(supabase: HealthClient): Promise<HealthCheckResult> {
   const start = Date.now();
   
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    if (!supabaseUrl) {
-      return {
-        service_id: "cdn",
-        service_name: "CDN / Assets",
-        status: "operational",
-        response_time_ms: 50,
-      };
-    }
-    
-    const response = await fetch(`${supabaseUrl}/storage/v1/`, {
-      method: "HEAD",
-    });
+    const { data } = await supabase.from('teams').select('shirts').eq('is_active', true).limit(1).maybeSingle();
+    const asset = data?.shirts?.[0]; const assetUrl = asset?.assetPath || asset?.imageUrl;
+    if (!assetUrl || new URL(assetUrl).protocol !== 'https:') throw new Error('Asset configuration unavailable');
+    const response = await fetch(assetUrl, { method: 'HEAD', redirect: 'error', signal: AbortSignal.timeout(10000) });
+    if (!response.ok) throw new Error(`Asset HTTP ${response.status}`);
     
     const responseTime = Date.now() - start;
     
@@ -246,7 +242,7 @@ async function checkCDN(): Promise<HealthCheckResult> {
 
 export const handler = endpoint(async (req) => {
   const supabase = serviceClient();
-  await requireAdmin(req, supabase);
+  try { await requireWorker(req); } catch { await requireAdmin(req, supabase); }
   const startTime = Date.now();
 
   try {
@@ -254,10 +250,10 @@ export const handler = endpoint(async (req) => {
     const [dbResult, authResult, replicateResult, edgeResult, realtimeResult, cdnResult] = await Promise.all([
       checkDatabase(supabase),
       checkAuth(supabase),
-      checkReplicate(),
+      checkReplicate(supabase),
       checkEdgeFunctions(),
       checkRealtime(),
-      checkCDN(),
+      checkCDN(supabase),
     ]);
 
     const results = [dbResult, authResult, replicateResult, edgeResult, realtimeResult, cdnResult];

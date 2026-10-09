@@ -165,7 +165,7 @@ export default function AdminSystemStatus() {
           id: def.id,
           name: def.name,
           description: def.description,
-          status: latest ? (latest.status as ServiceStatus) : "unknown",
+          status: latest && Date.now() - Date.parse(latest.created_at) <= 5 * 60000 ? (latest.status as ServiceStatus) : "unknown",
           responseTime: latest?.response_time_ms || undefined,
           lastChecked: latest ? new Date(latest.created_at) : null,
           icon: serviceIcons[def.id] || <Server className="h-5 w-5" />,
